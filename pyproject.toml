@@ -1,0 +1,122 @@
+[project]
+name = "openmarkets"
+version = "0.1.0.alpha"
+description = "OpenMarkets is a modular Model Context Protocol (MCP) server that unifies access to financial market data for AI, research, and quantitative finance. It offers robust APIs for historical prices, corporate actions, fundamentals, and more, enabling advanced agentic retrieval, RAG, and LLM-powered workflows."
+authors = [{ name = "Dobri Danchev" }]
+classifiers = [
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Development Status :: 3 - Alpha",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+]
+keywords = [
+    "machinelearning",
+    "finance",
+    "investment",
+    "mcp",
+    "modelcontextprotocol",
+    "yahoo finance",
+    "financial data retrieval",
+]
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.21.0",
+    "yfinance>=0.2.66",
+]
+optional-dependencies = {"fastmcp" = ["fastmcp>=2.13.0",], "lxml" = ["lxml>=6.0.2",]}
+
+[project.urls]
+Homepage = "https://openmarkets.dev"
+Source = "https://github.com/danchev/openmarkets"
+Documentation = "https://danchev.github.io/openmarkets/"
+Issues = "https://github.com/danchev/openmarkets/issues"
+
+[project.scripts]
+openmarkets = "openmarkets.core.server:main"
+mcp-server-yfinance = "openmarkets.core.server:main"
+
+[build-system]
+requires = ["uv_build>=0.9.4,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.407",
+    "refurb>=2.2.0",
+    "ruff>=0.14.4",
+    "ty>=0.0.1a25",
+    {include-group = "test"},
+    {include-group = "commit"},
+]
+test = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
+    "pytest-asyncio>=1.2.0",
+]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-glightbox>=0.5.1",
+    "mkdocs-material[imaging]>=9.6.22",
+    "mkdocstrings-python>=1.18.2",
+]
+commit = [
+    "commitizen>=4.9.1", 
+    "pre-commit>=4.3.0",
+]
+
+[tool.ruff]
+fix = true
+show-fixes = true
+output-format = "full"
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "Q"]
+ignore = ["E203", "E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["openmarkets"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+addopts = "-n auto --cov=src/openmarkets --cov-report=html --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+
+[tool.mypy]
+custom_typeshed_dir = "typings"
+plugins = ["mypy_ruff"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0.alpha"
+tag_format = "$version"
+version_files = [
+    "pyproject.toml:version"
+]
+update_changelog_on_bump = true

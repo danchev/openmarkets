@@ -1,0 +1,14 @@
+name: Mirror to GitLab
+on: [workflow_dispatch]
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: yesolutions/mirror-action@master
+        with:
+          REMOTE: "https://gitlab.com/danchev-org/openmarkets.git"
+          GIT_USERNAME: danchev-org
+          GIT_PASSWORD: ${{ secrets.GIT_PASSWORD }}

@@ -1,0 +1,22 @@
+{
+  "servers": {
+    "openmarkets (dev)": {
+      "type": "stdio",
+      "command": "${command:python.interpreterPath}",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "-m",
+        "openmarkets",
+        "--toolset",
+        "openmarkets.services.yfinance",
+      ],
+      "dev": {
+        // "watch": "**/*.py",
+        "debug": {
+          "type": "debugpy",
+          "debugpyPath": "debugpy"
+        }
+      }
+    }
+  }
+}
