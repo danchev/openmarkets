@@ -60,6 +60,17 @@ class InsiderRosterHolder(BaseModel):
         except Exception:
             return None
 
+    @field_validator("Shares_Owned_Directly", "Shares_Owned_Indirectly")
+    @classmethod
+    def convert_shares(cls, v):
+        """Convert shares fields to float, or pass through if None."""
+        if v in ("nan", "NaN", "Inf", "-Inf"):
+            return None
+        try:
+            return float(v)
+        except Exception:
+            return None
+
 
 class StockInstitutionalHoldings(BaseModel):
     """Schema for institutional holdings data."""
