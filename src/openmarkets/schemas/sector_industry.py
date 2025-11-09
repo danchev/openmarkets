@@ -42,7 +42,7 @@ software_ticker.history()
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class SectorEnum(str, Enum):
@@ -310,9 +310,18 @@ class IndustryResearchReportEntry(BaseModel):
     target_price: Optional[float] = Field(None, description="Target price", alias="targetPrice")
     target_price_status: Optional[str] = Field(None, description="Target price status", alias="targetPriceStatus")
     investment_rating: Optional[str] = Field(None, description="Investment rating", alias="investmentRating")
-    report_date: str = Field(..., description="Report date", alias="reportDate")
+    report_date: Optional[str] = Field(None, description="Report date", alias="reportDate")
     report_title: str = Field(..., description="Report title", alias="reportTitle")
     report_type: str = Field(..., description="Report type", alias="reportType")
+
+    @field_validator("target_price")
+    def validate_target_price(cls, v):
+        if v is None:
+            return v
+        try:
+            return float(v)
+        except Exception:
+            return None
 
 
 class IndustryTopGrowthCompaniesEntry(BaseModel):
