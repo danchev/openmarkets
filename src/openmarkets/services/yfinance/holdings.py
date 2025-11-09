@@ -9,7 +9,7 @@ from openmarkets.schemas.holdings import (
 )
 
 
-def fetch_major_holders(ticker: str) -> StockMajorHolders:
+def fetch_major_holders(ticker: str) -> list[StockMajorHolders]:
     """
     Fetch stock major holders data for a given ticker.
 
@@ -20,7 +20,7 @@ def fetch_major_holders(ticker: str) -> StockMajorHolders:
         StockMajorHolders: Major holders data.
     """
     df = yf.Ticker(ticker).get_major_holders()
-    return StockMajorHolders(**df.transpose().reset_index().to_dict(orient="records"))
+    return [StockMajorHolders(**row) for row in df.transpose().reset_index().to_dict(orient="records")]
 
 
 def fetch_institutional_holdings(ticker: str) -> list[StockInstitutionalHoldings]:
@@ -79,5 +79,4 @@ def fetch_insider_roster_holders(ticker: str) -> list[InsiderRosterHolder]:
         list[InsiderRosterHolder]: List of insider roster holders.
     """
     df = yf.Ticker(ticker).get_insider_roster_holders()
-    df.reset_index(inplace=True)
-    return [InsiderRosterHolder(**row.to_dict()) for _, row in df.iterrows()]
+    return [InsiderRosterHolder(**row.to_dict()) for _, row in df.reset_index().iterrows()]
