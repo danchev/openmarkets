@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 import yfinance as yf
 
 from openmarkets.schemas.sector_industry import (
@@ -16,7 +14,7 @@ from openmarkets.schemas.sector_industry import (
 )
 
 
-def get_sector_overview(sector: SectorEnum) -> SectorOverview:
+def fetch_sector_overview(sector: SectorEnum) -> SectorOverview:
     """Fetches overview information for a given sector.
 
     Args:
@@ -33,7 +31,7 @@ def get_sector_overview(sector: SectorEnum) -> SectorOverview:
     return SectorOverview(**data)
 
 
-def get_sector_overview_for_ticker(ticker: str) -> SectorOverview:
+def fetch_sector_overview_for_ticker(ticker: str) -> SectorOverview:
     """Fetches overview information for the sector of a given ticker.
 
     Args:
@@ -47,10 +45,12 @@ def get_sector_overview_for_ticker(ticker: str) -> SectorOverview:
     """
     stock = yf.Ticker(ticker)
     sector = stock.info.get("sectorKey")
-    return get_sector_overview(SectorEnum[sector.upper()])
+    if sector is None:
+        raise ValueError(f"Sector not found for ticker: {ticker}")
+    return fetch_sector_overview(SectorEnum[sector.upper()])
 
 
-def get_sector_top_companies(sector: SectorEnum) -> List[SectorTopCompaniesEntry]:
+def fetch_sector_top_companies(sector: SectorEnum) -> list[SectorTopCompaniesEntry]:
     """Fetches top companies for a given sector.
 
     Args:
@@ -60,10 +60,12 @@ def get_sector_top_companies(sector: SectorEnum) -> List[SectorTopCompaniesEntry
         List of SectorTopCompaniesEntry.
     """
     data = yf.Sector(sector.value).top_companies
+    if data is None:
+        return []
     return [SectorTopCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]
 
 
-def get_sector_top_companies_for_ticker(ticker: str) -> List[SectorTopCompaniesEntry]:
+def fetch_sector_top_companies_for_ticker(ticker: str) -> list[SectorTopCompaniesEntry]:
     """Fetches top companies for the sector of a given ticker.
 
     Args:
@@ -74,10 +76,12 @@ def get_sector_top_companies_for_ticker(ticker: str) -> List[SectorTopCompaniesE
     """
     stock = yf.Ticker(ticker)
     sector = stock.info.get("sectorKey")
-    return get_sector_top_companies(SectorEnum[sector.upper()])
+    if sector is None:
+        raise ValueError(f"Sector not found for ticker: {ticker}")
+    return fetch_sector_top_companies(SectorEnum[sector.upper()])
 
 
-def get_sector_top_etfs(sector: SectorEnum) -> List[SectorTopETFsEntry]:
+def fetch_sector_top_etfs(sector: SectorEnum) -> list[SectorTopETFsEntry]:
     """Fetches top ETFs for a given sector.
 
     Args:
@@ -90,7 +94,7 @@ def get_sector_top_etfs(sector: SectorEnum) -> List[SectorTopETFsEntry]:
     return [SectorTopETFsEntry(symbol=k, name=v) for k, v in data.items()]
 
 
-def get_sector_top_mutual_funds(sector: SectorEnum) -> List[SectorTopMutualFundsEntry]:
+def fetch_sector_top_mutual_funds(sector: SectorEnum) -> list[SectorTopMutualFundsEntry]:
     """Fetches top mutual funds for a given sector.
 
     Args:
@@ -103,7 +107,7 @@ def get_sector_top_mutual_funds(sector: SectorEnum) -> List[SectorTopMutualFunds
     return [SectorTopMutualFundsEntry(symbol=k, name=v) for k, v in data.items()]
 
 
-def get_sector_industries(sector: SectorEnum) -> List[str]:
+def fetch_sector_industries(sector: SectorEnum) -> list[str]:
     """Returns the list of industries for a given sector.
 
     Args:
@@ -115,7 +119,7 @@ def get_sector_industries(sector: SectorEnum) -> List[str]:
     return SECTOR_INDUSTRY_MAPPING.get(sector.value, [])
 
 
-def get_sector_research_reports(sector: SectorEnum) -> List[IndustryResearchReportEntry]:
+def fetch_sector_research_reports(sector: SectorEnum) -> list[IndustryResearchReportEntry]:
     """Fetches research reports for a given sector.
 
     Args:
@@ -133,7 +137,7 @@ def get_sector_research_reports(sector: SectorEnum) -> List[IndustryResearchRepo
     return [IndustryResearchReportEntry(**entry) for entry in data]
 
 
-def get_all_industries(sector: Optional[SectorEnum] = None) -> List[str]:
+def fetch_all_industries(sector: SectorEnum | None = None) -> list[str]:
     """Returns a list of industries.
 
     If sector is provided, returns industries for that sector only.
@@ -150,7 +154,7 @@ def get_all_industries(sector: Optional[SectorEnum] = None) -> List[str]:
     return sorted({industry for industries in SECTOR_INDUSTRY_MAPPING.values() for industry in industries})
 
 
-def get_industry_overview(industry: str) -> IndustryOverview:
+def fetch_industry_overview(industry: str) -> IndustryOverview:
     """Fetches overview information for a given industry.
 
     Args:
@@ -163,7 +167,7 @@ def get_industry_overview(industry: str) -> IndustryOverview:
     return IndustryOverview(**data)
 
 
-def get_industry_top_companies(industry: str) -> List[IndustryTopCompaniesEntry]:
+def fetch_industry_top_companies(industry: str) -> list[IndustryTopCompaniesEntry]:
     """Fetches top companies for a given industry.
 
     Args:
@@ -172,10 +176,12 @@ def get_industry_top_companies(industry: str) -> List[IndustryTopCompaniesEntry]
         List of IndustryTopCompaniesEntry.
     """
     data = yf.Industry(industry).top_companies
+    if data is None:
+        return []
     return [IndustryTopCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]
 
 
-def get_industry_top_growth_companies(industry: str) -> List[IndustryTopGrowthCompaniesEntry]:
+def fetch_industry_top_growth_companies(industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
     """Fetches top growth companies for a given industry.
 
     Args:
@@ -184,4 +190,6 @@ def get_industry_top_growth_companies(industry: str) -> List[IndustryTopGrowthCo
         List of IndustryTopGrowthCompaniesEntry.
     """
     data = yf.Industry(industry).top_growth_companies
+    if data is None:
+        return []
     return [IndustryTopGrowthCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]

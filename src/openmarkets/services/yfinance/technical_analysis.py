@@ -9,7 +9,7 @@ from openmarkets.schemas.technical_analysis import (
 )
 
 
-def get_technical_indicators_for_ticker(ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
+def fetch_technical_indicators(ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
     """
     Get technical indicators for a stock ticker.
 
@@ -54,7 +54,7 @@ def get_technical_indicators_for_ticker(ticker: str, period: str = "6mo") -> Tec
     return indicators
 
 
-def get_volatility_metrics_for_ticker(ticker: str, period: str = "1y") -> VolatilityMetricsDict:
+def fetch_volatility_metrics(ticker: str, period: str = "1y") -> VolatilityMetricsDict:
     """Calculate volatility metrics for a stock ticker.
 
     Args:
@@ -89,7 +89,7 @@ def get_volatility_metrics_for_ticker(ticker: str, period: str = "1y") -> Volati
     return volatility_data
 
 
-def get_support_resistance_levels_for_ticker(ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
+def fetch_support_resistance_levels(ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
     """Calculate support and resistance levels based on historical data.
 
     Args:

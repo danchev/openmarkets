@@ -1,6 +1,5 @@
 import json
 from datetime import date
-from typing import Optional
 
 import yfinance as yf
 
@@ -14,7 +13,7 @@ from openmarkets.schemas.options import (
 )
 
 
-def get_option_expiration_dates_for_ticker(ticker: str) -> list[OptionExpirationDate]:
+def fetch_option_expiration_dates(ticker: str) -> list[OptionExpirationDate]:
     """
     Fetch the option expiration dates for a given ticker and return as a list of OptionExpirationDate.
     """
@@ -22,7 +21,7 @@ def get_option_expiration_dates_for_ticker(ticker: str) -> list[OptionExpiration
     return [OptionExpirationDate(date=dt) for dt in options]
 
 
-def get_option_chain_for_ticker(ticker: str, expiration: date | None = None) -> OptionContractChain:
+def fetch_option_chain(ticker: str, expiration: date | None = None) -> OptionContractChain:
     """
     Fetch the option chain for a given ticker and return as an OptionContractChain.
     """
@@ -35,7 +34,7 @@ def get_option_chain_for_ticker(ticker: str, expiration: date | None = None) -> 
     return OptionContractChain(calls=call_objs, puts=put_objs, underlying=underlying)
 
 
-def get_call_options_for_ticker(ticker: str, expiration: date | None = None) -> list[CallOption] | None:
+def fetch_call_options(ticker: str, expiration: date | None = None) -> list[CallOption] | None:
     """
     Fetch the call options for a given ticker and expiration date, and return as a list of CallOption.
     """
@@ -47,7 +46,7 @@ def get_call_options_for_ticker(ticker: str, expiration: date | None = None) -> 
     return [CallOption(**row.to_dict()) for _, row in calls.iterrows()]
 
 
-def get_put_options_for_ticker(ticker: str, expiration: date | None = None) -> list[PutOption] | None:
+def fetch_put_options(ticker: str, expiration: date | None = None) -> list[PutOption] | None:
     """
     Fetch the put options for a given ticker and expiration date, and return as a list of PutOption.
     """
@@ -58,7 +57,7 @@ def get_put_options_for_ticker(ticker: str, expiration: date | None = None) -> l
     return [PutOption(**row.to_dict()) for _, row in puts.iterrows()]
 
 
-def get_options_volume_analysis(ticker: str, expiration_date: Optional[str] = None) -> str:
+def fetch_options_volume_analysis(ticker: str, expiration_date: str | None = None) -> str:
     """Get options volume and open interest analysis.
 
     Args:
@@ -99,9 +98,9 @@ def get_options_volume_analysis(ticker: str, expiration_date: Optional[str] = No
         return json.dumps({"error": f"Failed to analyze options data: {str(e)}"})
 
 
-async def get_options_by_moneyness(
+async def fetch_options_by_moneyness(
     ticker: str,
-    expiration_date: Optional[str] = None,
+    expiration_date: str | None = None,
     moneyness_range: float = 0.1,
 ) -> str:
     """Get options filtered by moneyness (proximity to current stock price).
@@ -149,7 +148,7 @@ async def get_options_by_moneyness(
         return json.dumps({"error": f"Failed to filter options data: {str(e)}"})
 
 
-async def get_options_skew(ticker: str, expiration_date: Optional[str] = None) -> dict:
+async def fetch_options_skew(ticker: str, expiration_date: str | None = None) -> str:
     """
     Analyze and return the volatility skew for call and put options.
 

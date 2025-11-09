@@ -12,7 +12,7 @@ from openmarkets.schemas.stock import (
 )
 
 
-def get_fast_info_for_ticker(ticker: str) -> StockFastInfo:
+def fetch_fast_info(ticker: str) -> StockFastInfo:
     """
     Fetch fast stock info for a given ticker and return as StockFastInfo.
     """
@@ -20,7 +20,7 @@ def get_fast_info_for_ticker(ticker: str) -> StockFastInfo:
     return StockFastInfo(**fast_info)
 
 
-def get_info_for_ticker(ticker: str) -> StockInfo:
+def fetch_info(ticker: str) -> StockInfo:
     """
     Fetch detailed stock info for a given ticker and return as StockInfo.
     """
@@ -28,7 +28,7 @@ def get_info_for_ticker(ticker: str) -> StockInfo:
     return StockInfo(**info)
 
 
-def get_history_for_ticker(ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
+def fetch_history(ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
     """
     Fetch historical OHLCV data for a given ticker and return as a list of StockHistory.
     """
@@ -37,7 +37,7 @@ def get_history_for_ticker(ticker: str, period: str = "1y", interval: str = "1d"
     return [StockHistory(**row.to_dict()) for _, row in df.iterrows()]
 
 
-def get_dividends_for_ticker(ticker: str) -> list[StockDividends]:
+def fetch_dividends(ticker: str) -> list[StockDividends]:
     """
     Fetch dividend history for a given ticker and return as a list of StockDividends.
     """
@@ -45,7 +45,7 @@ def get_dividends_for_ticker(ticker: str) -> list[StockDividends]:
     return [StockDividends(Date=row[0], Dividends=row[1]) for row in dividends.to_dict().items()]
 
 
-def get_financial_summary_for_ticker(ticker: str) -> dict:
+def fetch_financial_summary(ticker: str) -> dict:
     """
     Fetch financial summary data for a given ticker and return as a dictionary.
     """
@@ -72,7 +72,7 @@ def get_financial_summary_for_ticker(ticker: str) -> dict:
     return StockInfo(**data).model_dump(include=include_fields)
 
 
-def get_risk_metrics_for_ticker(ticker: str) -> dict:
+def fetch_risk_metrics(ticker: str) -> dict:
     """
     Fetch risk metrics data for a given ticker and return as a dictionary.
     """
@@ -89,7 +89,7 @@ def get_risk_metrics_for_ticker(ticker: str) -> dict:
     return StockInfo(**data).model_dump(include=include_fields)
 
 
-def get_dividend_summary_for_ticker(ticker: str) -> dict:
+def fetch_dividend_summary(ticker: str) -> dict:
     """
     Fetch dividend summary data for a given ticker and return as a dictionary.
     """
@@ -108,7 +108,7 @@ def get_dividend_summary_for_ticker(ticker: str) -> dict:
     return StockInfo(**data).model_dump(include=include_fields)
 
 
-def get_price_target_for_ticker(ticker: str) -> dict:
+def fetch_price_target(ticker: str) -> dict:
     """
     Fetch analyst price target data for a given ticker and return as a dictionary.
     """
@@ -125,7 +125,7 @@ def get_price_target_for_ticker(ticker: str) -> dict:
     return StockInfo(**data).model_dump(include=include_fields)
 
 
-def get_financial_summary_for_ticker_v2(ticker: str) -> dict:
+def fetch_financial_summary_v2(ticker: str) -> dict:
     """
     Fetch financial summary data for a given ticker and return as a dictionary.
     """
@@ -159,7 +159,7 @@ def get_financial_summary_for_ticker_v2(ticker: str) -> dict:
     return StockInfo(**data).model_dump(include=include_fields)
 
 
-def get_quick_technical_indicators_for_ticker(ticker: str) -> dict:
+def fetch_quick_technical_indicators(ticker: str) -> dict:
     """
     Fetch technical indicators for a given ticker and return as a dictionary.
     """
@@ -178,15 +178,17 @@ def get_quick_technical_indicators_for_ticker(ticker: str) -> dict:
     return StockInfo(**data).model_dump(include=include_fields)
 
 
-def get_splits_for_ticker(ticker: str) -> list[StockSplit]:
+def fetch_splits(ticker: str) -> list[StockSplit]:
     """
     Fetch stock split history for a given ticker and return as a list of StockSplit.
     """
     splits = yf.Ticker(ticker).splits
-    return [StockSplit(date=pd.Timestamp(index).to_pydatetime(), stock_splits=value) for index, value in splits.items()]
+    return [
+        StockSplit(date=pd.Timestamp(str(index)).to_pydatetime(), stock_splits=value) for index, value in splits.items()
+    ]
 
 
-def get_corporate_actions_for_ticker(ticker: str) -> list[CorporateActions]:
+def fetch_corporate_actions(ticker: str) -> list[CorporateActions]:
     """
     Fetch corporate actions (splits/dividends) history for a given ticker and return as a list of CorporateActions.
     """
@@ -194,7 +196,7 @@ def get_corporate_actions_for_ticker(ticker: str) -> list[CorporateActions]:
     return [CorporateActions(**row.to_dict()) for _, row in actions.reset_index().iterrows()]
 
 
-def get_news_for_ticker(ticker: str) -> list[NewsItem]:
+def fetch_news(ticker: str) -> list[NewsItem]:
     """
     Fetch news items for a given ticker and return as a list of NewsItem.
     """
