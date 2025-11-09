@@ -9,7 +9,6 @@ Ticker Holdings Schemas:
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -17,35 +16,35 @@ from pydantic import BaseModel, Field, field_validator
 class InsiderPurchase(BaseModel):
     """Schema for insider purchase data."""
 
-    Insider_Purchases_Last_6m: Optional[str] = Field(
+    Insider_Purchases_Last_6m: str | None = Field(
         None, alias="Insider Purchases Last 6m", description="Insider purchases in last 6 months"
     )
-    Shares: Optional[float] = Field(None, alias="Shares", description="Number of shares purchased")
-    Trans: Optional[int] = Field(None, alias="Trans", description="Number of transactions")
+    Shares: float | None = Field(None, alias="Shares", description="Number of shares purchased")
+    Trans: int | None = Field(None, alias="Trans", description="Number of transactions")
 
 
 class InsiderRosterHolder(BaseModel):
     """Schema for insider roster holder data."""
 
-    Name: Optional[str] = Field(None, alias="Name", description="Holder's name")
-    Position: Optional[str] = Field(None, alias="Position", description="Position held")
-    URL: Optional[str] = Field(None, alias="URL", description="Profile URL")
-    Most_Recent_Transaction: Optional[str] = Field(
+    Name: str | None = Field(None, alias="Name", description="Holder's name")
+    Position: str | None = Field(None, alias="Position", description="Position held")
+    URL: str | None = Field(None, alias="URL", description="Profile URL")
+    Most_Recent_Transaction: str | None = Field(
         None, alias="Most Recent Transaction", description="Most recent transaction type"
     )
-    Latest_Transaction_Date: Optional[datetime] = Field(
+    Latest_Transaction_Date: datetime | None = Field(
         None, alias="Latest Transaction Date", description="Date of latest transaction"
     )
-    Shares_Owned_Directly: Optional[float] = Field(
+    Shares_Owned_Directly: float | None = Field(
         None, alias="Shares Owned Directly", description="Shares owned directly"
     )
-    Position_Direct_Date: Optional[datetime] = Field(
+    Position_Direct_Date: datetime | None = Field(
         None, alias="Position Direct Date", description="Direct position date"
     )
-    Shares_Owned_Indirectly: Optional[float] = Field(
+    Shares_Owned_Indirectly: float | None = Field(
         None, alias="Shares Owned Indirectly", description="Shares owned indirectly"
     )
-    Position_Indirect_Date: Optional[datetime] = Field(
+    Position_Indirect_Date: datetime | None = Field(
         None, alias="Position Indirect Date", description="Indirect position date"
     )
 
@@ -75,11 +74,11 @@ class InsiderRosterHolder(BaseModel):
 class StockInstitutionalHoldings(BaseModel):
     """Schema for institutional holdings data."""
 
-    Holder: Optional[str] = Field(None, alias="Holder", description="Name of the institutional holder")
-    Shares: Optional[int] = Field(None, alias="Shares", description="Number of shares held")
-    Date_Report: Optional[datetime] = Field(None, alias="Date Report", description="Date of the report")
-    Value: Optional[int] = Field(None, alias="Value", description="Value of the holdings")
-    Percent_Out: Optional[float] = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
+    Holder: str | None = Field(None, alias="Holder", description="Name of the institutional holder")
+    Shares: int | None = Field(None, alias="Shares", description="Number of shares held")
+    Date_Report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
+    Value: int | None = Field(None, alias="Value", description="Value of the holdings")
+    Percent_Out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
 
     @field_validator("Date_Report", mode="before")
     @classmethod
@@ -96,11 +95,11 @@ class StockInstitutionalHoldings(BaseModel):
 class StockMutualFundHoldings(BaseModel):
     """Schema for mutual fund holdings data."""
 
-    Holder: Optional[str] = Field(None, alias="Holder", description="Name of the mutual fund holder")
-    Shares: Optional[int] = Field(None, alias="Shares", description="Number of shares held")
-    Date_Report: Optional[datetime] = Field(None, alias="Date Report", description="Date of the report")
-    Value: Optional[int] = Field(None, alias="Value", description="Value of the holdings")
-    Percent_Out: Optional[float] = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
+    Holder: str | None = Field(None, alias="Holder", description="Name of the mutual fund holder")
+    Shares: int | None = Field(None, alias="Shares", description="Number of shares held")
+    Date_Report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
+    Value: int | None = Field(None, alias="Value", description="Value of the holdings")
+    Percent_Out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
 
     @field_validator("Date_Report", mode="before")
     @classmethod
@@ -117,7 +116,7 @@ class StockMutualFundHoldings(BaseModel):
 class StockMajorHolders(BaseModel):
     """Schema for major holders data."""
 
-    insidersPercentHeld: Optional[float] = Field(None, description="Percentage of shares held by insiders")
-    institutionsPercentHeld: Optional[float] = Field(None, description="Percentage of shares held by institutions")
-    institutionsFloatPercentHeld: Optional[float] = Field(None, description="Percentage of float held by institutions")
-    institutionsCount: Optional[int] = Field(None, description="Number of institutional holders")
+    insidersPercentHeld: float | None = Field(None, description="Percentage of shares held by insiders")
+    institutionsPercentHeld: float | None = Field(None, description="Percentage of shares held by institutions")
+    institutionsFloatPercentHeld: float | None = Field(None, description="Percentage of float held by institutions")
+    institutionsCount: int | None = Field(None, description="Number of institutional holders")

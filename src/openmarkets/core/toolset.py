@@ -2,8 +2,9 @@ import importlib
 import inspect
 import logging
 import pkgutil
+from collections.abc import Callable
 from types import ModuleType
-from typing import Any, Callable, List, Protocol
+from typing import Any, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class ToolRegistrar(Protocol):
     def tool(self) -> Callable[[Callable[..., Any]], None]: ...
 
 
-def discover_tool_modules(package_name: str) -> List[ModuleType]:
+def discover_tool_modules(package_name: str) -> list[ModuleType]:
     """
     Discover all importable modules in a package for tool registration.
 
@@ -46,7 +47,7 @@ def discover_tool_modules(package_name: str) -> List[ModuleType]:
     return modules
 
 
-def discover_tool_functions(module: ModuleType) -> List[Callable[..., Any]]:
+def discover_tool_functions(module: ModuleType) -> list[Callable[..., Any]]:
     """
     Discover all public callable tool functions in a module.
 

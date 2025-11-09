@@ -3,7 +3,6 @@
 import inspect
 import json
 import sys
-from typing import List
 
 import yfinance as yf
 from mcp.server import FastMCP
@@ -105,7 +104,7 @@ async def get_sector_performance() -> str:
         return json.dumps({"error": f"Failed to get sector performance: {str(e)}"})
 
 
-async def get_index_data(indices: List[str] = None) -> str:
+async def get_index_data(indices: list[str] = None) -> str:
     """Get major market indices data.
 
     Args:

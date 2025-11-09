@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -32,7 +31,7 @@ class JSONSerializer(json.JSONEncoder):
         return super().default(o)
 
 
-def safe_json_dumps(data: object, indent: Optional[int] = None) -> str:
+def safe_json_dumps(data: object, indent: int | None = None) -> str:
     """
     Serialize data to a JSON string, converting pandas/numpy objects to JSON serializable types.
 

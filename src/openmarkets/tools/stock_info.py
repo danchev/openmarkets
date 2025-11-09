@@ -2,7 +2,6 @@
 
 import json
 from datetime import datetime
-from typing import List
 
 import yfinance as yf
 
@@ -190,7 +189,7 @@ async def get_financial_summary(ticker: str) -> str:
     return json.dumps(summary, indent=2)
 
 
-async def get_multiple_tickers(tickers: List[str], period: str = "1d") -> str:
+async def get_multiple_tickers(tickers: list[str], period: str = "1d") -> str:
     """Fetches current price and volume data for multiple stock tickers over a specified period.
 
     Args:

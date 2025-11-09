@@ -1,12 +1,12 @@
-from typing import List, Optional, TypedDict
+from typing import TypedDict
 
 
 class SupportResistanceLevelsDict(TypedDict, total=False):
     current_price: float
-    resistance_levels: List[float]
-    support_levels: List[float]
-    nearest_resistance: Optional[float]
-    nearest_support: Optional[float]
+    resistance_levels: list[float]
+    support_levels: list[float]
+    nearest_resistance: float | None
+    nearest_support: float | None
 
 
 class VolatilityMetricsDict(TypedDict, total=False):
@@ -24,11 +24,11 @@ class TechnicalIndicatorsDict(TypedDict, total=False):
     current_price: float
     fifty_two_week_high: float
     fifty_two_week_low: float
-    price_position_in_52w_range_percent: Optional[float]
+    price_position_in_52w_range_percent: float | None
     average_volume: float
-    sma_20: Optional[float]
-    sma_50: Optional[float]
-    sma_200: Optional[float]
-    price_vs_sma_20: Optional[float]
-    price_vs_sma_50: Optional[float]
-    price_vs_sma_200: Optional[float]
+    sma_20: float | None
+    sma_50: float | None
+    sma_200: float | None
+    price_vs_sma_20: float | None
+    price_vs_sma_50: float | None
+    price_vs_sma_200: float | None

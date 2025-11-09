@@ -40,7 +40,6 @@ software_ticker.history()
 """
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -283,7 +282,7 @@ class IndustryOverview(BaseModel):
     market_cap: int = Field(..., alias="market_cap")
     message_board_id: str = Field(..., alias="message_board_id")
     description: str = Field(..., alias="description")
-    industries_count: Optional[int] = Field(None, alias="industries_count")
+    industries_count: int | None = Field(None, alias="industries_count")
     market_weight: float = Field(..., alias="market_weight")
     employee_count: int = Field(..., alias="employee_count")
 
@@ -295,7 +294,7 @@ class IndustryTopCompaniesEntry(BaseModel):
 
     symbol: str = Field(..., description="Company ticker symbol")
     name: str = Field(..., description="Company name")
-    rating: Optional[str] = Field(None, description="Company rating")
+    rating: str | None = Field(None, description="Company rating")
     market_weight: float = Field(..., description="Market weight", alias="market weight")
 
 
@@ -307,10 +306,10 @@ class IndustryResearchReportEntry(BaseModel):
     id: str = Field(..., description="Research report ID")
     head_html: str = Field(..., description="Research report headline", alias="headHtml")
     provider: str = Field(..., description="Research report provider")
-    target_price: Optional[float] = Field(None, description="Target price", alias="targetPrice")
-    target_price_status: Optional[str] = Field(None, description="Target price status", alias="targetPriceStatus")
-    investment_rating: Optional[str] = Field(None, description="Investment rating", alias="investmentRating")
-    report_date: Optional[str] = Field(None, description="Report date", alias="reportDate")
+    target_price: float | None = Field(None, description="Target price", alias="targetPrice")
+    target_price_status: str | None = Field(None, description="Target price status", alias="targetPriceStatus")
+    investment_rating: str | None = Field(None, description="Investment rating", alias="investmentRating")
+    report_date: str | None = Field(None, description="Report date", alias="reportDate")
     report_title: str = Field(..., description="Report title", alias="reportTitle")
     report_type: str = Field(..., description="Report type", alias="reportType")
 

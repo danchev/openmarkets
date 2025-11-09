@@ -3,7 +3,6 @@
 import inspect
 import json
 import sys
-from typing import List
 
 import yfinance as yf
 from mcp.server import FastMCP
@@ -141,7 +140,7 @@ async def get_top_cryptocurrencies(count: int = 10) -> str:
         return json.dumps({"error": f"Failed to get crypto data: {str(e)}"})
 
 
-async def get_crypto_fear_greed_proxy(crypto_symbols: List[str] = None) -> str:
+async def get_crypto_fear_greed_proxy(crypto_symbols: list[str] = None) -> str:
     """Get a proxy for crypto market sentiment using price movements.
 
     Args:

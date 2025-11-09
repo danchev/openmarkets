@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -8,118 +8,118 @@ from .company import CompanyOfficer
 class FundInfo(BaseModel):
     """Schema for fund information, typically from yfinance Ticker.info for funds/ETFs."""
 
-    phone: Optional[str] = None
-    longBusinessSummary: Optional[str] = None
-    companyOfficers: Optional[List[CompanyOfficer]] = None
-    executiveTeam: Optional[List[Any]] = None
-    maxAge: Optional[int] = None
-    priceHint: Optional[int] = None
-    previousClose: Optional[float] = None
-    open: Optional[float] = None
-    dayLow: Optional[float] = None
-    dayHigh: Optional[float] = None
-    regularMarketPreviousClose: Optional[float] = None
-    regularMarketOpen: Optional[float] = None
-    regularMarketDayLow: Optional[float] = None
-    regularMarketDayHigh: Optional[float] = None
-    trailingPE: Optional[float] = None
-    volume: Optional[int] = None
-    regularMarketVolume: Optional[int] = None
-    averageVolume: Optional[int] = None
-    averageVolume10days: Optional[int] = None
-    averageDailyVolume10Day: Optional[int] = None
-    bid: Optional[float] = None
-    ask: Optional[float] = None
-    bidSize: Optional[int] = None
-    askSize: Optional[int] = None
-    yield_: Optional[float] = Field(None, alias="yield", description="Fund yield.")
-    totalAssets: Optional[float] = None
-    fiftyTwoWeekLow: Optional[float] = None
-    fiftyTwoWeekHigh: Optional[float] = None
-    allTimeHigh: Optional[float] = None
-    allTimeLow: Optional[float] = None
-    fiftyDayAverage: Optional[float] = None
-    twoHundredDayAverage: Optional[float] = None
-    trailingAnnualDividendRate: Optional[float] = None
-    trailingAnnualDividendYield: Optional[float] = None
-    navPrice: Optional[float] = None
-    currency: Optional[str] = None
-    tradeable: Optional[bool] = None
-    category: Optional[str] = None
-    ytdReturn: Optional[float] = None
-    beta3Year: Optional[float] = None
-    fundFamily: Optional[str] = None
-    fundInceptionDate: Optional[int] = None
-    legalType: Optional[str] = None
-    threeYearAverageReturn: Optional[float] = None
-    fiveYearAverageReturn: Optional[float] = None
-    quoteType: Optional[str] = None
-    symbol: Optional[str] = None
-    language: Optional[str] = None
-    region: Optional[str] = None
-    typeDisp: Optional[str] = None
-    quoteSourceName: Optional[str] = None
-    triggerable: Optional[bool] = None
-    customPriceAlertConfidence: Optional[str] = None
-    longName: Optional[str] = None
-    shortName: Optional[str] = None
-    marketState: Optional[str] = None
-    fiftyTwoWeekLowChangePercent: Optional[float] = None
-    fiftyTwoWeekRange: Optional[str] = None
-    fiftyTwoWeekHighChange: Optional[float] = None
-    fiftyTwoWeekHighChangePercent: Optional[float] = None
-    fiftyTwoWeekChangePercent: Optional[float] = None
-    dividendYield: Optional[float] = None
-    trailingThreeMonthReturns: Optional[float] = None
-    trailingThreeMonthNavReturns: Optional[float] = None
-    netAssets: Optional[float] = None
-    epsTrailingTwelveMonths: Optional[float] = None
-    bookValue: Optional[float] = None
-    fiftyDayAverageChange: Optional[float] = None
-    fiftyDayAverageChangePercent: Optional[float] = None
-    twoHundredDayAverageChange: Optional[float] = None
-    twoHundredDayAverageChangePercent: Optional[float] = None
-    netExpenseRatio: Optional[float] = None
-    priceToBook: Optional[float] = None
-    sourceInterval: Optional[int] = None
-    exchangeDataDelayedBy: Optional[int] = None
-    cryptoTradeable: Optional[bool] = None
-    hasPrePostMarketData: Optional[bool] = None
-    firstTradeDateMilliseconds: Optional[int] = None
-    postMarketChangePercent: Optional[float] = None
-    postMarketPrice: Optional[float] = None
-    postMarketChange: Optional[float] = None
-    regularMarketChange: Optional[float] = None
-    regularMarketDayRange: Optional[str] = None
-    fullExchangeName: Optional[str] = None
-    financialCurrency: Optional[str] = None
-    averageDailyVolume3Month: Optional[int] = None
-    fiftyTwoWeekLowChange: Optional[float] = None
-    corporateActions: Optional[List[Any]] = None
-    postMarketTime: Optional[int] = None
-    regularMarketTime: Optional[int] = None
-    exchange: Optional[str] = None
-    messageBoardId: Optional[str] = None
-    exchangeTimezoneName: Optional[str] = None
-    exchangeTimezoneShortName: Optional[str] = None
-    gmtOffSetMilliseconds: Optional[int] = None
-    market: Optional[str] = None
-    esgPopulated: Optional[bool] = None
-    regularMarketChangePercent: Optional[float] = None
-    regularMarketPrice: Optional[float] = None
-    trailingPegRatio: Optional[float] = None
+    phone: str | None = None
+    longBusinessSummary: str | None = None
+    companyOfficers: list[CompanyOfficer] | None = None
+    executiveTeam: list[Any] | None = None
+    maxAge: int | None = None
+    priceHint: int | None = None
+    previousClose: float | None = None
+    open: float | None = None
+    dayLow: float | None = None
+    dayHigh: float | None = None
+    regularMarketPreviousClose: float | None = None
+    regularMarketOpen: float | None = None
+    regularMarketDayLow: float | None = None
+    regularMarketDayHigh: float | None = None
+    trailingPE: float | None = None
+    volume: int | None = None
+    regularMarketVolume: int | None = None
+    averageVolume: int | None = None
+    averageVolume10days: int | None = None
+    averageDailyVolume10Day: int | None = None
+    bid: float | None = None
+    ask: float | None = None
+    bidSize: int | None = None
+    askSize: int | None = None
+    yield_: float | None = Field(None, alias="yield", description="Fund yield.")
+    totalAssets: float | None = None
+    fiftyTwoWeekLow: float | None = None
+    fiftyTwoWeekHigh: float | None = None
+    allTimeHigh: float | None = None
+    allTimeLow: float | None = None
+    fiftyDayAverage: float | None = None
+    twoHundredDayAverage: float | None = None
+    trailingAnnualDividendRate: float | None = None
+    trailingAnnualDividendYield: float | None = None
+    navPrice: float | None = None
+    currency: str | None = None
+    tradeable: bool | None = None
+    category: str | None = None
+    ytdReturn: float | None = None
+    beta3Year: float | None = None
+    fundFamily: str | None = None
+    fundInceptionDate: int | None = None
+    legalType: str | None = None
+    threeYearAverageReturn: float | None = None
+    fiveYearAverageReturn: float | None = None
+    quoteType: str | None = None
+    symbol: str | None = None
+    language: str | None = None
+    region: str | None = None
+    typeDisp: str | None = None
+    quoteSourceName: str | None = None
+    triggerable: bool | None = None
+    customPriceAlertConfidence: str | None = None
+    longName: str | None = None
+    shortName: str | None = None
+    marketState: str | None = None
+    fiftyTwoWeekLowChangePercent: float | None = None
+    fiftyTwoWeekRange: str | None = None
+    fiftyTwoWeekHighChange: float | None = None
+    fiftyTwoWeekHighChangePercent: float | None = None
+    fiftyTwoWeekChangePercent: float | None = None
+    dividendYield: float | None = None
+    trailingThreeMonthReturns: float | None = None
+    trailingThreeMonthNavReturns: float | None = None
+    netAssets: float | None = None
+    epsTrailingTwelveMonths: float | None = None
+    bookValue: float | None = None
+    fiftyDayAverageChange: float | None = None
+    fiftyDayAverageChangePercent: float | None = None
+    twoHundredDayAverageChange: float | None = None
+    twoHundredDayAverageChangePercent: float | None = None
+    netExpenseRatio: float | None = None
+    priceToBook: float | None = None
+    sourceInterval: int | None = None
+    exchangeDataDelayedBy: int | None = None
+    cryptoTradeable: bool | None = None
+    hasPrePostMarketData: bool | None = None
+    firstTradeDateMilliseconds: int | None = None
+    postMarketChangePercent: float | None = None
+    postMarketPrice: float | None = None
+    postMarketChange: float | None = None
+    regularMarketChange: float | None = None
+    regularMarketDayRange: str | None = None
+    fullExchangeName: str | None = None
+    financialCurrency: str | None = None
+    averageDailyVolume3Month: int | None = None
+    fiftyTwoWeekLowChange: float | None = None
+    corporateActions: list[Any] | None = None
+    postMarketTime: int | None = None
+    regularMarketTime: int | None = None
+    exchange: str | None = None
+    messageBoardId: str | None = None
+    exchangeTimezoneName: str | None = None
+    exchangeTimezoneShortName: str | None = None
+    gmtOffSetMilliseconds: int | None = None
+    market: str | None = None
+    esgPopulated: bool | None = None
+    regularMarketChangePercent: float | None = None
+    regularMarketPrice: float | None = None
+    trailingPegRatio: float | None = None
 
 
 class FundEquityHolding(BaseModel):
     """Schema for individual equity holdings within a fund."""
 
-    fund: Optional[str] = Field(None, alias="index")
-    price_to_earnings: Optional[float] = Field(None, alias="Price/Earnings")
-    price_to_book: Optional[float] = Field(None, alias="Price/Book")
-    price_to_sales: Optional[float] = Field(None, alias="Price/Sales")
-    price_to_cashflow: Optional[float] = Field(None, alias="Price/Cashflow")
-    median_market_cap: Optional[float] = Field(None, alias="Median Market Cap")
-    three_year_earnings_growth: Optional[float] = Field(None, alias="3 Year Earnings Growth")
+    fund: str | None = Field(None, alias="index")
+    price_to_earnings: float | None = Field(None, alias="Price/Earnings")
+    price_to_book: float | None = Field(None, alias="Price/Book")
+    price_to_sales: float | None = Field(None, alias="Price/Sales")
+    price_to_cashflow: float | None = Field(None, alias="Price/Cashflow")
+    median_market_cap: float | None = Field(None, alias="Median Market Cap")
+    three_year_earnings_growth: float | None = Field(None, alias="3 Year Earnings Growth")
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -127,31 +127,31 @@ class FundEquityHolding(BaseModel):
 class FundHoldings(BaseModel):
     """Schema for fund holdings information."""
 
-    equity_holdings: List[FundEquityHolding]
-    total_equity_holdings: Optional[float] = None
-    total_fixed_income_holdings: Optional[float] = None
-    total_other_holdings: Optional[float] = None
-    total_holdings: Optional[float] = None
+    equity_holdings: list[FundEquityHolding]
+    total_equity_holdings: float | None = None
+    total_fixed_income_holdings: float | None = None
+    total_other_holdings: float | None = None
+    total_holdings: float | None = None
 
 
 class FundBondHolding(BaseModel):
     """Schema for individual bond holdings within a fund."""
 
-    fund: Optional[str] = Field(None, alias="index")
-    duration: Optional[float] = Field(None, alias="Duration")
-    maturity: Optional[float] = Field(None, alias="Maturity")
-    credit_quality: Optional[float] = Field(None, alias="Credit Quality")
+    fund: str | None = Field(None, alias="index")
+    duration: float | None = Field(None, alias="Duration")
+    maturity: float | None = Field(None, alias="Maturity")
+    credit_quality: float | None = Field(None, alias="Credit Quality")
 
 
 class FundAssetClassHolding(BaseModel):
     """Schema for individual asset class holdings within a fund."""
 
-    cashPosition: Optional[float] = Field(None, description="Cash Position")
-    stockPosition: Optional[float] = Field(None, description="Stock Position")
-    bondPosition: Optional[float] = Field(None, description="Bond Position")
-    preferredPosition: Optional[float] = Field(None, description="Preferred Position")
-    convertiblePosition: Optional[float] = Field(None, description="Convertible Position")
-    otherPosition: Optional[float] = Field(None, description="Other Position")
+    cashPosition: float | None = Field(None, description="Cash Position")
+    stockPosition: float | None = Field(None, description="Stock Position")
+    bondPosition: float | None = Field(None, description="Bond Position")
+    preferredPosition: float | None = Field(None, description="Preferred Position")
+    convertiblePosition: float | None = Field(None, description="Convertible Position")
+    otherPosition: float | None = Field(None, description="Other Position")
 
 
 class FundTopHolding(BaseModel):
@@ -167,33 +167,31 @@ class FundTopHolding(BaseModel):
 class FundSectorWeighting(BaseModel):
     """Schema for sector weightings within a fund."""
 
-    realestate: Optional[float] = Field(None, description="Real Estate")
-    customer_ciclical: Optional[float] = Field(None, description="Consumer Cyclical")
-    basic_materials: Optional[float] = Field(None, description="Basic Materials")
-    consumer_defensive: Optional[float] = Field(None, description="Consumer Defensive")
-    utilities: Optional[float] = Field(None, description="Utilities")
-    energy: Optional[float] = Field(None, description="Energy")
-    communication_services: Optional[float] = Field(None, description="Communication Services")
-    financial_services: Optional[float] = Field(None, description="Financial Services")
-    industrials: Optional[float] = Field(None, description="Industrials")
-    technology: Optional[float] = Field(None, description="Technology")
-    healthcare: Optional[float] = Field(None, description="Healthcare")
+    realestate: float | None = Field(None, description="Real Estate")
+    customer_ciclical: float | None = Field(None, description="Consumer Cyclical")
+    basic_materials: float | None = Field(None, description="Basic Materials")
+    consumer_defensive: float | None = Field(None, description="Consumer Defensive")
+    utilities: float | None = Field(None, description="Utilities")
+    energy: float | None = Field(None, description="Energy")
+    communication_services: float | None = Field(None, description="Communication Services")
+    financial_services: float | None = Field(None, description="Financial Services")
+    industrials: float | None = Field(None, description="Industrials")
+    technology: float | None = Field(None, description="Technology")
+    healthcare: float | None = Field(None, description="Healthcare")
 
 
 class FundOperations(BaseModel):
-    index: Optional[str] = Field(None, description="Index or fund identifier.")
-    annual_report_expense_ratio: Optional[float] = Field(
+    index: str | None = Field(None, description="Index or fund identifier.")
+    annual_report_expense_ratio: float | None = Field(
         None, description="Annual report expense ratio of the fund.", alias="Annual Report Expense Ratio"
     )
-    annual_holdings_turnover: Optional[float] = Field(
+    annual_holdings_turnover: float | None = Field(
         None, description="Annual holdings turnover of the fund.", alias="Annual Holdings Turnover"
     )
-    total_net_assets: Optional[float] = Field(
-        None, description="Total net assets of the fund.", alias="Total Net Assets"
-    )
+    total_net_assets: float | None = Field(None, description="Total net assets of the fund.", alias="Total Net Assets")
 
 
 class FundOverview(BaseModel):
-    categoryName: Optional[str] = Field(None, description="Category name of the fund.")
-    family: Optional[str] = Field(None, description="Fund family.")
-    legalType: Optional[str] = Field(None, description="Legal type of the fund.")
+    categoryName: str | None = Field(None, description="Category name of the fund.")
+    family: str | None = Field(None, description="Fund family.")
+    legalType: str | None = Field(None, description="Legal type of the fund.")

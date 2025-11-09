@@ -3,7 +3,6 @@
 import inspect
 import json
 import sys
-from typing import List, Optional
 
 import yfinance as yf
 from mcp.server import FastMCP
@@ -11,7 +10,7 @@ from pandas import MultiIndex  # Explicit import
 
 
 async def download_bulk_data(
-    tickers: List[str],
+    tickers: list[str],
     period: str = "1mo",
     interval: str = "1d",
     group_by: str = "ticker",
@@ -201,7 +200,7 @@ async def get_market_hours(ticker: str) -> str:
         return json.dumps({"error": f"Failed to get market hours: {str(e)}"})
 
 
-async def validate_tickers(tickers: List[str]) -> str:
+async def validate_tickers(tickers: list[str]) -> str:
     """Validate a list of ticker symbols.
 
     Args:
@@ -252,7 +251,7 @@ async def validate_tickers(tickers: List[str]) -> str:
         return json.dumps({"error": f"Failed to validate tickers: {str(e)}"})
 
 
-async def get_currency_data(base_currency: str = "USD", target_currencies: Optional[List[str]] = None) -> str:
+async def get_currency_data(base_currency: str = "USD", target_currencies: list[str] | None = None) -> str:
     """Get currency exchange rate data.
 
     Args:

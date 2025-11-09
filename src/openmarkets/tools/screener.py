@@ -3,20 +3,19 @@
 import inspect
 import json
 import sys
-from typing import List, Optional
 
 import yfinance as yf
 from mcp.server import FastMCP
 
 
 async def screen_stocks_by_criteria(
-    min_market_cap: Optional[float] = None,
-    max_market_cap: Optional[float] = None,
-    min_pe_ratio: Optional[float] = None,
-    max_pe_ratio: Optional[float] = None,
-    min_dividend_yield: Optional[float] = None,
-    sector: Optional[str] = None,
-    tickers: Optional[List[str]] = None,
+    min_market_cap: float | None = None,
+    max_market_cap: float | None = None,
+    min_pe_ratio: float | None = None,
+    max_pe_ratio: float | None = None,
+    min_dividend_yield: float | None = None,
+    sector: str | None = None,
+    tickers: list[str] | None = None,
 ) -> str:
     """Screen stocks based on financial criteria.
 
@@ -281,7 +280,7 @@ async def get_similar_stocks(ticker: str, count: int = 5) -> str:
         return json.dumps({"error": f"Failed to find similar stocks: {str(e)}"})
 
 
-async def get_top_performers(period: str = "1mo", sector: Optional[str] = None, count: int = 10) -> str:
+async def get_top_performers(period: str = "1mo", sector: str | None = None, count: int = 10) -> str:
     """Get top performing stocks over a specified period.
 
     Args:

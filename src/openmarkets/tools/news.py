@@ -3,7 +3,6 @@
 import inspect
 import json
 import sys
-from typing import Optional
 
 import yfinance as yf
 from mcp.server import FastMCP
@@ -74,7 +73,7 @@ async def get_fast_info(ticker: str) -> str:
         return json.dumps({"error": f"Failed to get fast info: {str(e)}"})
 
 
-async def get_shares_outstanding(ticker: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> str:
+async def get_shares_outstanding(ticker: str, start_date: str | None = None, end_date: str | None = None) -> str:
     """Get shares outstanding data over time.
 
     Args:

@@ -4,7 +4,6 @@
 import inspect
 import sys
 from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 import yfinance as yf
@@ -14,8 +13,8 @@ from mcp.server import FastMCP
 async def get_dividends_summary(
     symbol: str,
     period: str = "1y",
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict:
     """Get dividend history for a stock.
 

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator
@@ -8,92 +7,92 @@ from pydantic import BaseModel, Field, field_validator
 class OptionUnderlying(BaseModel):
     """Schema for the underlying asset of an option chain."""
 
-    language: Optional[str] = None
-    region: Optional[str] = None
-    quoteType: Optional[str] = None
-    typeDisp: Optional[str] = None
-    quoteSourceName: Optional[str] = None
-    triggerable: Optional[bool] = None
-    customPriceAlertConfidence: Optional[str] = None
-    shortName: Optional[str] = None
-    longName: Optional[str] = None
-    marketState: Optional[str] = None
-    postMarketTime: Optional[int] = None
-    regularMarketTime: Optional[int] = None
-    exchange: Optional[str] = None
-    messageBoardId: Optional[str] = None
-    exchangeTimezoneName: Optional[str] = None
-    exchangeTimezoneShortName: Optional[str] = None
-    gmtOffSetMilliseconds: Optional[int] = None
-    market: Optional[str] = None
-    currency: Optional[str] = None
-    corporateActions: Optional[list] = None
-    epsCurrentYear: Optional[float] = None
-    priceEpsCurrentYear: Optional[float] = None
-    sharesOutstanding: Optional[int] = None
-    bookValue: Optional[float] = None
-    fiftyDayAverage: Optional[float] = None
-    fiftyDayAverageChange: Optional[float] = None
-    fiftyDayAverageChangePercent: Optional[float] = None
-    twoHundredDayAverage: Optional[float] = None
-    twoHundredDayAverageChange: Optional[float] = None
-    twoHundredDayAverageChangePercent: Optional[float] = None
-    marketCap: Optional[int] = None
-    forwardPE: Optional[float] = None
-    priceToBook: Optional[float] = None
-    sourceInterval: Optional[int] = None
-    exchangeDataDelayedBy: Optional[int] = None
-    averageAnalystRating: Optional[str] = None
-    tradeable: Optional[bool] = None
-    cryptoTradeable: Optional[bool] = None
-    esgPopulated: Optional[bool] = None
-    regularMarketChangePercent: Optional[float] = None
-    regularMarketPrice: Optional[float] = None
-    hasPrePostMarketData: Optional[bool] = None
-    firstTradeDateMilliseconds: Optional[int] = None
-    priceHint: Optional[int] = None
-    postMarketChangePercent: Optional[float] = None
-    postMarketPrice: Optional[float] = None
-    postMarketChange: Optional[float] = None
-    regularMarketChange: Optional[float] = None
-    regularMarketDayHigh: Optional[float] = None
-    regularMarketDayRange: Optional[str] = None
-    regularMarketDayLow: Optional[float] = None
-    regularMarketVolume: Optional[int] = None
-    regularMarketPreviousClose: Optional[float] = None
-    bid: Optional[float] = None
-    ask: Optional[float] = None
-    bidSize: Optional[int] = None
-    askSize: Optional[int] = None
-    fullExchangeName: Optional[str] = None
-    financialCurrency: Optional[str] = None
-    regularMarketOpen: Optional[float] = None
-    averageDailyVolume3Month: Optional[int] = None
-    averageDailyVolume10Day: Optional[int] = None
-    fiftyTwoWeekLowChange: Optional[float] = None
-    fiftyTwoWeekLowChangePercent: Optional[float] = None
-    fiftyTwoWeekRange: Optional[str] = None
-    fiftyTwoWeekHighChange: Optional[float] = None
-    fiftyTwoWeekHighChangePercent: Optional[float] = None
-    fiftyTwoWeekLow: Optional[float] = None
-    fiftyTwoWeekHigh: Optional[float] = None
-    fiftyTwoWeekChangePercent: Optional[float] = None
-    dividendDate: Optional[int] = None
-    earningsTimestamp: Optional[int] = None
-    earningsTimestampStart: Optional[int] = None
-    earningsTimestampEnd: Optional[int] = None
-    earningsCallTimestampStart: Optional[int] = None
-    earningsCallTimestampEnd: Optional[int] = None
-    isEarningsDateEstimate: Optional[bool] = None
-    trailingAnnualDividendRate: Optional[float] = None
-    trailingPE: Optional[float] = None
-    dividendRate: Optional[float] = None
-    trailingAnnualDividendYield: Optional[float] = None
-    dividendYield: Optional[float] = None
-    epsTrailingTwelveMonths: Optional[float] = None
-    epsForward: Optional[float] = None
-    displayName: Optional[str] = None
-    symbol: Optional[str] = None
+    language: str | None = None
+    region: str | None = None
+    quoteType: str | None = None
+    typeDisp: str | None = None
+    quoteSourceName: str | None = None
+    triggerable: bool | None = None
+    customPriceAlertConfidence: str | None = None
+    shortName: str | None = None
+    longName: str | None = None
+    marketState: str | None = None
+    postMarketTime: int | None = None
+    regularMarketTime: int | None = None
+    exchange: str | None = None
+    messageBoardId: str | None = None
+    exchangeTimezoneName: str | None = None
+    exchangeTimezoneShortName: str | None = None
+    gmtOffSetMilliseconds: int | None = None
+    market: str | None = None
+    currency: str | None = None
+    corporateActions: list | None = None
+    epsCurrentYear: float | None = None
+    priceEpsCurrentYear: float | None = None
+    sharesOutstanding: int | None = None
+    bookValue: float | None = None
+    fiftyDayAverage: float | None = None
+    fiftyDayAverageChange: float | None = None
+    fiftyDayAverageChangePercent: float | None = None
+    twoHundredDayAverage: float | None = None
+    twoHundredDayAverageChange: float | None = None
+    twoHundredDayAverageChangePercent: float | None = None
+    marketCap: int | None = None
+    forwardPE: float | None = None
+    priceToBook: float | None = None
+    sourceInterval: int | None = None
+    exchangeDataDelayedBy: int | None = None
+    averageAnalystRating: str | None = None
+    tradeable: bool | None = None
+    cryptoTradeable: bool | None = None
+    esgPopulated: bool | None = None
+    regularMarketChangePercent: float | None = None
+    regularMarketPrice: float | None = None
+    hasPrePostMarketData: bool | None = None
+    firstTradeDateMilliseconds: int | None = None
+    priceHint: int | None = None
+    postMarketChangePercent: float | None = None
+    postMarketPrice: float | None = None
+    postMarketChange: float | None = None
+    regularMarketChange: float | None = None
+    regularMarketDayHigh: float | None = None
+    regularMarketDayRange: str | None = None
+    regularMarketDayLow: float | None = None
+    regularMarketVolume: int | None = None
+    regularMarketPreviousClose: float | None = None
+    bid: float | None = None
+    ask: float | None = None
+    bidSize: int | None = None
+    askSize: int | None = None
+    fullExchangeName: str | None = None
+    financialCurrency: str | None = None
+    regularMarketOpen: float | None = None
+    averageDailyVolume3Month: int | None = None
+    averageDailyVolume10Day: int | None = None
+    fiftyTwoWeekLowChange: float | None = None
+    fiftyTwoWeekLowChangePercent: float | None = None
+    fiftyTwoWeekRange: str | None = None
+    fiftyTwoWeekHighChange: float | None = None
+    fiftyTwoWeekHighChangePercent: float | None = None
+    fiftyTwoWeekLow: float | None = None
+    fiftyTwoWeekHigh: float | None = None
+    fiftyTwoWeekChangePercent: float | None = None
+    dividendDate: int | None = None
+    earningsTimestamp: int | None = None
+    earningsTimestampStart: int | None = None
+    earningsTimestampEnd: int | None = None
+    earningsCallTimestampStart: int | None = None
+    earningsCallTimestampEnd: int | None = None
+    isEarningsDateEstimate: bool | None = None
+    trailingAnnualDividendRate: float | None = None
+    trailingPE: float | None = None
+    dividendRate: float | None = None
+    trailingAnnualDividendYield: float | None = None
+    dividendYield: float | None = None
+    epsTrailingTwelveMonths: float | None = None
+    epsForward: float | None = None
+    displayName: str | None = None
+    symbol: str | None = None
 
 
 class OptionExpirationDate(BaseModel):
@@ -113,7 +112,7 @@ class CallOption(BaseModel):
     ask: float = Field(..., description="Ask price.")
     change: float = Field(..., description="Change in price.")
     percentChange: float = Field(..., description="Percent change in price.")
-    volume: Optional[float] = Field(None, description="Trading volume.")
+    volume: float | None = Field(None, description="Trading volume.")
     openInterest: int = Field(..., description="Open interest.")
     impliedVolatility: float = Field(..., description="Implied volatility.")
     inTheMoney: bool = Field(..., description="Is the option in the money.")
@@ -139,7 +138,7 @@ class PutOption(BaseModel):
     ask: float = Field(..., description="Ask price.")
     change: float = Field(..., description="Change in price.")
     percentChange: float = Field(..., description="Percent change in price.")
-    volume: Optional[float] = Field(None, description="Trading volume.")
+    volume: float | None = Field(None, description="Trading volume.")
     openInterest: int = Field(..., description="Open interest.")
     impliedVolatility: float = Field(..., description="Implied volatility.")
     inTheMoney: bool = Field(..., description="Is the option in the money.")
@@ -157,6 +156,6 @@ class PutOption(BaseModel):
 class OptionContractChain(BaseModel):
     """Schema for the options chain data of a ticker."""
 
-    calls: Optional[list[CallOption]] = Field(None, description="Call option contracts.")
-    puts: Optional[list[PutOption]] = Field(None, description="Put option contracts.")
-    underlying: Optional[OptionUnderlying] = Field(None, description="Underlying asset information.")
+    calls: list[CallOption] | None = Field(None, description="Call option contracts.")
+    puts: list[PutOption] | None = Field(None, description="Put option contracts.")
+    underlying: OptionUnderlying | None = Field(None, description="Underlying asset information.")

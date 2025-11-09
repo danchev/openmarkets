@@ -3,7 +3,6 @@
 import inspect
 import json
 import sys
-from typing import Optional
 
 import yfinance as yf
 from mcp.server import FastMCP
@@ -28,7 +27,7 @@ async def get_options_expiration_dates(ticker: str) -> str:
         return json.dumps({"error": f"No options data available: {str(e)}"})
 
 
-async def get_option_chain(ticker: str, expiration_date: Optional[str] = None) -> str:
+async def get_option_chain(ticker: str, expiration_date: str | None = None) -> str:
     """Get options chain data for a specific expiration date.
 
     Args:
@@ -59,7 +58,7 @@ async def get_option_chain(ticker: str, expiration_date: Optional[str] = None) -
         return json.dumps({"error": f"Failed to get options data: {str(e)}"})
 
 
-async def get_options_volume_analysis(ticker: str, expiration_date: Optional[str] = None) -> str:
+async def get_options_volume_analysis(ticker: str, expiration_date: str | None = None) -> str:
     """Get options volume and open interest analysis.
 
     Args:
@@ -103,7 +102,7 @@ async def get_options_volume_analysis(ticker: str, expiration_date: Optional[str
 
 async def get_options_by_moneyness(
     ticker: str,
-    expiration_date: Optional[str] = None,
+    expiration_date: str | None = None,
     moneyness_range: float = 0.1,
 ) -> str:
     """Get options filtered by moneyness (proximity to current stock price).
@@ -152,7 +151,7 @@ async def get_options_by_moneyness(
         return json.dumps({"error": f"Failed to filter options data: {str(e)}"})
 
 
-async def get_options_skew(ticker: str, expiration_date: Optional[str] = None) -> str:
+async def get_options_skew(ticker: str, expiration_date: str | None = None) -> str:
     """Analyze and return the volatility skew for call and put options.
 
     This function retrieves the implied volatility for each strike price of both call and put options

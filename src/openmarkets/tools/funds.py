@@ -4,7 +4,6 @@ import inspect
 import json
 import sys
 from datetime import datetime
-from typing import List
 
 import yfinance as yf
 from mcp.server import FastMCP
@@ -137,7 +136,7 @@ async def get_fund_performance(ticker: str) -> str:
         return json.dumps({"error": f"Failed to get fund performance: {str(e)}"})
 
 
-async def compare_funds(tickers: List[str]) -> str:
+async def compare_funds(tickers: list[str]) -> str:
     """Compare multiple funds side by side.
 
     Args:
