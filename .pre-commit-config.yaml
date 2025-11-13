@@ -9,7 +9,7 @@ default_install_hook_types:
 
 repos:
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.9.7
+    rev: 0.9.9
     hooks:
       - id: uv-sync
         args: ["--all-packages"]
@@ -23,7 +23,7 @@ repos:
   #  Install the configuration into the git hook through pre-commit:
   #  `pre-commit install --hook-type commit-msg`
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.9.1
+    rev: v4.10.0
     hooks:
       - id: commitizen
       - id: commitizen-branch
