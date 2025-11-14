@@ -17,7 +17,12 @@ Set FontSize 18
 Set Width 1300
 Set Height 650
 
-Type@100ms "crush run 'Generate a comprehensive technical market report for Alphabet Inc. (ticker: GOOG)' | glow"
+Hide
+Type 'openmarkets() { crush run -q "$@" | glow; } && clear'
+Enter
+Show
+
+Type@100ms "openmarkets 'Generate a comprehensive technical market report for Alphabet Inc. (ticker: GOOG)'"
 
 Sleep 500ms
 
