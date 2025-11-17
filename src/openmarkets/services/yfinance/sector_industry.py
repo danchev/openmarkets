@@ -1,3 +1,5 @@
+from typing import Annotated
+
 import yfinance as yf
 
 from openmarkets.schemas.sector_industry import (
@@ -14,7 +16,7 @@ from openmarkets.schemas.sector_industry import (
 )
 
 
-def fetch_sector_overview(sector: SectorEnum) -> SectorOverview:
+def fetch_sector_overview(sector: Annotated[str, SectorEnum.__members__]) -> SectorOverview:
     """Fetches overview information for a given sector.
 
     Args:
@@ -27,7 +29,7 @@ def fetch_sector_overview(sector: SectorEnum) -> SectorOverview:
         ValueError: If the sector is not recognized.
     """
     print(f"Fetching overview for sector: {sector}")
-    data = yf.Sector(sector.value).overview
+    data = yf.Sector(sector).overview
     return SectorOverview(**data)
 
 
@@ -47,10 +49,10 @@ def fetch_sector_overview_for_ticker(ticker: str) -> SectorOverview:
     sector = stock.info.get("sectorKey")
     if sector is None:
         raise ValueError(f"Sector not found for ticker: {ticker}")
-    return fetch_sector_overview(SectorEnum[sector.upper()])
+    return fetch_sector_overview(sector)
 
 
-def fetch_sector_top_companies(sector: SectorEnum) -> list[SectorTopCompaniesEntry]:
+def fetch_sector_top_companies(sector: Annotated[str, SectorEnum.__members__]) -> list[SectorTopCompaniesEntry]:
     """Fetches top companies for a given sector.
 
     Args:
@@ -59,7 +61,7 @@ def fetch_sector_top_companies(sector: SectorEnum) -> list[SectorTopCompaniesEnt
     Returns:
         List of SectorTopCompaniesEntry.
     """
-    data = yf.Sector(sector.value).top_companies
+    data = yf.Sector(sector).top_companies
     if data is None:
         return []
     return [SectorTopCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]
@@ -81,7 +83,7 @@ def fetch_sector_top_companies_for_ticker(ticker: str) -> list[SectorTopCompanie
     return fetch_sector_top_companies(SectorEnum[sector.upper()])
 
 
-def fetch_sector_top_etfs(sector: SectorEnum) -> list[SectorTopETFsEntry]:
+def fetch_sector_top_etfs(sector: Annotated[str, SectorEnum.__members__]) -> list[SectorTopETFsEntry]:
     """Fetches top ETFs for a given sector.
 
     Args:
@@ -90,11 +92,11 @@ def fetch_sector_top_etfs(sector: SectorEnum) -> list[SectorTopETFsEntry]:
     Returns:
         List of SectorTopETFsEntry.
     """
-    data = yf.Sector(sector.value).top_etfs
+    data = yf.Sector(sector).top_etfs
     return [SectorTopETFsEntry(symbol=k, name=v) for k, v in data.items()]
 
 
-def fetch_sector_top_mutual_funds(sector: SectorEnum) -> list[SectorTopMutualFundsEntry]:
+def fetch_sector_top_mutual_funds(sector: Annotated[str, SectorEnum.__members__]) -> list[SectorTopMutualFundsEntry]:
     """Fetches top mutual funds for a given sector.
 
     Args:
@@ -103,11 +105,11 @@ def fetch_sector_top_mutual_funds(sector: SectorEnum) -> list[SectorTopMutualFun
     Returns:
         List of SectorTopMutualFundsEntry.
     """
-    data = yf.Sector(sector.value).top_mutual_funds
+    data = yf.Sector(sector).top_mutual_funds
     return [SectorTopMutualFundsEntry(symbol=k, name=v) for k, v in data.items()]
 
 
-def fetch_sector_industries(sector: SectorEnum) -> list[str]:
+def fetch_sector_industries(sector: Annotated[str, SectorEnum.__members__]) -> list[str]:
     """Returns the list of industries for a given sector.
 
     Args:
@@ -116,10 +118,10 @@ def fetch_sector_industries(sector: SectorEnum) -> list[str]:
     Returns:
         List of industry names.
     """
-    return SECTOR_INDUSTRY_MAPPING.get(sector.value, [])
+    return SECTOR_INDUSTRY_MAPPING.get(sector, [])
 
 
-def fetch_sector_research_reports(sector: SectorEnum) -> list[IndustryResearchReportEntry]:
+def fetch_sector_research_reports(sector: Annotated[str, SectorEnum.__members__]) -> list[IndustryResearchReportEntry]:
     """Fetches research reports for a given sector.
 
     Args:
@@ -131,13 +133,13 @@ def fetch_sector_research_reports(sector: SectorEnum) -> list[IndustryResearchRe
     Raises:
         ValueError: If the sector is not recognized or no reports are found.
     """
-    data = yf.Sector(sector.value).research_reports
+    data = yf.Sector(sector).research_reports
     if not data:
         return []
     return [IndustryResearchReportEntry(**entry) for entry in data]
 
 
-def fetch_all_industries(sector: SectorEnum | None = None) -> list[str]:
+def fetch_all_industries(sector: Annotated[str, SectorEnum.__members__] | None = None) -> list[str]:
     """Returns a list of industries.
 
     If sector is provided, returns industries for that sector only.
@@ -150,7 +152,7 @@ def fetch_all_industries(sector: SectorEnum | None = None) -> list[str]:
         List of industry names.
     """
     if sector is not None:
-        return sorted(SECTOR_INDUSTRY_MAPPING.get(sector.value, []))
+        return sorted(SECTOR_INDUSTRY_MAPPING.get(sector, []))
     return sorted({industry for industries in SECTOR_INDUSTRY_MAPPING.values() for industry in industries})
 
 
