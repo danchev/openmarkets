@@ -39,7 +39,7 @@ def fetch_crypto_history(ticker: str, period: str = "1y", interval: str = "1d") 
     return [CryptoHistory(**row.to_dict()) for _, row in df.iterrows()]
 
 
-def fetch_top_cryptocurrencies(count: int = 10) -> list[dict]:
+def fetch_top_cryptocurrencies(count: int = 10):
     """Get data for top cryptocurrencies by market cap.
 
     Args:
@@ -52,64 +52,33 @@ def fetch_top_cryptocurrencies(count: int = 10) -> list[dict]:
     top_cryptos = [
         "BTC-USD",
         "ETH-USD",
-        "BNB-USD",
+        "USDT-USD",
         "XRP-USD",
+        "BNB-USD",
         "SOL-USD",
-        "ADA-USD",
-        "AVAX-USD",
-        "DOGE-USD",
+        "USDC-USD",
         "TRX-USD",
-        "DOT-USD",
-        "MATIC-USD",
-        "LTC-USD",
-        "SHIB-USD",
+        "STETH-USD",
+        "WTRX-USD",
+        "DOGE-USD",
+        "ADA-USD",
+        "HYPE32196-USD",
+        "WSTETH-USD",
+        "WBTC-USD",
+        "WETH-USD",
         "BCH-USD",
-        "UNI-USD",
-        "ATOM-USD",
+        "ZEC-USD",
         "LINK-USD",
-        "ETC-USD",
+        "USDS33039-USD",
+        "AETHWETH-USD",
+        "LEO-USD",
         "XLM-USD",
-        "ALGO-USD",
+        "WEETH-USD",
     ]
 
     selected_cryptos = top_cryptos[: min(count, 20)]
-    crypto_data = []
 
-    try:
-        for crypto in selected_cryptos:
-            ticker = yf.Ticker(crypto)
-            info = ticker.info
-            hist = ticker.history(period="2d")
-
-            daily_change = None
-            daily_change_percent = None
-
-            if len(hist) >= 2:
-                current_price = hist.iloc[-1]["Close"]
-                previous_close = hist.iloc[-2]["Close"]
-                daily_change = current_price - previous_close
-                daily_change_percent = (daily_change / previous_close) * 100
-
-            # Ensure data types are JSON serializable
-            market_cap_val = info.get("marketCap")
-            volume_val = info.get("volume")
-
-            crypto_data.append(
-                {
-                    "symbol": crypto,
-                    "name": info.get("shortName", ""),
-                    "currentPrice": float(current_price) if current_price is not None else None,
-                    "marketCap": int(market_cap_val) if market_cap_val is not None else None,
-                    "volume": int(volume_val) if volume_val is not None else None,
-                    "dailyChange": float(daily_change) if daily_change is not None else None,
-                    "dailyChangePercent": float(daily_change_percent) if daily_change_percent is not None else None,
-                }
-            )
-
-        return crypto_data
-
-    except Exception as e:
-        raise RuntimeError(f"Failed to fetch top cryptocurrencies: {str(e)}") from e
+    return [fetch_crypto_info(crypto) for crypto in selected_cryptos]
 
 
 def fetch_crypto_fear_greed_proxy(tickers: list[str] | None = None) -> str:
