@@ -43,10 +43,6 @@ class Settings(BaseSettings):
         "*",
         description="Allowed origins for CORS (Cross-Origin Resource Sharing).",
     )
-    toolset: str = Field(
-        "openmarkets.tools",
-        description="The Python module path for the toolset to use.",
-    )
 
     model_config = SettingsConfigDict(env_file=".env")
 

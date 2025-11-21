@@ -1,0 +1,131 @@
+from abc import ABC, abstractmethod
+
+import yfinance as yf
+
+from openmarkets.schemas.funds import (
+    FundAssetClassHolding,
+    FundBondHolding,
+    FundEquityHolding,
+    FundInfo,
+    FundOperations,
+    FundOverview,
+    FundSectorWeighting,
+    FundTopHolding,
+)
+
+
+class IFundsRepository(ABC):
+    @abstractmethod
+    def fetch_fund_info(self, ticker: str) -> FundInfo:
+        pass
+
+    @abstractmethod
+    def fetch_fund_sector_weighting(self, ticker: str) -> FundSectorWeighting | None:
+        pass
+
+    @abstractmethod
+    def fetch_fund_operations(self, ticker: str) -> FundOperations | None:
+        pass
+
+    @abstractmethod
+    def fetch_fund_overview(self, ticker: str) -> FundOverview | None:
+        pass
+
+    @abstractmethod
+    def fetch_fund_top_holdings(self, ticker: str) -> list[FundTopHolding]:
+        pass
+
+    @abstractmethod
+    def fetch_fund_bond_holdings(self, ticker: str) -> list[FundBondHolding]:
+        pass
+
+    @abstractmethod
+    def fetch_fund_equity_holdings(self, ticker: str) -> list[FundEquityHolding]:
+        pass
+
+    @abstractmethod
+    def fetch_fund_asset_class_holdings(self, ticker: str) -> FundAssetClassHolding | None:
+        pass
+
+
+class YFinanceFundsRepository(IFundsRepository):
+    def fetch_fund_info(self, ticker: str) -> FundInfo:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.info
+        return FundInfo(**fund_info)
+
+    def fetch_fund_sector_weighting(self, ticker: str) -> FundSectorWeighting | None:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "sector_weightings"):
+            return None
+        return FundSectorWeighting(**fund_info.sector_weightings)
+
+    def fetch_fund_operations(self, ticker: str) -> FundOperations | None:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "fund_operations"):
+            return None
+        import numpy as np
+        import pandas as pd
+
+        ops = fund_info.fund_operations
+        if hasattr(ops, "to_dict"):
+            ops = ops.to_dict()
+
+        # Ensure keys are strings and values are native types
+        def to_native(val):
+            if isinstance(val, pd.Series):
+                # If Series has only one value, extract it
+                if len(val) == 1:
+                    return to_native(val.iloc[0])
+                return val.to_list()
+            if hasattr(val, "item"):
+                try:
+                    return val.item()
+                except Exception:
+                    pass
+            if isinstance(val, (np.generic, np.ndarray)):
+                return val.tolist()
+            return val
+
+        ops = {str(k): to_native(v) for k, v in ops.items()}
+        return FundOperations(**ops)
+
+    def fetch_fund_overview(self, ticker: str) -> FundOverview | None:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "fund_overview"):
+            return None
+        return FundOverview(**fund_info.fund_overview)
+
+    def fetch_fund_top_holdings(self, ticker: str) -> list[FundTopHolding]:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "top_holdings"):
+            return []
+        df = fund_info.top_holdings
+        return [FundTopHolding(**row.to_dict()) for _, row in df.reset_index().iterrows()]
+
+    def fetch_fund_bond_holdings(self, ticker: str) -> list[FundBondHolding]:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "bond_holdings"):
+            return []
+        df = fund_info.bond_holdings
+        return [FundBondHolding(**row.to_dict()) for _, row in df.transpose().reset_index().iterrows()]
+
+    def fetch_fund_equity_holdings(self, ticker: str) -> list[FundEquityHolding]:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "equity_holdings"):
+            return []
+        df = fund_info.equity_holdings
+        return [FundEquityHolding(**row.to_dict()) for _, row in df.transpose().reset_index().iterrows()]
+
+    def fetch_fund_asset_class_holdings(self, ticker: str) -> FundAssetClassHolding | None:
+        fund_ticker = yf.Ticker(ticker)
+        fund_info = fund_ticker.get_funds_data()
+        if not fund_info or not hasattr(fund_info, "asset_classes"):
+            return None
+        return FundAssetClassHolding(**fund_info.asset_classes)

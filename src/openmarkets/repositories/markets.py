@@ -1,0 +1,32 @@
+from abc import ABC, abstractmethod
+
+import yfinance as yf
+
+from openmarkets.schemas.markets import MarketStatus, MarketSummary, SummaryEntry
+
+
+class IMarketsRepository(ABC):
+    @abstractmethod
+    def fetch_market_summary(self, market: str) -> MarketSummary:
+        pass
+
+    @abstractmethod
+    def fetch_market_status(self, market: str) -> MarketStatus:
+        pass
+
+
+class YFinanceMarketsRepository(IMarketsRepository):
+    """
+    Repository for accessing market data from external sources (e.g., yfinance).
+    Infrastructure layer: encapsulates yfinance dependency.
+    """
+
+    def fetch_market_summary(self, market: str) -> MarketSummary:
+        """Fetch raw market summary data from yfinance."""
+        summary = yf.Market(market).summary
+        return MarketSummary(summary={k: SummaryEntry(**v) for k, v in summary.items()})
+
+    def fetch_market_status(self, market: str) -> MarketStatus:
+        """Fetch raw market status data from yfinance."""
+        status = yf.Market(market).status
+        return MarketStatus(**status)

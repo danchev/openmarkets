@@ -17,7 +17,7 @@ from openmarkets.core.fastmcp import FastMCP, create_mcp
 
 logger = logging.getLogger(__name__)
 
-settings = get_settings()
+settings: Settings = get_settings()
 mcp: FastMCP = create_mcp(settings)
 
 

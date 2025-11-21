@@ -8,8 +8,19 @@ except ImportError:
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 
-from openmarkets.core.config import Settings
-from openmarkets.core.toolset import register_toolset
+from openmarkets.core.config import Settings, get_settings
+from openmarkets.services import (
+    analysis_service,
+    crypto_service,
+    financials_service,
+    funds_service,
+    holdings_service,
+    markets_service,
+    options_service,
+    sector_industry_service,
+    stock_service,
+    technical_analysis_service,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,29 +59,32 @@ class FastMCPWithCORS(FastMCP):
         return app
 
 
-def create_mcp(config: Settings) -> FastMCP:
-    """
-    Create and configure the MCP server instance.
-
-    Initializes the MCP server and registers all available tools
-    using the ToolRegistry. Logs any errors during tool registration.
+def create_mcp(config: Settings | None = None) -> FastMCP:
+    """Create and configure the FastMCP server with registered tool methods.
 
     Args:
-        config (Settings): Configuration object containing tool module reference.
-
+        config (Settings | None): Application configuration settings.
     Returns:
-        FastMCP: Configured MCP server instance.
-
-    Raises:
-        RuntimeError: If tool registration fails.
+        FastMCP: Configured FastMCP server instance.
     """
+    if config is None:
+        config = get_settings()
     mcp = FastMCP(
         name="Open Markets Server",
         instructions=("This server allows for the integration of various market data tools."),
     )
 
     try:
-        register_toolset(mcp, config.toolset)
+        analysis_service.register_tool_methods(mcp)
+        crypto_service.register_tool_methods(mcp)
+        financials_service.register_tool_methods(mcp)
+        funds_service.register_tool_methods(mcp)
+        holdings_service.register_tool_methods(mcp)
+        markets_service.register_tool_methods(mcp)
+        options_service.register_tool_methods(mcp)
+        sector_industry_service.register_tool_methods(mcp)
+        stock_service.register_tool_methods(mcp)
+        technical_analysis_service.register_tool_methods(mcp)
         logger.info("Tool registration completed successfully.")
     except Exception as exc:
         logger.exception("Failed to initialize ToolRegistry or register tools.")
