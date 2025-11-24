@@ -20,7 +20,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceCryptoRepository()
 
-    def fetch_crypto_info(self, ticker: Annotated[str, "The symbol of the security."]) -> CryptoFastInfo:
+    def get_crypto_info(self, ticker: Annotated[str, "The symbol of the security."]) -> CryptoFastInfo:
         """
         Retrieve fast information for a specific cryptocurrency.
 
@@ -32,7 +32,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self.repository.fetch_crypto_info(ticker)
 
-    def fetch_crypto_history(
+    def get_crypto_history(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y", interval: str = "1d"
     ) -> list[CryptoHistory]:
         """
@@ -48,7 +48,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self.repository.fetch_crypto_history(ticker, period, interval)
 
-    def fetch_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
+    def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
         """
         Retrieve a list of the top cryptocurrencies by market cap or volume.
 
@@ -60,7 +60,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self.repository.fetch_top_cryptocurrencies(count)
 
-    def fetch_crypto_fear_greed_proxy(self, tickers: list[str] | None = None):
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None):
         """
         Retrieve a proxy value for the crypto fear and greed index.
 

@@ -8,43 +8,43 @@ from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
 
 class ICryptoRepository(ABC):
     @abstractmethod
-    def fetch_crypto_info(self, ticker: str) -> CryptoFastInfo:
+    def get_crypto_info(self, ticker: str) -> CryptoFastInfo:
         pass
 
     @abstractmethod
-    def fetch_crypto_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[CryptoHistory]:
+    def get_crypto_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[CryptoHistory]:
         pass
 
     @abstractmethod
-    def fetch_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
+    def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
         pass
 
     @abstractmethod
-    def fetch_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> str:
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> str:
         pass
 
 
 class YFinanceCryptoRepository(ICryptoRepository):
     """Repository for fetching crypto data from yfinance."""
 
-    def fetch_crypto_info(self, ticker: str) -> CryptoFastInfo:
+    def get_crypto_info(self, ticker: str) -> CryptoFastInfo:
         if not ticker.endswith("-USD"):
             ticker += "-USD"
         fast_info = yf.Ticker(ticker).fast_info
         return CryptoFastInfo(**fast_info)
 
-    def fetch_crypto_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[CryptoHistory]:
+    def get_crypto_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[CryptoHistory]:
         if not ticker.endswith("-USD"):
             ticker += "-USD"
         df = yf.Ticker(ticker).history(period=period, interval=interval)
         df.reset_index(inplace=True)
         return [CryptoHistory(**row.to_dict()) for _, row in df.iterrows()]
 
-    def fetch_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
+    def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
         selected_cryptos = TOP_CRYPTO_TICKERS[: min(count, 20)]
         return [self.fetch_crypto_info(crypto) for crypto in selected_cryptos]
 
-    def fetch_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> dict:
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> dict:
         if tickers is None:
             tickers = DEFAULT_SENTIMENT_TICKERS
         try:

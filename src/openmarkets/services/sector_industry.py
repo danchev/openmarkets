@@ -30,7 +30,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceSectorIndustryRepository()
 
-    def fetch_sector_overview(self, sector: Annotated[str, SectorEnum.__members__]) -> SectorOverview:
+    def get_sector_overview(self, sector: Annotated[str, SectorEnum.__members__]) -> SectorOverview:
         """
         Retrieve overview information for a specific sector.
 
@@ -41,7 +41,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_overview(sector)
 
-    def fetch_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
+    def get_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
         """
         Retrieve overview information for a specific sector based on a stock ticker.
 
@@ -52,9 +52,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_overview_for_ticker(ticker)
 
-    def fetch_sector_top_companies(
-        self, sector: Annotated[str, SectorEnum.__members__]
-    ) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies(self, sector: Annotated[str, SectorEnum.__members__]) -> list[SectorTopCompaniesEntry]:
         """
         Retrieve a list of top companies within a specific sector.
 
@@ -65,7 +63,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_top_companies(sector)
 
-    def fetch_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
         """
         Retrieve a list of top companies within a specific sector based on a stock ticker.
 
@@ -76,7 +74,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_top_companies_for_ticker(ticker)
 
-    def fetch_sector_top_etfs(self, sector: Annotated[str, SectorEnum.__members__]) -> list[SectorTopETFsEntry]:
+    def get_sector_top_etfs(self, sector: Annotated[str, SectorEnum.__members__]) -> list[SectorTopETFsEntry]:
         """
         Retrieve a list of top ETFs within a specific sector.
 
@@ -87,7 +85,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_top_etfs(sector)
 
-    def fetch_sector_top_mutual_funds(
+    def get_sector_top_mutual_funds(
         self, sector: Annotated[str, SectorEnum.__members__]
     ) -> list[SectorTopMutualFundsEntry]:
         """
@@ -100,7 +98,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_top_mutual_funds(sector)
 
-    def fetch_sector_industries(self, sector: Annotated[str, SectorEnum.__members__]) -> list[str]:
+    def get_sector_industries(self, sector: Annotated[str, SectorEnum.__members__]) -> list[str]:
         """
         Retrieve a list of industries within a specific sector.
 
@@ -111,7 +109,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_industries(sector)
 
-    def fetch_sector_research_reports(
+    def get_sector_research_reports(
         self, sector: Annotated[str, SectorEnum.__members__]
     ) -> list[IndustryResearchReportEntry]:
         """
@@ -124,7 +122,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_sector_research_reports(sector)
 
-    def fetch_all_industries(self, sector: Annotated[str | None, "The name of the sector."] = None) -> list[str]:
+    def get_all_industries(self, sector: Annotated[str | None, "The name of the sector."] = None) -> list[str]:
         """
         Retrieve a list of all industries, optionally filtered by sector.
 
@@ -135,7 +133,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_all_industries(sector)
 
-    def fetch_industry_overview(self, industry: str) -> IndustryOverview:
+    def get_industry_overview(self, industry: str) -> IndustryOverview:
         """
         Retrieve an overview of a specific industry.
 
@@ -146,7 +144,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_industry_overview(industry)
 
-    def fetch_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
+    def get_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
         """
         Retrieve a list of top companies within a specific industry.
 
@@ -157,7 +155,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         """
         return self.repository.fetch_industry_top_companies(industry)
 
-    def fetch_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
+    def get_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
         """
         Retrieve a list of top growth companies within a specific industry.
 

@@ -17,112 +17,112 @@ from openmarkets.schemas.sector_industry import (
 
 class ISectorIndustryRepository(ABC):
     @abstractmethod
-    def fetch_sector_overview(self, sector: str) -> SectorOverview:
+    def get_sector_overview(self, sector: str) -> SectorOverview:
         pass
 
     @abstractmethod
-    def fetch_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
+    def get_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
         pass
 
     @abstractmethod
-    def fetch_sector_top_companies(self, sector: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies(self, sector: str) -> list[SectorTopCompaniesEntry]:
         pass
 
     @abstractmethod
-    def fetch_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
         pass
 
     @abstractmethod
-    def fetch_sector_top_etfs(self, sector: str) -> list[SectorTopETFsEntry]:
+    def get_sector_top_etfs(self, sector: str) -> list[SectorTopETFsEntry]:
         pass
 
     @abstractmethod
-    def fetch_sector_top_mutual_funds(self, sector: str) -> list[SectorTopMutualFundsEntry]:
+    def get_sector_top_mutual_funds(self, sector: str) -> list[SectorTopMutualFundsEntry]:
         pass
 
     @abstractmethod
-    def fetch_sector_industries(self, sector: str) -> list[str]:
+    def get_sector_industries(self, sector: str) -> list[str]:
         pass
 
     @abstractmethod
-    def fetch_sector_research_reports(self, sector: str) -> list[IndustryResearchReportEntry]:
+    def get_sector_research_reports(self, sector: str) -> list[IndustryResearchReportEntry]:
         pass
 
     @abstractmethod
-    def fetch_all_industries(self, sector: str | None = None) -> list[str]:
+    def get_all_industries(self, sector: str | None = None) -> list[str]:
         pass
 
     @abstractmethod
-    def fetch_industry_overview(self, industry: str) -> IndustryOverview:
+    def get_industry_overview(self, industry: str) -> IndustryOverview:
         pass
 
     @abstractmethod
-    def fetch_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
+    def get_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
         pass
 
     @abstractmethod
-    def fetch_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
+    def get_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
         pass
 
 
 class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
-    def fetch_sector_overview(self, sector: str) -> SectorOverview:
+    def get_sector_overview(self, sector: str) -> SectorOverview:
         data = yf.Sector(sector).overview
         return SectorOverview(**data)
 
-    def fetch_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
+    def get_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
         stock = yf.Ticker(ticker)
         sector = stock.info.get("sectorKey")
         if sector is None:
             raise ValueError(f"Sector not found for ticker: {ticker}")
         return self.fetch_sector_overview(sector)
 
-    def fetch_sector_top_companies(self, sector: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies(self, sector: str) -> list[SectorTopCompaniesEntry]:
         data = yf.Sector(sector).top_companies
         if data is None:
             return []
         return [SectorTopCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]
 
-    def fetch_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
         stock = yf.Ticker(ticker)
         sector = stock.info.get("sectorKey")
         if sector is None:
             raise ValueError(f"Sector not found for ticker: {ticker}")
         return self.fetch_sector_top_companies(sector)
 
-    def fetch_sector_top_etfs(self, sector: str) -> list[SectorTopETFsEntry]:
+    def get_sector_top_etfs(self, sector: str) -> list[SectorTopETFsEntry]:
         data = yf.Sector(sector).top_etfs
         return [SectorTopETFsEntry(symbol=k, name=v) for k, v in data.items()]
 
-    def fetch_sector_top_mutual_funds(self, sector: str) -> list[SectorTopMutualFundsEntry]:
+    def get_sector_top_mutual_funds(self, sector: str) -> list[SectorTopMutualFundsEntry]:
         data = yf.Sector(sector).top_mutual_funds
         return [SectorTopMutualFundsEntry(symbol=k, name=v) for k, v in data.items()]
 
-    def fetch_sector_industries(self, sector: str) -> list[str]:
+    def get_sector_industries(self, sector: str) -> list[str]:
         return SECTOR_INDUSTRY_MAPPING.get(sector, [])
 
-    def fetch_sector_research_reports(self, sector: str) -> list[IndustryResearchReportEntry]:
+    def get_sector_research_reports(self, sector: str) -> list[IndustryResearchReportEntry]:
         data = yf.Sector(sector).research_reports
         if not data:
             return []
         return [IndustryResearchReportEntry(**entry) for entry in data]
 
-    def fetch_all_industries(self, sector: str | None = None) -> list[str]:
+    def get_all_industries(self, sector: str | None = None) -> list[str]:
         if sector is not None:
             return sorted(SECTOR_INDUSTRY_MAPPING.get(sector, []))
         return sorted({industry for industries in SECTOR_INDUSTRY_MAPPING.values() for industry in industries})
 
-    def fetch_industry_overview(self, industry: str) -> IndustryOverview:
+    def get_industry_overview(self, industry: str) -> IndustryOverview:
         data = yf.Industry(industry).overview
         return IndustryOverview(**data)
 
-    def fetch_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
+    def get_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
         data = yf.Industry(industry).top_companies
         if data is None:
             return []
         return [IndustryTopCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]
 
-    def fetch_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
+    def get_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
         data = yf.Industry(industry).top_growth_companies
         if data is None:
             return []

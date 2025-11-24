@@ -19,7 +19,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceHoldingsRepository()
 
-    def fetch_major_holders(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_major_holders(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve major holders for a given ticker.
 
@@ -31,7 +31,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_major_holders(ticker)
 
-    def fetch_institutional_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_institutional_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve institutional holdings for a given ticker.
 
@@ -43,7 +43,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_institutional_holdings(ticker)
 
-    def fetch_mutual_fund_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_mutual_fund_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve mutual fund holdings for a given ticker.
 
@@ -55,7 +55,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_mutual_fund_holdings(ticker)
 
-    def fetch_insider_purchases(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_insider_purchases(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve insider purchases for a given ticker.
 
@@ -67,7 +67,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_insider_purchases(ticker)
 
-    def fetch_full_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_full_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve a full set of holdings data for a given ticker, aggregating all available holdings information.
 

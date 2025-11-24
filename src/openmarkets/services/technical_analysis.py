@@ -27,7 +27,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceTechnicalAnalysisRepository()
 
-    def fetch_technical_indicators(
+    def get_technical_indicators(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
     ) -> TechnicalIndicatorsDict:
         """
@@ -42,7 +42,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_technical_indicators(ticker, period)
 
-    def fetch_volatility_metrics(
+    def get_volatility_metrics(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y"
     ) -> VolatilityMetricsDict:
         """
@@ -57,7 +57,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_volatility_metrics(ticker, period)
 
-    def fetch_support_resistance_levels(
+    def get_support_resistance_levels(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
     ) -> SupportResistanceLevelsDict:
         """

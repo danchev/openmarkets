@@ -26,7 +26,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceOptionsRepository()
 
-    def fetch_option_expiration_dates(
+    def get_option_expiration_dates(
         self, ticker: Annotated[str, "The symbol of the security."]
     ) -> list[OptionExpirationDate]:
         """
@@ -40,7 +40,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_option_expiration_dates(ticker)
 
-    def fetch_option_chain(
+    def get_option_chain(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
     ) -> OptionContractChain:
         """
@@ -55,7 +55,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_option_chain(ticker, expiration)
 
-    def fetch_call_options(
+    def get_call_options(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
     ) -> list[CallOption] | None:
         """
@@ -70,7 +70,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_call_options(ticker, expiration)
 
-    def fetch_put_options(
+    def get_put_options(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
     ) -> list[PutOption] | None:
         """
@@ -85,7 +85,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_put_options(ticker, expiration)
 
-    def fetch_options_volume_analysis(
+    def get_options_volume_analysis(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
     ) -> dict:
         """
@@ -100,7 +100,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_options_volume_analysis(ticker, expiration_date)
 
-    async def fetch_options_by_moneyness(
+    async def get_options_by_moneyness(
         self,
         ticker: Annotated[str, "The symbol of the security."],
         expiration_date: str | None = None,
@@ -119,7 +119,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return await self.repository.fetch_options_by_moneyness(ticker, expiration_date, moneyness_range)
 
-    async def fetch_options_skew(
+    async def get_options_skew(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
     ) -> dict:
         """

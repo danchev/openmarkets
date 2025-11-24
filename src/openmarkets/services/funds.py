@@ -29,7 +29,7 @@ class FundsService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceFundsRepository()
 
-    def fetch_fund_info(self, ticker: Annotated[str, "The symbol of the security."]) -> FundInfo:
+    def get_fund_info(self, ticker: Annotated[str, "The symbol of the security."]) -> FundInfo:
         """
         Retrieve general information for a specific fund.
 
@@ -41,7 +41,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_info(ticker)
 
-    def fetch_fund_sector_weighting(
+    def get_fund_sector_weighting(
         self, ticker: Annotated[str, "The symbol of the security."]
     ) -> FundSectorWeighting | None:
         """
@@ -55,7 +55,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_sector_weighting(ticker)
 
-    def fetch_fund_operations(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOperations | None:
+    def get_fund_operations(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOperations | None:
         """
         Retrieve operations data for a specific fund.
 
@@ -67,7 +67,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_operations(ticker)
 
-    def fetch_fund_overview(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOverview | None:
+    def get_fund_overview(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOverview | None:
         """
         Retrieve an overview for a specific fund.
 
@@ -79,7 +79,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_overview(ticker)
 
-    def fetch_fund_top_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundTopHolding]:
+    def get_fund_top_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundTopHolding]:
         """
         Retrieve the top holdings for a specific fund.
 
@@ -91,7 +91,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_top_holdings(ticker)
 
-    def fetch_fund_bond_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundBondHolding]:
+    def get_fund_bond_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundBondHolding]:
         """
         Retrieve the bond holdings for a specific fund.
 
@@ -103,7 +103,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_bond_holdings(ticker)
 
-    def fetch_fund_equity_holdings(
+    def get_fund_equity_holdings(
         self, ticker: Annotated[str, "The symbol of the security."]
     ) -> list[FundEquityHolding]:
         """
@@ -117,7 +117,7 @@ class FundsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fund_equity_holdings(ticker)
 
-    def fetch_fund_asset_class_holdings(
+    def get_fund_asset_class_holdings(
         self, ticker: Annotated[str, "The symbol of the security."]
     ) -> FundAssetClassHolding | None:
         """

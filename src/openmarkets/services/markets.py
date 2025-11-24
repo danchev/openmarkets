@@ -20,7 +20,7 @@ class MarketsService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceMarketsRepository()
 
-    def fetch_market_summary(self, market: Annotated[str, MarketType.__members__]) -> MarketSummary:
+    def get_market_summary(self, market: Annotated[str, MarketType.__members__]) -> MarketSummary:
         """
         Retrieve a summary of the overall market performance.
 
@@ -29,7 +29,7 @@ class MarketsService(ToolRegistrationMixin):
         """
         return self.repository.fetch_market_summary(market=market)
 
-    def fetch_market_status(self, market: Annotated[str, MarketType.__members__]) -> MarketStatus:
+    def get_market_status(self, market: Annotated[str, MarketType.__members__]) -> MarketStatus:
         """
         Retrieve the current status of major market indices.
 

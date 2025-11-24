@@ -11,20 +11,20 @@ from openmarkets.schemas.technical_analysis import (
 
 class ITechnicalAnalysisRepository(ABC):
     @abstractmethod
-    def fetch_technical_indicators(self, ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
+    def get_technical_indicators(self, ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
         pass
 
     @abstractmethod
-    def fetch_volatility_metrics(self, ticker: str, period: str = "1y") -> VolatilityMetricsDict:
+    def get_volatility_metrics(self, ticker: str, period: str = "1y") -> VolatilityMetricsDict:
         pass
 
     @abstractmethod
-    def fetch_support_resistance_levels(self, ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
+    def get_support_resistance_levels(self, ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
         pass
 
 
 class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
-    def fetch_technical_indicators(self, ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
+    def get_technical_indicators(self, ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period)
         if hist.empty:
@@ -58,7 +58,7 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
         }
         return indicators
 
-    def fetch_volatility_metrics(self, ticker: str, period: str = "1y") -> VolatilityMetricsDict:
+    def get_volatility_metrics(self, ticker: str, period: str = "1y") -> VolatilityMetricsDict:
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period)
         if hist.empty:
@@ -83,7 +83,7 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
         }
         return volatility_data
 
-    def fetch_support_resistance_levels(self, ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
+    def get_support_resistance_levels(self, ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
         stock = yf.Ticker(ticker)
         hist = stock.history(period=period)
         if hist.empty:

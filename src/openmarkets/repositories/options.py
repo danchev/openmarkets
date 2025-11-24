@@ -14,42 +14,42 @@ from openmarkets.schemas.options import (
 
 class IOptionsRepository(ABC):
     @abstractmethod
-    def fetch_option_expiration_dates(self, ticker: str) -> list[OptionExpirationDate]:
+    def get_option_expiration_dates(self, ticker: str) -> list[OptionExpirationDate]:
         pass
 
     @abstractmethod
-    def fetch_option_chain(self, ticker: str, expiration: date | None = None) -> OptionContractChain:
+    def get_option_chain(self, ticker: str, expiration: date | None = None) -> OptionContractChain:
         pass
 
     @abstractmethod
-    def fetch_call_options(self, ticker: str, expiration: date | None = None) -> list[CallOption] | None:
+    def get_call_options(self, ticker: str, expiration: date | None = None) -> list[CallOption] | None:
         pass
 
     @abstractmethod
-    def fetch_put_options(self, ticker: str, expiration: date | None = None) -> list[PutOption] | None:
+    def get_put_options(self, ticker: str, expiration: date | None = None) -> list[PutOption] | None:
         pass
 
     @abstractmethod
-    def fetch_options_volume_analysis(self, ticker: str, expiration_date: str | None = None) -> dict:
+    def get_options_volume_analysis(self, ticker: str, expiration_date: str | None = None) -> dict:
         pass
 
     @abstractmethod
-    async def fetch_options_by_moneyness(
+    async def get_options_by_moneyness(
         self, ticker: str, expiration_date: str | None = None, moneyness_range: float = 0.1
     ) -> dict:
         pass
 
     @abstractmethod
-    async def fetch_options_skew(self, ticker: str, expiration_date: str | None = None) -> dict:
+    async def get_options_skew(self, ticker: str, expiration_date: str | None = None) -> dict:
         pass
 
 
 class YFinanceOptionsRepository(IOptionsRepository):
-    def fetch_option_expiration_dates(self, ticker: str) -> list[OptionExpirationDate]:
+    def get_option_expiration_dates(self, ticker: str) -> list[OptionExpirationDate]:
         options = yf.Ticker(ticker).options
         return [OptionExpirationDate(date=dt) for dt in options]
 
-    def fetch_option_chain(self, ticker: str, expiration: date | None = None) -> OptionContractChain:
+    def get_option_chain(self, ticker: str, expiration: date | None = None) -> OptionContractChain:
         option_chain = yf.Ticker(ticker).option_chain(date=str(expiration) if expiration else None)
         calls = option_chain.calls
         puts = option_chain.puts
@@ -58,21 +58,21 @@ class YFinanceOptionsRepository(IOptionsRepository):
         underlying = OptionUnderlying(**getattr(option_chain, "underlying", {}))
         return OptionContractChain(calls=call_objs, puts=put_objs, underlying=underlying)
 
-    def fetch_call_options(self, ticker: str, expiration: date | None = None) -> list[CallOption] | None:
+    def get_call_options(self, ticker: str, expiration: date | None = None) -> list[CallOption] | None:
         option_chain = yf.Ticker(ticker).option_chain(str(expiration) if expiration else None)
         calls = option_chain.calls
         if calls.empty:
             return None
         return [CallOption(**row.to_dict()) for _, row in calls.iterrows()]
 
-    def fetch_put_options(self, ticker: str, expiration: date | None = None) -> list[PutOption] | None:
+    def get_put_options(self, ticker: str, expiration: date | None = None) -> list[PutOption] | None:
         option_chain = yf.Ticker(ticker).option_chain(str(expiration) if expiration else None)
         puts = option_chain.puts
         if puts.empty:
             return None
         return [PutOption(**row.to_dict()) for _, row in puts.iterrows()]
 
-    def fetch_options_volume_analysis(self, ticker: str, expiration_date: str | None = None) -> dict:
+    def get_options_volume_analysis(self, ticker: str, expiration_date: str | None = None) -> dict:
         stock = yf.Ticker(ticker)
         if expiration_date:
             option_chain = stock.option_chain(expiration_date)
@@ -97,7 +97,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
         }
         return analysis
 
-    async def fetch_options_by_moneyness(
+    async def get_options_by_moneyness(
         self, ticker: str, expiration_date: str | None = None, moneyness_range: float = 0.1
     ) -> dict:
         stock = yf.Ticker(ticker)
@@ -125,7 +125,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
         }
         return result
 
-    async def fetch_options_skew(self, ticker: str, expiration_date: str | None = None) -> dict:
+    async def get_options_skew(self, ticker: str, expiration_date: str | None = None) -> dict:
         stock = yf.Ticker(ticker)
         if not expiration_date:
             expirations = stock.options

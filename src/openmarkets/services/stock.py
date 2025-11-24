@@ -28,7 +28,7 @@ class StockService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceStockRepository()
 
-    def fetch_fast_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockFastInfo:
+    def get_fast_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockFastInfo:
         """
         Retrieve fast info for a specific stock ticker.
 
@@ -40,7 +40,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_fast_info(ticker)
 
-    def fetch_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockInfo:
+    def get_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockInfo:
         """
         Retrieve detailed info for a specific stock ticker.
 
@@ -52,7 +52,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_info(ticker)
 
-    def fetch_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
+    def get_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
         """
         Retrieve historical price data for a stock.
 
@@ -66,7 +66,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_history(ticker, period, interval)
 
-    def fetch_dividends(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockDividends]:
+    def get_dividends(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockDividends]:
         """
         Retrieve dividend history for a stock.
 
@@ -78,7 +78,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_dividends(ticker)
 
-    def fetch_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve a financial summary for a stock.
 
@@ -90,7 +90,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_financial_summary(ticker)
 
-    def fetch_risk_metrics(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_risk_metrics(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve risk metrics for a stock.
 
@@ -102,7 +102,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_risk_metrics(ticker)
 
-    def fetch_dividend_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_dividend_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve a summary of dividend data for a stock.
 
@@ -114,7 +114,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_dividend_summary(ticker)
 
-    def fetch_price_target(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_price_target(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve price target data for a stock.
 
@@ -126,7 +126,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_price_target(ticker)
 
-    def fetch_financial_summary_v2(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_financial_summary_v2(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve an alternative version of the financial summary for a stock.
 
@@ -138,7 +138,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_financial_summary_v2(ticker)
 
-    def fetch_quick_technical_indicators(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_quick_technical_indicators(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve quick technical indicators for a stock.
 
@@ -150,7 +150,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_quick_technical_indicators(ticker)
 
-    def fetch_splits(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockSplit]:
+    def get_splits(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockSplit]:
         """
         Retrieve stock split history for a stock.
 
@@ -162,7 +162,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_splits(ticker)
 
-    def fetch_corporate_actions(self, ticker: Annotated[str, "The symbol of the security."]) -> list[CorporateActions]:
+    def get_corporate_actions(self, ticker: Annotated[str, "The symbol of the security."]) -> list[CorporateActions]:
         """
         Retrieve corporate actions for a stock.
 
@@ -174,7 +174,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.fetch_corporate_actions(ticker)
 
-    def fetch_news(self, ticker: Annotated[str, "The symbol of the security."]) -> list[NewsItem]:
+    def get_news(self, ticker: Annotated[str, "The symbol of the security."]) -> list[NewsItem]:
         """
         Retrieve news items for a stock.
 

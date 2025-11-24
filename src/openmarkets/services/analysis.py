@@ -19,7 +19,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         self.repository = repository or YFinanceAnalysisRepository()
 
-    def fetch_analyst_recommendations(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_analyst_recommendations(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve analyst recommendations for a given ticker.
 
@@ -31,7 +31,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_analyst_recommendations(ticker)
 
-    def fetch_recommendation_changes(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_recommendation_changes(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve changes in analyst recommendations for a given ticker.
 
@@ -43,7 +43,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_recommendation_changes(ticker)
 
-    def fetch_revenue_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_revenue_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve revenue estimates for a given ticker.
 
@@ -55,7 +55,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_revenue_estimates(ticker)
 
-    def fetch_earnings_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_earnings_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve earnings estimates for a given ticker.
 
@@ -67,7 +67,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_earnings_estimates(ticker)
 
-    def fetch_growth_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_growth_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve growth estimates for a given ticker.
 
@@ -79,7 +79,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_growth_estimates(ticker)
 
-    def fetch_eps_trends(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_eps_trends(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve EPS (Earnings Per Share) trends for a given ticker.
 
@@ -91,7 +91,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_eps_trends(ticker)
 
-    def fetch_price_targets(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_price_targets(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve price targets for a given ticker.
 
@@ -103,7 +103,7 @@ class AnalysisService(ToolRegistrationMixin):
         """
         return self.repository.fetch_price_targets(ticker)
 
-    def fetch_full_analysis(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_full_analysis(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve a full analysis report for a given ticker, aggregating all available analysis data.
 
