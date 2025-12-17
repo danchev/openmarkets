@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import yfinance as yf
+from curl_cffi.requests import Session
 
 from openmarkets.schemas.funds import (
     FundAssetClassHolding,
@@ -49,20 +50,20 @@ class IFundsRepository(ABC):
 
 
 class YFinanceFundsRepository(IFundsRepository):
-    def get_fund_info(self, ticker: str) -> FundInfo:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_info(self, ticker: str, session: Session | None = None) -> FundInfo:
+        fund_ticker = yf.Ticker(ticker, session=self.session)
         fund_info = fund_ticker.info
         return FundInfo(**fund_info)
 
-    def get_fund_sector_weighting(self, ticker: str) -> FundSectorWeighting | None:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_sector_weighting(self, ticker: str, session: Session | None = None) -> FundSectorWeighting | None:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "sector_weightings"):
             return None
         return FundSectorWeighting(**fund_info.sector_weightings)
 
-    def get_fund_operations(self, ticker: str) -> FundOperations | None:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_operations(self, ticker: str, session: Session | None = None) -> FundOperations | None:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "fund_operations"):
             return None
@@ -92,39 +93,41 @@ class YFinanceFundsRepository(IFundsRepository):
         ops = {str(k): to_native(v) for k, v in ops.items()}
         return FundOperations(**ops)
 
-    def get_fund_overview(self, ticker: str) -> FundOverview | None:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_overview(self, ticker: str, session: Session | None = None) -> FundOverview | None:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "fund_overview"):
             return None
         return FundOverview(**fund_info.fund_overview)
 
-    def get_fund_top_holdings(self, ticker: str) -> list[FundTopHolding]:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_top_holdings(self, ticker: str, session: Session | None = None) -> list[FundTopHolding]:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "top_holdings"):
             return []
         df = fund_info.top_holdings
         return [FundTopHolding(**row.to_dict()) for _, row in df.reset_index().iterrows()]
 
-    def get_fund_bond_holdings(self, ticker: str) -> list[FundBondHolding]:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_bond_holdings(self, ticker: str, session: Session | None = None) -> list[FundBondHolding]:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "bond_holdings"):
             return []
         df = fund_info.bond_holdings
         return [FundBondHolding(**row.to_dict()) for _, row in df.transpose().reset_index().iterrows()]
 
-    def get_fund_equity_holdings(self, ticker: str) -> list[FundEquityHolding]:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_equity_holdings(self, ticker: str, session: Session | None = None) -> list[FundEquityHolding]:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "equity_holdings"):
             return []
         df = fund_info.equity_holdings
         return [FundEquityHolding(**row.to_dict()) for _, row in df.transpose().reset_index().iterrows()]
 
-    def get_fund_asset_class_holdings(self, ticker: str) -> FundAssetClassHolding | None:
-        fund_ticker = yf.Ticker(ticker)
+    def get_fund_asset_class_holdings(
+        self, ticker: str, session: Session | None = None
+    ) -> FundAssetClassHolding | None:
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.get_funds_data()
         if not fund_info or not hasattr(fund_info, "asset_classes"):
             return None

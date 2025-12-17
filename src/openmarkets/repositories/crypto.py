@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import yfinance as yf
+from curl_cffi.requests import Session
 
 from openmarkets.core.constants import DEFAULT_SENTIMENT_TICKERS, TOP_CRYPTO_TICKERS
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
@@ -20,23 +21,25 @@ class ICryptoRepository(ABC):
         pass
 
     @abstractmethod
-    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> str:
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> dict:
         pass
 
 
 class YFinanceCryptoRepository(ICryptoRepository):
     """Repository for fetching crypto data from yfinance."""
 
-    def get_crypto_info(self, ticker: str) -> CryptoFastInfo:
+    def get_crypto_info(self, ticker: str, session: Session | None = None) -> CryptoFastInfo:
         if not ticker.endswith("-USD"):
             ticker += "-USD"
-        fast_info = yf.Ticker(ticker).fast_info
+        fast_info = yf.Ticker(ticker, session=session).fast_info
         return CryptoFastInfo(**fast_info)
 
-    def get_crypto_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[CryptoHistory]:
+    def get_crypto_history(
+        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+    ) -> list[CryptoHistory]:
         if not ticker.endswith("-USD"):
             ticker += "-USD"
-        df = yf.Ticker(ticker).history(period=period, interval=interval)
+        df = yf.Ticker(ticker, session=session).history(period=period, interval=interval)
         df.reset_index(inplace=True)
         return [CryptoHistory(**row.to_dict()) for _, row in df.iterrows()]
 

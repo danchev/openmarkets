@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from curl_cffi.requests import Session
+
 from openmarkets.repositories.financials import IFinancialsRepository, YFinanceFinancialsRepository
 from openmarkets.schemas.financials import (
     BalanceSheetEntry,
@@ -19,7 +21,7 @@ class FinancialsService(ToolRegistrationMixin):
     Provides methods to retrieve various financial statements, calendars, filings, and EPS history for a given ticker.
     """
 
-    def __init__(self, repository: IFinancialsRepository | None = None):
+    def __init__(self, repository: IFinancialsRepository | None = None, session: None = None):
         """
         Initialize the FinancialsService with a repository dependency.
 
@@ -27,6 +29,7 @@ class FinancialsService(ToolRegistrationMixin):
             repository (IFinancialsRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceFinancialsRepository()
+        self.session = session or Session(impersonate="chrome")
 
     def get_balance_sheet(self, ticker: Annotated[str, "The symbol of the security."]) -> list[BalanceSheetEntry]:
         """
@@ -38,7 +41,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             list[BalanceSheetEntry]: List of balance sheet entries.
         """
-        return self.repository.fetch_balance_sheet(ticker)
+        return self.repository.get_balance_sheet(ticker, session=self.session)
 
     def get_income_statement(self, ticker: Annotated[str, "The symbol of the security."]) -> list[IncomeStatementEntry]:
         """
@@ -50,7 +53,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             list[IncomeStatementEntry]: List of income statement entries.
         """
-        return self.repository.fetch_income_statement(ticker)
+        return self.repository.get_income_statement(ticker, session=self.session)
 
     def get_ttm_income_statement(
         self, ticker: Annotated[str, "The symbol of the security."]
@@ -64,7 +67,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             list[TTMIncomeStatementEntry]: List of TTM income statement entries.
         """
-        return self.repository.fetch_ttm_income_statement(ticker)
+        return self.repository.get_ttm_income_statement(ticker, session=self.session)
 
     def get_ttm_cash_flow_statement(
         self, ticker: Annotated[str, "The symbol of the security."]
@@ -78,7 +81,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             list[TTMCashFlowStatementEntry]: List of TTM cash flow statement entries.
         """
-        return self.repository.fetch_ttm_cash_flow_statement(ticker)
+        return self.repository.get_ttm_cash_flow_statement(ticker, session=self.session)
 
     def get_financial_calendar(self, ticker: Annotated[str, "The symbol of the security."]) -> FinancialCalendar:
         """
@@ -90,7 +93,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             FinancialCalendar: Financial calendar data.
         """
-        return self.repository.fetch_financial_calendar(ticker)
+        return self.repository.get_financial_calendar(ticker, session=self.session)
 
     def get_sec_filings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[SecFilingRecord]:
         """
@@ -102,7 +105,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             list[SecFilingRecord]: List of SEC filing records.
         """
-        return self.repository.fetch_sec_filings(ticker)
+        return self.repository.get_sec_filings(ticker, session=self.session)
 
     def get_eps_history(self, ticker: Annotated[str, "The symbol of the security."]) -> list[EPSHistoryEntry]:
         """
@@ -114,7 +117,7 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             list[EPSHistoryEntry]: List of EPS history entries.
         """
-        return self.repository.fetch_eps_history(ticker)
+        return self.repository.get_eps_history(ticker, session=self.session)
 
     def get_full_financials(self, ticker: Annotated[str, "The symbol of the security."]):
         """
@@ -127,13 +130,13 @@ class FinancialsService(ToolRegistrationMixin):
             dict: Dictionary containing all financial data for the ticker.
         """
         return {
-            "balance_sheet": self.repository.fetch_balance_sheet(ticker),
-            "income_statement": self.repository.fetch_income_statement(ticker),
-            "ttm_income_statement": self.repository.fetch_ttm_income_statement(ticker),
-            "ttm_cash_flow_statement": self.repository.fetch_ttm_cash_flow_statement(ticker),
-            "financial_calendar": self.repository.fetch_financial_calendar(ticker),
-            "sec_filings": self.repository.fetch_sec_filings(ticker),
-            "eps_history": self.repository.fetch_eps_history(ticker),
+            "balance_sheet": self.repository.get_balance_sheet(ticker, session=self.session),
+            "income_statement": self.repository.get_income_statement(ticker, session=self.session),
+            "ttm_income_statement": self.repository.get_ttm_income_statement(ticker, session=self.session),
+            "ttm_cash_flow_statement": self.repository.get_ttm_cash_flow_statement(ticker, session=self.session),
+            "financial_calendar": self.repository.get_financial_calendar(ticker, session=self.session),
+            "sec_filings": self.repository.get_sec_filings(ticker, session=self.session),
+            "eps_history": self.repository.get_eps_history(ticker, session=self.session),
         }
 
 

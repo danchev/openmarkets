@@ -1,6 +1,8 @@
 from datetime import date
 from typing import Annotated
 
+from curl_cffi import Session
+
 from openmarkets.repositories.options import IOptionsRepository, YFinanceOptionsRepository
 from openmarkets.schemas.options import (
     CallOption,
@@ -17,7 +19,7 @@ class OptionsService(ToolRegistrationMixin):
     Provides methods to retrieve option expiration dates, option chains, call/put options, volume analysis, and advanced analytics for a given ticker.
     """
 
-    def __init__(self, repository: IOptionsRepository | None = None):
+    def __init__(self, repository: IOptionsRepository | None = None, session: Session | None = None):
         """
         Initialize the OptionsService with a repository dependency.
 
@@ -25,6 +27,7 @@ class OptionsService(ToolRegistrationMixin):
             repository (IOptionsRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceOptionsRepository()
+        self.session = session or Session(impersonate="chrome")
 
     def get_option_expiration_dates(
         self, ticker: Annotated[str, "The symbol of the security."]
@@ -38,7 +41,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             list[OptionExpirationDate]: List of available expiration dates.
         """
-        return self.repository.fetch_option_expiration_dates(ticker)
+        return self.repository.get_option_expiration_dates(ticker, session=self.session)
 
     def get_option_chain(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
@@ -53,7 +56,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             OptionContractChain: The option contract chain data.
         """
-        return self.repository.fetch_option_chain(ticker, expiration)
+        return self.repository.get_option_chain(ticker, expiration, session=self.session)
 
     def get_call_options(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
@@ -68,7 +71,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             list[CallOption] | None: List of call options or None if unavailable.
         """
-        return self.repository.fetch_call_options(ticker, expiration)
+        return self.repository.get_call_options(ticker, expiration, session=self.session)
 
     def get_put_options(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
@@ -83,7 +86,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             list[PutOption] | None: List of put options or None if unavailable.
         """
-        return self.repository.fetch_put_options(ticker, expiration)
+        return self.repository.get_put_options(ticker, expiration, session=self.session)
 
     def get_options_volume_analysis(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
@@ -98,7 +101,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             dict: Volume analysis data.
         """
-        return self.repository.fetch_options_volume_analysis(ticker, expiration_date)
+        return self.repository.get_options_volume_analysis(ticker, expiration_date, session=self.session)
 
     async def get_options_by_moneyness(
         self,
@@ -117,7 +120,9 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             dict: Options data filtered by moneyness.
         """
-        return await self.repository.fetch_options_by_moneyness(ticker, expiration_date, moneyness_range)
+        return await self.repository.get_options_by_moneyness(
+            ticker, expiration_date, moneyness_range, session=self.session
+        )
 
     async def get_options_skew(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
@@ -132,7 +137,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             dict: Options skew analysis data.
         """
-        return await self.repository.fetch_options_skew(ticker, expiration_date)
+        return await self.repository.get_options_skew(ticker, expiration_date, session=self.session)
 
 
 options_service = OptionsService()

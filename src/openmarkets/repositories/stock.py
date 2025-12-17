@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 import yfinance as yf
+from curl_cffi.requests import Session
 
 from openmarkets.schemas.stock import (
     CorporateActions,
@@ -71,24 +72,26 @@ class IStockRepository(ABC):
 
 
 class YFinanceStockRepository(IStockRepository):
-    def get_fast_info(self, ticker: str) -> StockFastInfo:
-        fast_info = yf.Ticker(ticker).fast_info
+    def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo:
+        fast_info = yf.Ticker(ticker, session=session).fast_info
         return StockFastInfo(**fast_info)
 
-    def get_info(self, ticker: str) -> StockInfo:
-        info = yf.Ticker(ticker).info
+    def get_info(self, ticker: str, session: Session | None = None) -> StockInfo:
+        info = yf.Ticker(ticker, session=session).info
         return StockInfo(**info)
 
-    def get_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
-        df: pd.DataFrame = yf.Ticker(ticker).history(period=period, interval=interval)
+    def get_history(
+        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+    ) -> list[StockHistory]:
+        df: pd.DataFrame = yf.Ticker(ticker, session=session).history(period=period, interval=interval)
         df.reset_index(inplace=True)
         return [StockHistory(**row.to_dict()) for _, row in df.iterrows()]
 
-    def get_dividends(self, ticker: str) -> list[StockDividends]:
-        dividends = yf.Ticker(ticker).dividends
+    def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]:
+        dividends = yf.Ticker(ticker, session=session).dividends
         return [StockDividends(Date=row[0], Dividends=row[1]) for row in dividends.to_dict().items()]
 
-    def get_financial_summary(self, ticker: str) -> dict:
+    def get_financial_summary(self, ticker: str, session: Session | None = None) -> dict:
         include_fields: set[str] = {
             "totalRevenue",
             "revenueGrowth",
@@ -108,10 +111,10 @@ class YFinanceStockRepository(IStockRepository):
             "returnOnEquity",
             "debtToEquity",
         }
-        data = yf.Ticker(ticker).info
+        data = yf.Ticker(ticker, session=session).info
         return StockInfo(**data).model_dump(include=include_fields)
 
-    def get_risk_metrics(self, ticker: str) -> dict:
+    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> dict:
         include_fields: set[str] = {
             "auditRisk",
             "boardRisk",
@@ -121,10 +124,10 @@ class YFinanceStockRepository(IStockRepository):
             "overallRisk",
             "shareHolderRightsRisk",
         }
-        data = yf.Ticker(ticker).info
+        data = yf.Ticker(ticker, session=session).info
         return StockInfo(**data).model_dump(include=include_fields)
 
-    def get_dividend_summary(self, ticker: str) -> dict:
+    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> dict:
         include_fields: set[str] = {
             "dividendRate",
             "dividendYield",
@@ -136,10 +139,10 @@ class YFinanceStockRepository(IStockRepository):
             "lastDividendDate",
             "lastDividendValue",
         }
-        data = yf.Ticker(ticker).info
+        data = yf.Ticker(ticker, session=session).info
         return StockInfo(**data).model_dump(include=include_fields)
 
-    def get_price_target(self, ticker: str) -> dict:
+    def get_price_target(self, ticker: str, session: Session | None = None) -> dict:
         include_fields: set[str] = {
             "targetHighPrice",
             "targetLowPrice",
@@ -149,10 +152,10 @@ class YFinanceStockRepository(IStockRepository):
             "recommendationKey",
             "numberOfAnalystOpinions",
         }
-        data = yf.Ticker(ticker).info
+        data = yf.Ticker(ticker, session=session).info
         return StockInfo(**data).model_dump(include=include_fields)
 
-    def get_financial_summary_v2(self, ticker: str) -> dict:
+    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
         include_fields: set[str] = {
             "marketCap",
             "enterpriseValue",
@@ -179,10 +182,10 @@ class YFinanceStockRepository(IStockRepository):
             "returnOnEquity",
             "debtToEquity",
         }
-        data = yf.Ticker(ticker).info
+        data = yf.Ticker(ticker, session=session).info
         return StockInfo(**data).model_dump(include=include_fields)
 
-    def get_quick_technical_indicators(self, ticker: str) -> dict:
+    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:
         include_fields: set[str] = {
             "currentPrice",
             "fiftyDayAverage",
@@ -194,20 +197,20 @@ class YFinanceStockRepository(IStockRepository):
             "fiftyTwoWeekLow",
             "fiftyTwoWeekHigh",
         }
-        data = yf.Ticker(ticker).info
+        data = yf.Ticker(ticker, session=session).info
         return StockInfo(**data).model_dump(include=include_fields)
 
-    def get_splits(self, ticker: str) -> list[StockSplit]:
-        splits = yf.Ticker(ticker).splits
+    def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]:
+        splits = yf.Ticker(ticker, session=session).splits
         return [
             StockSplit(date=pd.Timestamp(str(index)).to_pydatetime(), stock_splits=value)
             for index, value in splits.items()
         ]
 
-    def get_corporate_actions(self, ticker: str) -> list[CorporateActions]:
-        actions = yf.Ticker(ticker).actions
+    def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]:
+        actions = yf.Ticker(ticker, session=session).actions
         return [CorporateActions(**row.to_dict()) for _, row in actions.reset_index().iterrows()]
 
-    def get_news(self, ticker: str) -> list[NewsItem]:
-        news = yf.Ticker(ticker).news
+    def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]:
+        news = yf.Ticker(ticker, session=session).news
         return [NewsItem(**item) for item in news]

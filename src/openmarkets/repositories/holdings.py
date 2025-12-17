@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import Callable
 
 import yfinance as yf
+from curl_cffi.requests import Session
 
 from openmarkets.schemas.holdings import (
     InsiderPurchase,
@@ -9,6 +11,8 @@ from openmarkets.schemas.holdings import (
     StockMajorHolders,
     StockMutualFundHoldings,
 )
+
+YFinanceClient = Callable[[str], yf.Ticker]
 
 
 class IHoldingsRepository(ABC):
@@ -34,25 +38,27 @@ class IHoldingsRepository(ABC):
 
 
 class YFinanceHoldingsRepository(IHoldingsRepository):
-    def get_major_holders(self, ticker: str) -> list[StockMajorHolders]:
-        df = yf.Ticker(ticker).get_major_holders()
+    def get_major_holders(self, ticker: str, session: Session | None = None) -> list[StockMajorHolders]:
+        df = yf.Ticker(ticker, session=session).get_major_holders()
         return [StockMajorHolders(**row) for row in df.transpose().reset_index().to_dict(orient="records")]
 
-    def get_institutional_holdings(self, ticker: str) -> list[StockInstitutionalHoldings]:
-        df = yf.Ticker(ticker).get_institutional_holders()
+    def get_institutional_holdings(
+        self, ticker: str, session: Session | None = None
+    ) -> list[StockInstitutionalHoldings]:
+        df = yf.Ticker(ticker, session=session).get_institutional_holders()
         df.reset_index(inplace=True)
         return [StockInstitutionalHoldings(**row.to_dict()) for _, row in df.iterrows()]
 
-    def get_mutual_fund_holdings(self, ticker: str) -> list[StockMutualFundHoldings]:
-        df = yf.Ticker(ticker).get_mutualfund_holders()
+    def get_mutual_fund_holdings(self, ticker: str, session: Session | None = None) -> list[StockMutualFundHoldings]:
+        df = yf.Ticker(ticker, session=session).get_mutualfund_holders()
         df.reset_index(inplace=True)
         return [StockMutualFundHoldings(**row.to_dict()) for _, row in df.iterrows()]
 
-    def get_insider_purchases(self, ticker: str) -> list[InsiderPurchase]:
-        df = yf.Ticker(ticker).get_insider_purchases()
+    def get_insider_purchases(self, ticker: str, session: Session | None = None) -> list[InsiderPurchase]:
+        df = yf.Ticker(ticker, session=session).get_insider_purchases()
         df.reset_index(inplace=True)
         return [InsiderPurchase(**row.to_dict()) for _, row in df.iterrows()]
 
-    def get_insider_roster_holders(self, ticker: str) -> list[InsiderRosterHolder]:
-        df = yf.Ticker(ticker).get_insider_roster_holders()
+    def get_insider_roster_holders(self, ticker: str, session: Session | None = None) -> list[InsiderRosterHolder]:
+        df = yf.Ticker(ticker, session=session).get_insider_roster_holders()
         return [InsiderRosterHolder(**row.to_dict()) for _, row in df.reset_index().iterrows()]

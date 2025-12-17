@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import yfinance as yf
+from curl_cffi.requests import Session
 
 from openmarkets.schemas.technical_analysis import (
     SupportResistanceLevelsDict,
@@ -24,8 +25,10 @@ class ITechnicalAnalysisRepository(ABC):
 
 
 class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
-    def get_technical_indicators(self, ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
-        stock = yf.Ticker(ticker)
+    def get_technical_indicators(
+        self, ticker: str, period: str = "6mo", session: Session | None = None
+    ) -> TechnicalIndicatorsDict:
+        stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
         if hist.empty:
             raise ValueError("No historical data available")
@@ -58,8 +61,10 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
         }
         return indicators
 
-    def get_volatility_metrics(self, ticker: str, period: str = "1y") -> VolatilityMetricsDict:
-        stock = yf.Ticker(ticker)
+    def get_volatility_metrics(
+        self, ticker: str, period: str = "1y", session: Session | None = None
+    ) -> VolatilityMetricsDict:
+        stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
         if hist.empty:
             raise ValueError("No historical data available")
@@ -83,8 +88,10 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
         }
         return volatility_data
 
-    def get_support_resistance_levels(self, ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
-        stock = yf.Ticker(ticker)
+    def get_support_resistance_levels(
+        self, ticker: str, period: str = "6mo", session: Session | None = None
+    ) -> SupportResistanceLevelsDict:
+        stock = yf.Ticker(ticker, session=session)
         hist = stock.history(period=period)
         if hist.empty:
             raise ValueError("No historical data available")

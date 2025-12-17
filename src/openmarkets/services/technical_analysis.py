@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from curl_cffi.requests import Session
+
 from openmarkets.repositories.technical_analysis import (
     ITechnicalAnalysisRepository,
     YFinanceTechnicalAnalysisRepository,
@@ -18,7 +20,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     Provides methods to retrieve technical indicators, volatility metrics, and support/resistance levels for a given ticker.
     """
 
-    def __init__(self, repository: ITechnicalAnalysisRepository | None = None):
+    def __init__(self, repository: ITechnicalAnalysisRepository | None = None, session: Session | None = None):
         """
         Initialize the TechnicalAnalysisService with a repository dependency.
 
@@ -26,6 +28,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
             repository (ITechnicalAnalysisRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceTechnicalAnalysisRepository()
+        self.session = session or Session(impersonate="chrome")
 
     def get_technical_indicators(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
@@ -40,7 +43,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         Returns:
             TechnicalIndicatorsDict: Technical indicators data.
         """
-        return self.repository.fetch_technical_indicators(ticker, period)
+        return self.repository.get_technical_indicators(ticker, period, session=self.session)
 
     def get_volatility_metrics(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y"
@@ -55,7 +58,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         Returns:
             VolatilityMetricsDict: Volatility metrics data.
         """
-        return self.repository.fetch_volatility_metrics(ticker, period)
+        return self.repository.get_volatility_metrics(ticker, period, session=self.session)
 
     def get_support_resistance_levels(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
@@ -70,7 +73,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         Returns:
             SupportResistanceLevelsDict: Support and resistance levels data.
         """
-        return self.repository.fetch_support_resistance_levels(ticker, period)
+        return self.repository.get_support_resistance_levels(ticker, period, session=self.session)
 
 
 technical_analysis_service = TechnicalAnalysisService()

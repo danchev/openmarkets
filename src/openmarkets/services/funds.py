@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from curl_cffi.requests import Session
+
 from openmarkets.repositories.funds import IFundsRepository, YFinanceFundsRepository
 from openmarkets.schemas.funds import (
     FundAssetClassHolding,
@@ -20,7 +22,7 @@ class FundsService(ToolRegistrationMixin):
     Provides methods to retrieve fund information, holdings, sector weightings, operations, and overviews for a given ticker.
     """
 
-    def __init__(self, repository: IFundsRepository | None = None):
+    def __init__(self, repository: IFundsRepository | None = None, session: None = None):
         """
         Initialize the FundsService with a repository dependency.
 
@@ -28,6 +30,7 @@ class FundsService(ToolRegistrationMixin):
             repository (IFundsRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceFundsRepository()
+        self.session = session or Session(impersonate="chrome")
 
     def get_fund_info(self, ticker: Annotated[str, "The symbol of the security."]) -> FundInfo:
         """
@@ -39,7 +42,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             FundInfo: Information about the fund.
         """
-        return self.repository.fetch_fund_info(ticker)
+        return self.repository.get_fund_info(ticker, session=self.session)
 
     def get_fund_sector_weighting(
         self, ticker: Annotated[str, "The symbol of the security."]
@@ -53,7 +56,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             FundSectorWeighting | None: Sector weighting data or None if unavailable.
         """
-        return self.repository.fetch_fund_sector_weighting(ticker)
+        return self.repository.get_fund_sector_weighting(ticker, session=self.session)
 
     def get_fund_operations(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOperations | None:
         """
@@ -65,7 +68,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             FundOperations | None: Operations data or None if unavailable.
         """
-        return self.repository.fetch_fund_operations(ticker)
+        return self.repository.get_fund_operations(ticker, session=self.session)
 
     def get_fund_overview(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOverview | None:
         """
@@ -77,7 +80,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             FundOverview | None: Overview data or None if unavailable.
         """
-        return self.repository.fetch_fund_overview(ticker)
+        return self.repository.get_fund_overview(ticker, session=self.session)
 
     def get_fund_top_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundTopHolding]:
         """
@@ -89,7 +92,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             list[FundTopHolding]: List of top holdings in the fund.
         """
-        return self.repository.fetch_fund_top_holdings(ticker)
+        return self.repository.get_fund_top_holdings(ticker, session=self.session)
 
     def get_fund_bond_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundBondHolding]:
         """
@@ -101,7 +104,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             list[FundBondHolding]: List of bond holdings in the fund.
         """
-        return self.repository.fetch_fund_bond_holdings(ticker)
+        return self.repository.get_fund_bond_holdings(ticker, session=self.session)
 
     def get_fund_equity_holdings(
         self, ticker: Annotated[str, "The symbol of the security."]
@@ -115,7 +118,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             list[FundEquityHolding]: List of equity holdings in the fund.
         """
-        return self.repository.fetch_fund_equity_holdings(ticker)
+        return self.repository.get_fund_equity_holdings(ticker, session=self.session)
 
     def get_fund_asset_class_holdings(
         self, ticker: Annotated[str, "The symbol of the security."]
@@ -129,7 +132,7 @@ class FundsService(ToolRegistrationMixin):
         Returns:
             FundAssetClassHolding | None: Asset class holdings data or None if unavailable.
         """
-        return self.repository.fetch_fund_asset_class_holdings(ticker)
+        return self.repository.get_fund_asset_class_holdings(ticker, session=self.session)
 
 
 funds_service = FundsService()

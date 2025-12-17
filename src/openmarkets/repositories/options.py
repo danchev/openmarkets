@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import date
 
 import yfinance as yf
+from curl_cffi.requests import Session
 
 from openmarkets.schemas.options import (
     CallOption,
@@ -45,12 +46,14 @@ class IOptionsRepository(ABC):
 
 
 class YFinanceOptionsRepository(IOptionsRepository):
-    def get_option_expiration_dates(self, ticker: str) -> list[OptionExpirationDate]:
-        options = yf.Ticker(ticker).options
+    def get_option_expiration_dates(self, ticker: str, session: Session | None = None) -> list[OptionExpirationDate]:
+        options = yf.Ticker(ticker, session=session).options
         return [OptionExpirationDate(date=dt) for dt in options]
 
-    def get_option_chain(self, ticker: str, expiration: date | None = None) -> OptionContractChain:
-        option_chain = yf.Ticker(ticker).option_chain(date=str(expiration) if expiration else None)
+    def get_option_chain(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> OptionContractChain:
+        option_chain = yf.Ticker(ticker, session=session).option_chain(date=str(expiration) if expiration else None)
         calls = option_chain.calls
         puts = option_chain.puts
         call_objs = [CallOption(**row.to_dict()) for _, row in calls.iterrows()] if not calls.empty else None
@@ -58,22 +61,28 @@ class YFinanceOptionsRepository(IOptionsRepository):
         underlying = OptionUnderlying(**getattr(option_chain, "underlying", {}))
         return OptionContractChain(calls=call_objs, puts=put_objs, underlying=underlying)
 
-    def get_call_options(self, ticker: str, expiration: date | None = None) -> list[CallOption] | None:
-        option_chain = yf.Ticker(ticker).option_chain(str(expiration) if expiration else None)
+    def get_call_options(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> list[CallOption] | None:
+        option_chain = yf.Ticker(ticker, session=session).option_chain(str(expiration) if expiration else None)
         calls = option_chain.calls
         if calls.empty:
             return None
         return [CallOption(**row.to_dict()) for _, row in calls.iterrows()]
 
-    def get_put_options(self, ticker: str, expiration: date | None = None) -> list[PutOption] | None:
-        option_chain = yf.Ticker(ticker).option_chain(str(expiration) if expiration else None)
+    def get_put_options(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> list[PutOption] | None:
+        option_chain = yf.Ticker(ticker, session=session).option_chain(str(expiration) if expiration else None)
         puts = option_chain.puts
         if puts.empty:
             return None
         return [PutOption(**row.to_dict()) for _, row in puts.iterrows()]
 
-    def get_options_volume_analysis(self, ticker: str, expiration_date: str | None = None) -> dict:
-        stock = yf.Ticker(ticker)
+    def get_options_volume_analysis(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
+    ) -> dict:
+        stock = yf.Ticker(ticker, session=session)
         if expiration_date:
             option_chain = stock.option_chain(expiration_date)
         else:
@@ -98,9 +107,13 @@ class YFinanceOptionsRepository(IOptionsRepository):
         return analysis
 
     async def get_options_by_moneyness(
-        self, ticker: str, expiration_date: str | None = None, moneyness_range: float = 0.1
+        self,
+        ticker: str,
+        expiration_date: str | None = None,
+        moneyness_range: float = 0.1,
+        session: Session | None = None,
     ) -> dict:
-        stock = yf.Ticker(ticker)
+        stock = yf.Ticker(ticker, session=session)
         current_price = stock.info.get("currentPrice")
         if not current_price:
             return {"error": "Could not get current stock price"}
@@ -125,8 +138,10 @@ class YFinanceOptionsRepository(IOptionsRepository):
         }
         return result
 
-    async def get_options_skew(self, ticker: str, expiration_date: str | None = None) -> dict:
-        stock = yf.Ticker(ticker)
+    async def get_options_skew(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
+    ) -> dict:
+        stock = yf.Ticker(ticker, session=session)
         if not expiration_date:
             expirations = stock.options
             if not expirations:

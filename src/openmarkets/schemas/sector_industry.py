@@ -313,7 +313,7 @@ class IndustryResearchReportEntry(BaseModel):
     report_title: str = Field(..., description="Report title", alias="reportTitle")
     report_type: str = Field(..., description="Report type", alias="reportType")
 
-    @field_validator("target_price")
+    @field_validator("target_price", mode="before")
     def validate_target_price(cls, v):
         if v is None:
             return v

@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from curl_cffi.requests import Session
+
 from openmarkets.repositories.crypto import ICryptoRepository, YFinanceCryptoRepository
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
 from openmarkets.services.utils import ToolRegistrationMixin
@@ -11,7 +13,7 @@ class CryptoService(ToolRegistrationMixin):
     Provides methods to fetch crypto info, history, top cryptocurrencies, and fear/greed proxy data.
     """
 
-    def __init__(self, repository: ICryptoRepository | None = None):
+    def __init__(self, repository: ICryptoRepository | None = None, session: None = None):
         """
         Initialize the CryptoService with a repository dependency.
 
@@ -19,6 +21,7 @@ class CryptoService(ToolRegistrationMixin):
             repository (ICryptoRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceCryptoRepository()
+        self.session = session or Session(impersonate="chrome")
 
     def get_crypto_info(self, ticker: Annotated[str, "The symbol of the security."]) -> CryptoFastInfo:
         """
@@ -30,7 +33,7 @@ class CryptoService(ToolRegistrationMixin):
         Returns:
             CryptoFastInfo: Fast info data for the given ticker.
         """
-        return self.repository.fetch_crypto_info(ticker)
+        return self.repository.get_crypto_info(ticker, session=self.session)
 
     def get_crypto_history(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y", interval: str = "1d"
@@ -46,7 +49,7 @@ class CryptoService(ToolRegistrationMixin):
         Returns:
             list[CryptoHistory]: List of historical data points.
         """
-        return self.repository.fetch_crypto_history(ticker, period, interval)
+        return self.repository.get_crypto_history(ticker, period, interval, session=self.session)
 
     def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
         """
@@ -58,7 +61,7 @@ class CryptoService(ToolRegistrationMixin):
         Returns:
             list[CryptoFastInfo]: List of top cryptocurrencies.
         """
-        return self.repository.fetch_top_cryptocurrencies(count)
+        return self.repository.get_top_cryptocurrencies(count)
 
     def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None):
         """
@@ -70,7 +73,7 @@ class CryptoService(ToolRegistrationMixin):
         Returns:
             str: Proxy value or description for the fear/greed index.
         """
-        return self.repository.fetch_crypto_fear_greed_proxy(tickers)
+        return self.repository.get_crypto_fear_greed_proxy(tickers, session=self.session)
 
 
 crypto_service = CryptoService()

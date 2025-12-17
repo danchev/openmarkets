@@ -53,35 +53,13 @@ def test_putoption_lasttradedate_accepts_pandas_timestamp():
 
 
 class DummyOptionsRepository(IOptionsRepository):
-    # Implement abstract methods to satisfy IOptionsRepository
-    def get_option_expiration_dates(self, ticker):
-        return self.fetch_option_expiration_dates(ticker)
-
-    def get_option_chain(self, ticker, expiration=None):
-        return self.fetch_option_chain(ticker, expiration)
-
-    def get_call_options(self, ticker, expiration=None):
-        return self.fetch_call_options(ticker, expiration)
-
-    def get_put_options(self, ticker, expiration=None):
-        return self.fetch_put_options(ticker, expiration)
-
-    def get_options_volume_analysis(self, ticker, expiration_date=None):
-        return self.fetch_options_volume_analysis(ticker, expiration_date)
-
-    async def get_options_by_moneyness(self, ticker, expiration_date=None, moneyness_range=0.1):
-        return await self.fetch_options_by_moneyness(ticker, expiration_date, moneyness_range)
-
-    async def get_options_skew(self, ticker, expiration_date=None):
-        return await self.fetch_options_skew(ticker, expiration_date)
-
-    def fetch_option_expiration_dates(self, ticker):
+    def get_option_expiration_dates(self, ticker, **kwargs):
         return [OptionExpirationDate(date=datetime(2025, 12, 19))]
 
-    def fetch_option_chain(self, ticker, expiration):
+    def get_option_chain(self, ticker, expiration, **kwargs):
         return OptionContractChain(calls=[], puts=[], underlying=None)
 
-    def fetch_call_options(self, ticker, expiration):
+    def get_call_options(self, ticker, expiration, **kwargs):
         return [
             CallOption(
                 contractSymbol="AAPL231215C00100000",
@@ -101,7 +79,7 @@ class DummyOptionsRepository(IOptionsRepository):
             )
         ]
 
-    def fetch_put_options(self, ticker, expiration):
+    def get_put_options(self, ticker, expiration, **kwargs):
         return [
             PutOption(
                 contractSymbol="AAPL231215P00100000",
@@ -121,13 +99,13 @@ class DummyOptionsRepository(IOptionsRepository):
             )
         ]
 
-    def fetch_options_volume_analysis(self, ticker, expiration_date):
+    def get_options_volume_analysis(self, ticker, expiration_date, **kwargs):
         return {"total_call_volume": 100, "total_put_volume": 50}
 
-    async def fetch_options_by_moneyness(self, ticker, expiration_date, moneyness_range):
+    async def get_options_by_moneyness(self, ticker, expiration_date, moneyness_range, **kwargs):
         return {"calls": [], "puts": []}
 
-    async def fetch_options_skew(self, ticker, expiration_date):
+    async def get_options_skew(self, ticker, expiration_date, **kwargs):
         return {"call_skew": [], "put_skew": []}
 
 

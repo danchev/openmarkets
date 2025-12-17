@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from curl_cffi.requests import Session
+
 from openmarkets.repositories.stock import IStockRepository, YFinanceStockRepository
 from openmarkets.schemas.stock import (
     CorporateActions,
@@ -19,7 +21,7 @@ class StockService(ToolRegistrationMixin):
     Provides methods to retrieve stock info, history, dividends, financial summaries, risk metrics, technical indicators, splits, corporate actions, and news for a given ticker.
     """
 
-    def __init__(self, repository: IStockRepository | None = None):
+    def __init__(self, repository: IStockRepository | None = None, session: Session | None = None):
         """
         Initialize the StockService with a repository dependency.
 
@@ -27,6 +29,7 @@ class StockService(ToolRegistrationMixin):
             repository (IStockRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceStockRepository()
+        self.session = session or Session()
 
     def get_fast_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockFastInfo:
         """
@@ -38,7 +41,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             StockFastInfo: Fast info data for the given ticker.
         """
-        return self.repository.fetch_fast_info(ticker)
+        return self.repository.get_fast_info(ticker, session=self.session)
 
     def get_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockInfo:
         """
@@ -50,7 +53,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             StockInfo: Detailed info data for the given ticker.
         """
-        return self.repository.fetch_info(ticker)
+        return self.repository.get_info(ticker, session=self.session)
 
     def get_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
         """
@@ -64,7 +67,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             list[StockHistory]: List of historical data points.
         """
-        return self.repository.fetch_history(ticker, period, interval)
+        return self.repository.get_history(ticker, period, interval, session=self.session)
 
     def get_dividends(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockDividends]:
         """
@@ -76,7 +79,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             list[StockDividends]: List of dividend records.
         """
-        return self.repository.fetch_dividends(ticker)
+        return self.repository.get_dividends(ticker, session=self.session)
 
     def get_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
@@ -88,7 +91,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             dict: Financial summary data.
         """
-        return self.repository.fetch_financial_summary(ticker)
+        return self.repository.get_financial_summary(ticker, session=self.session)
 
     def get_risk_metrics(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
@@ -100,7 +103,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             dict: Risk metrics data.
         """
-        return self.repository.fetch_risk_metrics(ticker)
+        return self.repository.get_risk_metrics(ticker, session=self.session)
 
     def get_dividend_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
@@ -112,7 +115,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             dict: Dividend summary data.
         """
-        return self.repository.fetch_dividend_summary(ticker)
+        return self.repository.get_dividend_summary(ticker, session=self.session)
 
     def get_price_target(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
@@ -124,7 +127,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             dict: Price target data.
         """
-        return self.repository.fetch_price_target(ticker)
+        return self.repository.get_price_target(ticker, session=self.session)
 
     def get_financial_summary_v2(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
@@ -136,7 +139,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             dict: Financial summary data (version 2).
         """
-        return self.repository.fetch_financial_summary_v2(ticker)
+        return self.repository.get_financial_summary_v2(ticker, session=self.session)
 
     def get_quick_technical_indicators(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
@@ -148,7 +151,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             dict: Technical indicators data.
         """
-        return self.repository.fetch_quick_technical_indicators(ticker)
+        return self.repository.get_quick_technical_indicators(ticker, session=self.session)
 
     def get_splits(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockSplit]:
         """
@@ -160,7 +163,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             list[StockSplit]: List of stock split records.
         """
-        return self.repository.fetch_splits(ticker)
+        return self.repository.get_splits(ticker, session=self.session)
 
     def get_corporate_actions(self, ticker: Annotated[str, "The symbol of the security."]) -> list[CorporateActions]:
         """
@@ -172,7 +175,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             list[CorporateActions]: List of corporate action records.
         """
-        return self.repository.fetch_corporate_actions(ticker)
+        return self.repository.get_corporate_actions(ticker, session=self.session)
 
     def get_news(self, ticker: Annotated[str, "The symbol of the security."]) -> list[NewsItem]:
         """
@@ -184,7 +187,7 @@ class StockService(ToolRegistrationMixin):
         Returns:
             list[NewsItem]: List of news items.
         """
-        return self.repository.fetch_news(ticker)
+        return self.repository.get_news(ticker, session=self.session)
 
 
 stock_service = StockService()
