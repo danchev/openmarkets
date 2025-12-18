@@ -26,6 +26,10 @@ This MCP server can be used with various LLM applications that support the Model
 - **Cursor**: AI-powered code editor with MCP support
 - **Custom MCP clients**: Any application implementing the MCP client specification
 
+## Installation
+
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/en-US/install-mcp?name=openmarkets&config=eyJjb21tYW5kIjoidXZ4IG9wZW5tYXJrZXRzQGxhdGVzdCJ9)
+
 ## Usage with Claude Desktop
 
 1. Install Claude Desktop from https://claude.ai/download
