@@ -43,8 +43,8 @@ class CryptoService(ToolRegistrationMixin):
 
         Args:
             ticker (str): The symbol of the cryptocurrency.
-            period (str, optional): Time period for history (e.g., '1y', '6mo'). Defaults to '1y'.
-            interval (str, optional): Data interval (e.g., '1d', '1h'). Defaults to '1d'.
+            period (str, optional): Time period for history. Valid periods: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max. Defaults to '1y'.
+            interval (str, optional): Data interval. Valid intervals: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo. Defaults to '1d'.
 
         Returns:
             list[CryptoHistory]: List of historical data points.
