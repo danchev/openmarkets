@@ -40,8 +40,10 @@ requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.24.0",
     "yfinance>=0.2.66",
+    "lxml>=6.0.2",
+    
 ]
-optional-dependencies = {"fastmcp" = ["fastmcp>=2.14.1",], "lxml" = ["lxml>=6.0.2",]}
+optional-dependencies = {"fastmcp" = ["fastmcp>=2.14.1"]}
 
 [project.urls]
 Homepage = "https://openmarkets.dev"
