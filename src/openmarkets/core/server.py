@@ -3,7 +3,6 @@ Open Markets Server
 
 Initializes and runs the Open Markets MCP server, handling tool registration
 and server lifecycle management.
-Follows Google Python Style Guide for documentation and formatting.
 """
 
 import logging

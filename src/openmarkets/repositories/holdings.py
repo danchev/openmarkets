@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Callable
 
 import yfinance as yf
 from curl_cffi.requests import Session
@@ -11,8 +10,6 @@ from openmarkets.schemas.holdings import (
     StockMajorHolders,
     StockMutualFundHoldings,
 )
-
-YFinanceClient = Callable[[str], yf.Ticker]
 
 
 class IHoldingsRepository(ABC):
