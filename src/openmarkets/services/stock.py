@@ -29,7 +29,7 @@ class StockService(ToolRegistrationMixin):
             repository (IStockRepository): The repository instance for data access.
         """
         self.repository = repository or YFinanceStockRepository()
-        self.session = session or Session()
+        self.session = session or Session(impersonate="chrome")
 
     def get_fast_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockFastInfo:
         """
