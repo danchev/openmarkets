@@ -83,6 +83,12 @@ class YFinanceStockRepository(IStockRepository):
     def get_history(
         self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
     ) -> list[StockHistory]:
+        if period not in ("1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"):
+            raise ValueError("Invalid period. Must be one of: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max.")
+        if interval not in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
+            raise ValueError(
+                "Invalid interval. Must be one of: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo."
+            )
         df: pd.DataFrame = yf.Ticker(ticker, session=session).history(period=period, interval=interval)
         df.reset_index(inplace=True)
         return [StockHistory(**row.to_dict()) for _, row in df.iterrows()]
