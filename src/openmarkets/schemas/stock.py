@@ -140,7 +140,7 @@ class StockInfo(BaseModel):
     lastSplitDate: datetime | None = Field(None, description="Last split date.")
     enterpriseToRevenue: float | None = Field(None, description="Enterprise to revenue ratio.")
     enterpriseToEbitda: float | None = Field(None, description="Enterprise to EBITDA ratio.")
-    FiftyTwoWeekChange: float | None = Field(None, alias="52WeekChange", description="52-week change.")
+    fiftyTwoWeekChange: float | None = Field(None, alias="52WeekChange", description="52-week change.")
     SandP52WeekChange: float | None = Field(None, description="S&P 52-week change.")
     lastDividendValue: float | None = Field(None, description="Last dividend value.")
     lastDividendDate: datetime | None = Field(None, description="Last dividend date.")
