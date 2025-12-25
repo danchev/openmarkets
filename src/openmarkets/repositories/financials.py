@@ -16,31 +16,33 @@ from openmarkets.schemas.financials import (
 
 class IFinancialsRepository(ABC):
     @abstractmethod
-    def get_balance_sheet(self, ticker: str) -> list[BalanceSheetEntry]:
+    def get_balance_sheet(self, ticker: str, session: Session | None = None) -> list[BalanceSheetEntry]:
         pass
 
     @abstractmethod
-    def get_income_statement(self, ticker: str) -> list[IncomeStatementEntry]:
+    def get_income_statement(self, ticker: str, session: Session | None = None) -> list[IncomeStatementEntry]:
         pass
 
     @abstractmethod
-    def get_ttm_income_statement(self, ticker: str) -> list[TTMIncomeStatementEntry]:
+    def get_ttm_income_statement(self, ticker: str, session: Session | None = None) -> list[TTMIncomeStatementEntry]:
         pass
 
     @abstractmethod
-    def get_ttm_cash_flow_statement(self, ticker: str) -> list[TTMCashFlowStatementEntry]:
+    def get_ttm_cash_flow_statement(
+        self, ticker: str, session: Session | None = None
+    ) -> list[TTMCashFlowStatementEntry]:
         pass
 
     @abstractmethod
-    def get_financial_calendar(self, ticker: str) -> FinancialCalendar:
+    def get_financial_calendar(self, ticker: str, session: Session | None = None) -> FinancialCalendar:
         pass
 
     @abstractmethod
-    def get_sec_filings(self, ticker: str) -> list[SecFilingRecord]:
+    def get_sec_filings(self, ticker: str, session: Session | None = None) -> list[SecFilingRecord]:
         pass
 
     @abstractmethod
-    def get_eps_history(self, ticker: str) -> list[EPSHistoryEntry]:
+    def get_eps_history(self, ticker: str, session: Session | None = None) -> list[EPSHistoryEntry]:
         pass
 
 

@@ -19,55 +19,57 @@ class IStockRepository(ABC):
     """Repository interface for stock data access."""
 
     @abstractmethod
-    def get_fast_info(self, ticker: str) -> StockFastInfo:
+    def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo:
         pass
 
     @abstractmethod
-    def get_info(self, ticker: str) -> StockInfo:
+    def get_info(self, ticker: str, session: Session | None = None) -> StockInfo:
         pass
 
     @abstractmethod
-    def get_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
+    def get_history(
+        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+    ) -> list[StockHistory]:
         pass
 
     @abstractmethod
-    def get_dividends(self, ticker: str) -> list[StockDividends]:
+    def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]:
         pass
 
     @abstractmethod
-    def get_financial_summary(self, ticker: str) -> dict:
+    def get_financial_summary(self, ticker: str, session: Session | None = None) -> dict:
         pass
 
     @abstractmethod
-    def get_risk_metrics(self, ticker: str) -> dict:
+    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> dict:
         pass
 
     @abstractmethod
-    def get_dividend_summary(self, ticker: str) -> dict:
+    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> dict:
         pass
 
     @abstractmethod
-    def get_price_target(self, ticker: str) -> dict:
+    def get_price_target(self, ticker: str, session: Session | None = None) -> dict:
         pass
 
     @abstractmethod
-    def get_financial_summary_v2(self, ticker: str) -> dict:
+    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
         pass
 
     @abstractmethod
-    def get_quick_technical_indicators(self, ticker: str) -> dict:
+    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:
         pass
 
     @abstractmethod
-    def get_splits(self, ticker: str) -> list[StockSplit]:
+    def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]:
         pass
 
     @abstractmethod
-    def get_corporate_actions(self, ticker: str) -> list[CorporateActions]:
+    def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]:
         pass
 
     @abstractmethod
-    def get_news(self, ticker: str) -> list[NewsItem]:
+    def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]:
         pass
 
 

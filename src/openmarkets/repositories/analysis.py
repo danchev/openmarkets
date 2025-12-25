@@ -18,31 +18,33 @@ class IAnalysisRepository(ABC):
     """Repository interface for analysis data access."""
 
     @abstractmethod
-    def get_analyst_recommendations(self, ticker: str) -> list[AnalystRecommendation]:
+    def get_analyst_recommendations(self, ticker: str, session: Session | None = None) -> list[AnalystRecommendation]:
         pass
 
     @abstractmethod
-    def get_recommendation_changes(self, ticker: str) -> list[AnalystRecommendationChange]:
+    def get_recommendation_changes(
+        self, ticker: str, session: Session | None = None
+    ) -> list[AnalystRecommendationChange]:
         pass
 
     @abstractmethod
-    def get_revenue_estimates(self, ticker: str) -> list[RevenueEstimate]:
+    def get_revenue_estimates(self, ticker: str, session: Session | None = None) -> list[RevenueEstimate]:
         pass
 
     @abstractmethod
-    def get_earnings_estimates(self, ticker: str) -> list[EarningsEstimate]:
+    def get_earnings_estimates(self, ticker: str, session: Session | None = None) -> list[EarningsEstimate]:
         pass
 
     @abstractmethod
-    def get_growth_estimates(self, ticker: str) -> list[GrowthEstimates]:
+    def get_growth_estimates(self, ticker: str, session: Session | None = None) -> list[GrowthEstimates]:
         pass
 
     @abstractmethod
-    def get_eps_trends(self, ticker: str) -> list[EPSTrend]:
+    def get_eps_trends(self, ticker: str, session: Session | None = None) -> list[EPSTrend]:
         pass
 
     @abstractmethod
-    def get_price_targets(self, ticker: str) -> AnalystPriceTargets:
+    def get_price_targets(self, ticker: str, session: Session | None = None) -> AnalystPriceTargets:
         pass
 
 

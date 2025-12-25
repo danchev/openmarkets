@@ -8,11 +8,11 @@ from openmarkets.schemas.markets import MarketStatus, MarketSummary, SummaryEntr
 
 class IMarketsRepository(ABC):
     @abstractmethod
-    def get_market_summary(self, market: str) -> MarketSummary:
+    def get_market_summary(self, market: str, session: Session | None = None) -> MarketSummary:
         pass
 
     @abstractmethod
-    def get_market_status(self, market: str) -> MarketStatus:
+    def get_market_status(self, market: str, session: Session | None = None) -> MarketStatus:
         pass
 
 

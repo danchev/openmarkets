@@ -19,55 +19,67 @@ from openmarkets.schemas.sector_industry import (
 
 class ISectorIndustryRepository(ABC):
     @abstractmethod
-    def get_sector_overview(self, sector: str) -> SectorOverview:
+    def get_sector_overview(self, sector: str, session: Session | None = None) -> SectorOverview:
         pass
 
     @abstractmethod
-    def get_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
+    def get_sector_overview_for_ticker(self, ticker: str, session: Session | None = None) -> SectorOverview:
         pass
 
     @abstractmethod
-    def get_sector_top_companies(self, sector: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies(self, sector: str, session: Session | None = None) -> list[SectorTopCompaniesEntry]:
         pass
 
     @abstractmethod
-    def get_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies_for_ticker(
+        self, ticker: str, session: Session | None = None
+    ) -> list[SectorTopCompaniesEntry]:
         pass
 
     @abstractmethod
-    def get_sector_top_etfs(self, sector: str) -> list[SectorTopETFsEntry]:
+    def get_sector_top_etfs(self, sector: str, session: Session | None = None) -> list[SectorTopETFsEntry]:
         pass
 
     @abstractmethod
-    def get_sector_top_mutual_funds(self, sector: str) -> list[SectorTopMutualFundsEntry]:
+    def get_sector_top_mutual_funds(
+        self, sector: str, session: Session | None = None
+    ) -> list[SectorTopMutualFundsEntry]:
         pass
 
     @abstractmethod
-    def get_sector_industries(self, sector: str) -> list[str]:
+    def get_sector_industries(self, sector: str, session: Session | None = None) -> list[str]:
         pass
 
     @abstractmethod
-    def get_sector_research_reports(self, sector: str) -> list[IndustryResearchReportEntry]:
+    def get_sector_research_reports(
+        self, sector: str, session: Session | None = None
+    ) -> list[IndustryResearchReportEntry]:
         pass
 
     @abstractmethod
-    def get_all_industries(self, sector: str | None = None) -> list[str]:
+    def get_all_industries(self, sector: str | None = None, session: Session | None = None) -> list[str]:
         pass
 
     @abstractmethod
-    def get_industry_overview(self, industry: str) -> IndustryOverview:
+    def get_industry_overview(self, industry: str, session: Session | None = None) -> IndustryOverview:
         pass
 
     @abstractmethod
-    def get_industry_top_companies(self, industry: str) -> list[IndustryTopCompaniesEntry]:
+    def get_industry_top_companies(
+        self, industry: str, session: Session | None = None
+    ) -> list[IndustryTopCompaniesEntry]:
         pass
 
     @abstractmethod
-    def get_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
+    def get_industry_top_growth_companies(
+        self, industry: str, session: Session | None = None
+    ) -> list[IndustryTopGrowthCompaniesEntry]:
         pass
 
     @abstractmethod
-    def get_industry_top_performing_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
+    def get_industry_top_performing_companies(
+        self, industry: str, session: Session | None = None
+    ) -> list[IndustryTopPerformingCompaniesEntry]:
         pass
 
 
@@ -81,7 +93,7 @@ class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
         sector = stock.info.get("sectorKey")
         if sector is None:
             raise ValueError(f"Sector not found for ticker: {ticker}")
-        return self.get_sector_overview(sector)
+        return self.get_sector_overview(sector, session=session)
 
     def get_sector_top_companies(self, sector: str, session: Session | None = None) -> list[SectorTopCompaniesEntry]:
         data = yf.Sector(sector, session=session).top_companies
@@ -96,7 +108,7 @@ class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
         sector = stock.info.get("sectorKey")
         if sector is None:
             raise ValueError(f"Sector not found for ticker: {ticker}")
-        return self.get_sector_top_companies(sector)
+        return self.get_sector_top_companies(sector, session=session)
 
     def get_sector_top_etfs(self, sector: str, session: Session | None = None) -> list[SectorTopETFsEntry]:
         data = yf.Sector(sector, session=session).top_etfs
@@ -108,7 +120,7 @@ class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
         data = yf.Sector(sector, session=session).top_mutual_funds
         return [SectorTopMutualFundsEntry(symbol=k, name=v) for k, v in data.items()]
 
-    def get_sector_industries(self, sector: str) -> list[str]:
+    def get_sector_industries(self, sector: str, session: Session | None = None) -> list[str]:
         return SECTOR_INDUSTRY_MAPPING.get(sector, [])
 
     def get_sector_research_reports(
@@ -119,7 +131,7 @@ class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
             return []
         return [IndustryResearchReportEntry(**entry) for entry in data]
 
-    def get_all_industries(self, sector: str | None = None) -> list[str]:
+    def get_all_industries(self, sector: str | None = None, session: Session | None = None) -> list[str]:
         if sector is not None:
             return sorted(SECTOR_INDUSTRY_MAPPING.get(sector, []))
         return sorted({industry for industries in SECTOR_INDUSTRY_MAPPING.values() for industry in industries})

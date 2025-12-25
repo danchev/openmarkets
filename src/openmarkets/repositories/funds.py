@@ -17,41 +17,43 @@ from openmarkets.schemas.funds import (
 
 class IFundsRepository(ABC):
     @abstractmethod
-    def get_fund_info(self, ticker: str) -> FundInfo:
+    def get_fund_info(self, ticker: str, session: Session | None = None) -> FundInfo:
         pass
 
     @abstractmethod
-    def get_fund_sector_weighting(self, ticker: str) -> FundSectorWeighting | None:
+    def get_fund_sector_weighting(self, ticker: str, session: Session | None = None) -> FundSectorWeighting | None:
         pass
 
     @abstractmethod
-    def get_fund_operations(self, ticker: str) -> FundOperations | None:
+    def get_fund_operations(self, ticker: str, session: Session | None = None) -> FundOperations | None:
         pass
 
     @abstractmethod
-    def get_fund_overview(self, ticker: str) -> FundOverview | None:
+    def get_fund_overview(self, ticker: str, session: Session | None = None) -> FundOverview | None:
         pass
 
     @abstractmethod
-    def get_fund_top_holdings(self, ticker: str) -> list[FundTopHolding]:
+    def get_fund_top_holdings(self, ticker: str, session: Session | None = None) -> list[FundTopHolding]:
         pass
 
     @abstractmethod
-    def get_fund_bond_holdings(self, ticker: str) -> list[FundBondHolding]:
+    def get_fund_bond_holdings(self, ticker: str, session: Session | None = None) -> list[FundBondHolding]:
         pass
 
     @abstractmethod
-    def get_fund_equity_holdings(self, ticker: str) -> list[FundEquityHolding]:
+    def get_fund_equity_holdings(self, ticker: str, session: Session | None = None) -> list[FundEquityHolding]:
         pass
 
     @abstractmethod
-    def get_fund_asset_class_holdings(self, ticker: str) -> FundAssetClassHolding | None:
+    def get_fund_asset_class_holdings(
+        self, ticker: str, session: Session | None = None
+    ) -> FundAssetClassHolding | None:
         pass
 
 
 class YFinanceFundsRepository(IFundsRepository):
     def get_fund_info(self, ticker: str, session: Session | None = None) -> FundInfo:
-        fund_ticker = yf.Ticker(ticker, session=self.session)
+        fund_ticker = yf.Ticker(ticker, session=session)
         fund_info = fund_ticker.info
         return FundInfo(**fund_info)
 

@@ -9,19 +9,21 @@ from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
 
 class ICryptoRepository(ABC):
     @abstractmethod
-    def get_crypto_info(self, ticker: str) -> CryptoFastInfo:
+    def get_crypto_info(self, ticker: str, session: Session | None = None) -> CryptoFastInfo:
         pass
 
     @abstractmethod
-    def get_crypto_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[CryptoHistory]:
+    def get_crypto_history(
+        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+    ) -> list[CryptoHistory]:
         pass
 
     @abstractmethod
-    def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
+    def get_top_cryptocurrencies(self, count: int = 10, session: Session | None = None) -> list[CryptoFastInfo]:
         pass
 
     @abstractmethod
-    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> dict:
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None, session: Session | None = None) -> dict:
         pass
 
 
@@ -49,11 +51,12 @@ class YFinanceCryptoRepository(ICryptoRepository):
         df.reset_index(inplace=True)
         return [CryptoHistory(**row.to_dict()) for _, row in df.iterrows()]
 
-    def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
+    def get_top_cryptocurrencies(self, count: int = 10, session: Session | None = None) -> list[CryptoFastInfo]:
         selected_cryptos = TOP_CRYPTO_TICKERS[: min(count, 20)]
-        return [self.fetch_crypto_info(crypto) for crypto in selected_cryptos]
+        # reuse get_crypto_info and forward session
+        return [self.get_crypto_info(crypto, session=session) for crypto in selected_cryptos]
 
-    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> dict:
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None, session: Session | None = None) -> dict:
         if tickers is None:
             tickers = DEFAULT_SENTIMENT_TICKERS
         try:
@@ -61,7 +64,7 @@ class YFinanceCryptoRepository(ICryptoRepository):
             total_change = 0
             valid_cryptos = 0
             for crypto in tickers:
-                ticker = yf.Ticker(crypto)
+                ticker = yf.Ticker(crypto, session=session)
                 hist = ticker.history(period="7d")
                 if len(hist) >= 2:
                     weekly_change = ((hist.iloc[-1]["Close"] - hist.iloc[0]["Close"]) / hist.iloc[0]["Close"]) * 100

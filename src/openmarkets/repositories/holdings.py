@@ -14,23 +14,25 @@ from openmarkets.schemas.holdings import (
 
 class IHoldingsRepository(ABC):
     @abstractmethod
-    def get_major_holders(self, ticker: str) -> list[StockMajorHolders]:
+    def get_major_holders(self, ticker: str, session: Session | None = None) -> list[StockMajorHolders]:
         pass
 
     @abstractmethod
-    def get_institutional_holdings(self, ticker: str) -> list[StockInstitutionalHoldings]:
+    def get_institutional_holdings(
+        self, ticker: str, session: Session | None = None
+    ) -> list[StockInstitutionalHoldings]:
         pass
 
     @abstractmethod
-    def get_mutual_fund_holdings(self, ticker: str) -> list[StockMutualFundHoldings]:
+    def get_mutual_fund_holdings(self, ticker: str, session: Session | None = None) -> list[StockMutualFundHoldings]:
         pass
 
     @abstractmethod
-    def get_insider_purchases(self, ticker: str) -> list[InsiderPurchase]:
+    def get_insider_purchases(self, ticker: str, session: Session | None = None) -> list[InsiderPurchase]:
         pass
 
     @abstractmethod
-    def get_insider_roster_holders(self, ticker: str) -> list[InsiderRosterHolder]:
+    def get_insider_roster_holders(self, ticker: str, session: Session | None = None) -> list[InsiderRosterHolder]:
         pass
 
 

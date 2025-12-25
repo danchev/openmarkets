@@ -103,7 +103,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_options_volume_analysis(ticker, expiration_date, session=self.session)
 
-    async def get_options_by_moneyness(
+    def get_options_by_moneyness(
         self,
         ticker: Annotated[str, "The symbol of the security."],
         expiration_date: str | None = None,
@@ -120,11 +120,9 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             dict: Options data filtered by moneyness.
         """
-        return await self.repository.get_options_by_moneyness(
-            ticker, expiration_date, moneyness_range, session=self.session
-        )
+        return self.repository.get_options_by_moneyness(ticker, expiration_date, moneyness_range, session=self.session)
 
-    async def get_options_skew(
+    def get_options_skew(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
     ) -> dict:
         """
@@ -137,7 +135,7 @@ class OptionsService(ToolRegistrationMixin):
         Returns:
             dict: Options skew analysis data.
         """
-        return await self.repository.get_options_skew(ticker, expiration_date, session=self.session)
+        return self.repository.get_options_skew(ticker, expiration_date, session=self.session)
 
 
 options_service = OptionsService()

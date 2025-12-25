@@ -265,7 +265,7 @@ class IndustryResearchReportEntry(BaseModel):
     id: str = Field(..., description="Research report ID")
     head_html: str = Field(..., description="Research report headline", alias="headHtml")
     provider: str = Field(..., description="Research report provider")
-    target_price: float | None = Field(None, description="Target price", alias="targetPrice")
+    target_price: float | str | None = Field(None, description="Target price", alias="targetPrice")
     target_price_status: str | None = Field(None, description="Target price status", alias="targetPriceStatus")
     investment_rating: str | None = Field(None, description="Investment rating", alias="investmentRating")
     report_date: str | None = Field(None, description="Report date", alias="reportDate")

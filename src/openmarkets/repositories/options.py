@@ -15,33 +15,45 @@ from openmarkets.schemas.options import (
 
 class IOptionsRepository(ABC):
     @abstractmethod
-    def get_option_expiration_dates(self, ticker: str) -> list[OptionExpirationDate]:
+    def get_option_expiration_dates(self, ticker: str, session: Session | None = None) -> list[OptionExpirationDate]:
         pass
 
     @abstractmethod
-    def get_option_chain(self, ticker: str, expiration: date | None = None) -> OptionContractChain:
+    def get_option_chain(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> OptionContractChain:
         pass
 
     @abstractmethod
-    def get_call_options(self, ticker: str, expiration: date | None = None) -> list[CallOption] | None:
+    def get_call_options(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> list[CallOption] | None:
         pass
 
     @abstractmethod
-    def get_put_options(self, ticker: str, expiration: date | None = None) -> list[PutOption] | None:
+    def get_put_options(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> list[PutOption] | None:
         pass
 
     @abstractmethod
-    def get_options_volume_analysis(self, ticker: str, expiration_date: str | None = None) -> dict:
-        pass
-
-    @abstractmethod
-    async def get_options_by_moneyness(
-        self, ticker: str, expiration_date: str | None = None, moneyness_range: float = 0.1
+    def get_options_volume_analysis(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
     ) -> dict:
         pass
 
     @abstractmethod
-    async def get_options_skew(self, ticker: str, expiration_date: str | None = None) -> dict:
+    def get_options_by_moneyness(
+        self,
+        ticker: str,
+        expiration_date: str | None = None,
+        moneyness_range: float = 0.1,
+        session: Session | None = None,
+    ) -> dict:
+        pass
+
+    @abstractmethod
+    def get_options_skew(self, ticker: str, expiration_date: str | None = None, session: Session | None = None) -> dict:
         pass
 
 
@@ -106,7 +118,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
         }
         return analysis
 
-    async def get_options_by_moneyness(
+    def get_options_by_moneyness(
         self,
         ticker: str,
         expiration_date: str | None = None,
@@ -138,9 +150,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
         }
         return result
 
-    async def get_options_skew(
-        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
-    ) -> dict:
+    def get_options_skew(self, ticker: str, expiration_date: str | None = None, session: Session | None = None) -> dict:
         stock = yf.Ticker(ticker, session=session)
         if not expiration_date:
             expirations = stock.options

@@ -12,15 +12,21 @@ from openmarkets.schemas.technical_analysis import (
 
 class ITechnicalAnalysisRepository(ABC):
     @abstractmethod
-    def get_technical_indicators(self, ticker: str, period: str = "6mo") -> TechnicalIndicatorsDict:
+    def get_technical_indicators(
+        self, ticker: str, period: str = "6mo", session: Session | None = None
+    ) -> TechnicalIndicatorsDict:
         pass
 
     @abstractmethod
-    def get_volatility_metrics(self, ticker: str, period: str = "1y") -> VolatilityMetricsDict:
+    def get_volatility_metrics(
+        self, ticker: str, period: str = "1y", session: Session | None = None
+    ) -> VolatilityMetricsDict:
         pass
 
     @abstractmethod
-    def get_support_resistance_levels(self, ticker: str, period: str = "6mo") -> SupportResistanceLevelsDict:
+    def get_support_resistance_levels(
+        self, ticker: str, period: str = "6mo", session: Session | None = None
+    ) -> SupportResistanceLevelsDict:
         pass
 
 
