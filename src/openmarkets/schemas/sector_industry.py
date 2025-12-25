@@ -1,44 +1,3 @@
-"""
-import yfinance as yf
-
-tech = yf.Sector('technology')
-software = yf.Industry('software-infrastructure')
-
-# Common information
-tech.key
-tech.name
-tech.symbol
-tech.ticker
-tech.overview
-tech.top_companies
-tech.research_reports
-
-# Sector information
-tech.top_etfs
-tech.top_mutual_funds
-tech.industries
-
-# Industry information
-software.sector_key
-software.sector_name
-software.top_performing_companies
-software.top_growth_companies
-
-The modules can be chained with Ticker as below.
-
-import yfinance as yf
-# Ticker to Sector and Industry
-msft = yf.Ticker('MSFT')
-tech = yf.Sector(msft.info.get('sectorKey'))
-software = yf.Industry(msft.info.get('industryKey'))
-
-# Sector and Industry to Ticker
-tech_ticker = tech.ticker
-tech_ticker.info
-software_ticker = software.ticker
-software_ticker.history()
-"""
-
 from enum import Enum
 
 from pydantic import BaseModel, Field, field_validator
@@ -332,3 +291,15 @@ class IndustryTopGrowthCompaniesEntry(BaseModel):
     name: str = Field(..., description="Company name")
     ytd_return: float = Field(..., description="Year-to-date return", alias="ytd return")
     growth_estimate: float = Field(..., description="Growth Estimate", alias="growth estimate")
+
+
+class IndustryTopPerformingCompaniesEntry(BaseModel):
+    """
+    Industry Top Growth Companies Entry Schema
+    """
+
+    symbol: str = Field(..., description="Company ticker symbol")
+    name: str = Field(..., description="Company name")
+    ytd_return: float = Field(..., description="Year-to-date return", alias="ytd return")
+    last_price: float = Field(..., description="Last Price", alias="last price")
+    target_price: float = Field(..., description="Target Price", alias="target price")

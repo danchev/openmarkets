@@ -9,6 +9,7 @@ from openmarkets.schemas.sector_industry import (
     IndustryResearchReportEntry,
     IndustryTopCompaniesEntry,
     IndustryTopGrowthCompaniesEntry,
+    IndustryTopPerformingCompaniesEntry,
     SectorOverview,
     SectorTopCompaniesEntry,
     SectorTopETFsEntry,
@@ -63,6 +64,10 @@ class ISectorIndustryRepository(ABC):
 
     @abstractmethod
     def get_industry_top_growth_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
+        pass
+
+    @abstractmethod
+    def get_industry_top_performing_companies(self, industry: str) -> list[IndustryTopGrowthCompaniesEntry]:
         pass
 
 
@@ -138,3 +143,11 @@ class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
         if data is None:
             return []
         return [IndustryTopGrowthCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]
+
+    def get_industry_top_performing_companies(
+        self, industry: str, session: Session | None = None
+    ) -> list[IndustryTopPerformingCompaniesEntry]:
+        data = yf.Industry(industry, session=session).top_performing_companies
+        if data is None:
+            return []
+        return [IndustryTopPerformingCompaniesEntry(**row.to_dict()) for _, row in data.reset_index().iterrows()]

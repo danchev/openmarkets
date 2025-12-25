@@ -39,7 +39,7 @@ license = { text = "AGPL-3.0-or-later" }
 requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.24.0",
-    "yfinance>=0.2.66",
+    "yfinance>=1.0.0",
     "lxml>=6.0.2",
     
 ]

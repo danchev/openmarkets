@@ -6,6 +6,7 @@ from openmarkets.schemas.sector_industry import (
     IndustryResearchReportEntry,
     IndustryTopCompaniesEntry,
     IndustryTopGrowthCompaniesEntry,
+    IndustryTopPerformingCompaniesEntry,
     SectorEnum,
     SectorOverview,
     SectorTopCompaniesEntry,
@@ -165,6 +166,17 @@ class SectorIndustryService(ToolRegistrationMixin):
             list[IndustryTopGrowthCompaniesEntry]: A list of top growth companies in the industry.
         """
         return self.repository.get_industry_top_growth_companies(industry)
+
+    def get_industry_top_performing_companies(self, industry: str) -> list[IndustryTopPerformingCompaniesEntry]:
+        """
+        Retrieve a list of top performing companies within a specific industry.
+
+        Args:
+            industry (str): The name of the industry.
+        Returns:
+            list[IndustryTopPerformingCompaniesEntry]: A list of top growth companies in the industry.
+        """
+        return self.repository.get_industry_top_performing_companies(industry)
 
 
 sector_industry_service = SectorIndustryService()
