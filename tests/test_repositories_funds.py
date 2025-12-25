@@ -138,11 +138,11 @@ def test_get_fund_overview_and_asset_classes_and_top_holdings_and_bond_equity_ho
     )
 
     ov = repo.get_fund_overview("F")
-    assert ov.categoryName == "cat"
+    assert ov.category_name == "cat"
 
     top = repo.get_fund_top_holdings("F")
     assert len(top) == 1
-    assert top[0].Symbol == "A"
+    assert top[0].symbol == "A"
 
     bond = repo.get_fund_bond_holdings("F")
     assert len(bond) == 1
@@ -154,4 +154,4 @@ def test_get_fund_overview_and_asset_classes_and_top_holdings_and_bond_equity_ho
 
     ac = repo.get_fund_asset_class_holdings("F")
     assert isinstance(ac, FundAssetClassHolding)
-    assert ac.cashPosition == 1.0
+    assert ac.cash_position == 1.0

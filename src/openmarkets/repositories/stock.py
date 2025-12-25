@@ -164,28 +164,28 @@ class YFinanceStockRepository(IStockRepository):
             Dictionary containing financial summary metrics.
         """
         include_fields: set[str] = {
-            "totalRevenue",
-            "revenueGrowth",
-            "grossProfits",
-            "grossMargins",
-            "operatingMargins",
-            "profitMargins",
-            "operatingCashflow",
-            "freeCashflow",
-            "totalCash",
-            "totalDebt",
-            "totalCashPerShare",
-            "earningsGrowth",
-            "currentRatio",
-            "quickRatio",
-            "returnOnAssets",
-            "returnOnEquity",
-            "debtToEquity",
+            "total_revenue",
+            "revenue_growth",
+            "gross_profits",
+            "gross_margins",
+            "operating_margins",
+            "profit_margins",
+            "operating_cashflow",
+            "free_cashflow",
+            "total_cash",
+            "total_debt",
+            "total_cash_per_share",
+            "earnings_growth",
+            "current_ratio",
+            "quick_ratio",
+            "return_on_assets",
+            "return_on_equity",
+            "debt_to_equity",
         }
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields)
+        return stock_info.model_dump(include=include_fields, by_alias=True)
 
     def get_risk_metrics(self, ticker: str, session: Session | None = None) -> dict:
         """Retrieve risk metrics for a stock ticker.
@@ -198,18 +198,18 @@ class YFinanceStockRepository(IStockRepository):
             Dictionary containing risk metrics.
         """
         include_fields: set[str] = {
-            "auditRisk",
-            "boardRisk",
-            "compensationRisk",
-            "financialRisk",
-            "governanceRisk",
-            "overallRisk",
-            "shareHolderRightsRisk",
+            "audit_risk",
+            "board_risk",
+            "compensation_risk",
+            "financial_risk",
+            "governance_risk",
+            "overall_risk",
+            "share_holder_rights_risk",
         }
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields)
+        return stock_info.model_dump(include=include_fields, by_alias=True)
 
     def get_dividend_summary(self, ticker: str, session: Session | None = None) -> dict:
         """Retrieve dividend summary for a stock ticker.
@@ -222,20 +222,20 @@ class YFinanceStockRepository(IStockRepository):
             Dictionary containing dividend metrics.
         """
         include_fields: set[str] = {
-            "dividendRate",
-            "dividendYield",
-            "payoutRatio",
-            "fiveYearAvgDividendYield",
-            "trailingAnnualDividendRate",
-            "trailingAnnualDividendYield",
-            "exDividendDate",
-            "lastDividendDate",
-            "lastDividendValue",
+            "dividend_rate",
+            "dividend_yield",
+            "payout_ratio",
+            "five_year_avg_dividend_yield",
+            "trailing_annual_dividend_rate",
+            "trailing_annual_dividend_yield",
+            "ex_dividend_date",
+            "last_dividend_date",
+            "last_dividend_value",
         }
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields)
+        return stock_info.model_dump(include=include_fields, by_alias=True)
 
     def get_price_target(self, ticker: str, session: Session | None = None) -> dict:
         """Retrieve analyst price targets for a stock ticker.
@@ -248,18 +248,18 @@ class YFinanceStockRepository(IStockRepository):
             Dictionary containing price target data.
         """
         include_fields: set[str] = {
-            "targetHighPrice",
-            "targetLowPrice",
-            "targetMeanPrice",
-            "targetMedianPrice",
-            "recommendationMean",
-            "recommendationKey",
-            "numberOfAnalystOpinions",
+            "target_high_price",
+            "target_low_price",
+            "target_mean_price",
+            "target_median_price",
+            "recommendation_mean",
+            "recommendation_key",
+            "number_of_analyst_opinions",
         }
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields)
+        return stock_info.model_dump(include=include_fields, by_alias=True)
 
     def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
         """Retrieve extended financial summary metrics for a stock ticker.
@@ -272,35 +272,35 @@ class YFinanceStockRepository(IStockRepository):
             Dictionary containing extended financial metrics.
         """
         include_fields: set[str] = {
-            "marketCap",
-            "enterpriseValue",
-            "floatShares",
-            "sharesOutstanding",
-            "sharesShort",
-            "bookValue",
-            "priceToBook",
-            "totalRevenue",
-            "revenueGrowth",
-            "grossProfits",
-            "grossMargins",
-            "operatingMargins",
-            "profitMargins",
-            "operatingCashflow",
-            "freeCashflow",
-            "totalCash",
-            "totalDebt",
-            "totalCashPerShare",
-            "earningsGrowth",
-            "currentRatio",
-            "quickRatio",
-            "returnOnAssets",
-            "returnOnEquity",
-            "debtToEquity",
+            "market_cap",
+            "enterprise_value",
+            "float_shares",
+            "shares_outstanding",
+            "shares_short",
+            "book_value",
+            "price_to_book",
+            "total_revenue",
+            "revenue_growth",
+            "gross_profits",
+            "gross_margins",
+            "operating_margins",
+            "profit_margins",
+            "operating_cashflow",
+            "free_cashflow",
+            "total_cash",
+            "total_debt",
+            "total_cash_per_share",
+            "earnings_growth",
+            "current_ratio",
+            "quick_ratio",
+            "return_on_assets",
+            "return_on_equity",
+            "debt_to_equity",
         }
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields)
+        return stock_info.model_dump(include=include_fields, by_alias=True)
 
     def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:
         """Retrieve quick technical indicators for a stock ticker.
@@ -313,20 +313,20 @@ class YFinanceStockRepository(IStockRepository):
             Dictionary containing technical indicators.
         """
         include_fields: set[str] = {
-            "currentPrice",
-            "fiftyDayAverage",
-            "twoHundredDayAverage",
-            "fiftyDayAverageChange",
-            "fiftyDayAverageChangePercent",
-            "twoHundredDayAverageChange",
-            "twoHundredDayAverageChangePercent",
-            "fiftyTwoWeekLow",
-            "fiftyTwoWeekHigh",
+            "current_price",
+            "fifty_day_average",
+            "two_hundred_day_average",
+            "fifty_day_average_change",
+            "fifty_day_average_change_percent",
+            "two_hundred_day_average_change",
+            "two_hundred_day_average_change_percent",
+            "fifty_two_week_low",
+            "fifty_two_week_high",
         }
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields)
+        return stock_info.model_dump(include=include_fields, by_alias=True)
 
     def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]:
         """Retrieve stock split history for a ticker.

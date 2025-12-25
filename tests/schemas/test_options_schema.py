@@ -21,7 +21,7 @@ def test_calloption_lasttradedate_accepts_datetime():
         contractSize="REGULAR",
         currency="USD",
     )
-    assert call.lastTradeDate == dt
+    assert call.last_trade_date == dt
 
 
 def test_calloption_lasttradedate_accepts_str():
@@ -43,8 +43,8 @@ def test_calloption_lasttradedate_accepts_str():
         contractSize="REGULAR",
         currency="USD",
     )
-    assert isinstance(call.lastTradeDate, datetime)
-    assert call.lastTradeDate == datetime(2025, 12, 18)
+    assert isinstance(call.last_trade_date, datetime)
+    assert call.last_trade_date == datetime(2025, 12, 18)
 
 
 def test_putoption_lasttradedate_accepts_datetime():
@@ -65,7 +65,7 @@ def test_putoption_lasttradedate_accepts_datetime():
         contractSize="REGULAR",
         currency="USD",
     )
-    assert put.lastTradeDate == dt
+    assert put.last_trade_date == dt
 
 
 def test_putoption_lasttradedate_accepts_str():
@@ -86,5 +86,5 @@ def test_putoption_lasttradedate_accepts_str():
         contractSize="REGULAR",
         currency="USD",
     )
-    assert isinstance(put.lastTradeDate, datetime)
-    assert put.lastTradeDate == datetime(2025, 12, 18)
+    assert isinstance(put.last_trade_date, datetime)
+    assert put.last_trade_date == datetime(2025, 12, 18)

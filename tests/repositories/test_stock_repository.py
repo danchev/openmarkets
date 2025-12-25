@@ -26,7 +26,7 @@ class TestYFinanceStockRepository:
         self.repo = YFinanceStockRepository()
         self.ticker = "AAPL"
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_fast_info(self, mock_ticker):
         mock_ticker.return_value.fast_info = {
             "currency": "USD",
@@ -54,14 +54,14 @@ class TestYFinanceStockRepository:
         assert isinstance(result, StockFastInfo)
         assert result.currency == "USD"
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_info(self, mock_ticker):
         mock_ticker.return_value.info = {"currency": "USD", "marketCap": 2000000000}
         result = self.repo.get_info(self.ticker)
         assert isinstance(result, StockInfo)
         assert result.currency == "USD"
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_history(self, mock_ticker):
         df = pd.DataFrame(
             {
@@ -80,7 +80,7 @@ class TestYFinanceStockRepository:
         assert isinstance(result, list)
         assert isinstance(result[0], StockHistory)
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_dividends(self, mock_ticker):
         # Provide a string date and float dividend to match StockDividends fields
         mock_ticker.return_value.dividends.to_dict.return_value = {"2023-01-01": 0.5}
@@ -88,14 +88,14 @@ class TestYFinanceStockRepository:
         assert isinstance(result, list)
         assert isinstance(result[0], StockDividends)
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_splits(self, mock_ticker):
         mock_ticker.return_value.splits.items.return_value = [("2023-01-01", 2)]
         result = self.repo.get_splits(self.ticker)
         assert isinstance(result, list)
         assert isinstance(result[0], StockSplit)
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_news(self, mock_ticker):
         # NewsItem requires 'id' and 'content' fields
         mock_ticker.return_value.news = [
@@ -105,7 +105,7 @@ class TestYFinanceStockRepository:
         assert isinstance(result, list)
         assert isinstance(result[0], NewsItem)
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_corporate_actions(self, mock_ticker):
         # CorporateActions requires 'Date' field (datetime or string)
         mock_df = MagicMock()
@@ -117,42 +117,42 @@ class TestYFinanceStockRepository:
         assert isinstance(result, list)
         assert isinstance(result[0], CorporateActions)
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_financial_summary(self, mock_ticker):
         mock_ticker.return_value.info = {"totalRevenue": 100, "revenueGrowth": 0.1}
         result = self.repo.get_financial_summary(self.ticker)
         assert isinstance(result, dict)
         assert "totalRevenue" in result
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_risk_metrics(self, mock_ticker):
         mock_ticker.return_value.info = {"auditRisk": 1, "boardRisk": 2}
         result = self.repo.get_risk_metrics(self.ticker)
         assert isinstance(result, dict)
         assert "auditRisk" in result
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_dividend_summary(self, mock_ticker):
         mock_ticker.return_value.info = {"dividendRate": 1.5, "dividendYield": 0.02}
         result = self.repo.get_dividend_summary(self.ticker)
         assert isinstance(result, dict)
         assert "dividendRate" in result
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_price_target(self, mock_ticker):
         mock_ticker.return_value.info = {"targetHighPrice": 200.0, "targetLowPrice": 150.0}
         result = self.repo.get_price_target(self.ticker)
         assert isinstance(result, dict)
         assert "targetHighPrice" in result
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_financial_summary_v2(self, mock_ticker):
         mock_ticker.return_value.info = {"marketCap": 1000000000, "enterpriseValue": 900000000}
         result = self.repo.get_financial_summary_v2(self.ticker)
         assert isinstance(result, dict)
         assert "marketCap" in result
 
-    @patch("yfinance.Ticker")
+    @patch("openmarkets.repositories.stock.yf.Ticker")
     def test_get_quick_technical_indicators(self, mock_ticker):
         mock_ticker.return_value.info = {"currentPrice": 150.0, "fiftyDayAverage": 148.0}
         result = self.repo.get_quick_technical_indicators(self.ticker)

@@ -26,11 +26,11 @@ def test_calloption_lasttradedate_accepts_pandas_timestamp():
         contractSize="REGULAR",
         currency="USD",
     )
-    assert isinstance(call.lastTradeDate, datetime)
-    assert call.lastTradeDate == datetime(2025, 12, 18)
+    assert isinstance(call.last_trade_date, datetime)
+    assert call.last_trade_date == datetime(2025, 12, 18)
 
 
-def test_putoption_lasttradedate_accepts_pandas_timestamp():
+def test_putoption_last_trade_date_accepts_pandas_timestamp():
     ts = pd.Timestamp("2025-12-18T00:00:00")
     put = PutOption(
         contractSymbol="AAPL231215P00100000",
@@ -48,8 +48,8 @@ def test_putoption_lasttradedate_accepts_pandas_timestamp():
         contractSize="REGULAR",
         currency="USD",
     )
-    assert isinstance(put.lastTradeDate, datetime)
-    assert put.lastTradeDate == datetime(2025, 12, 18)
+    assert isinstance(put.last_trade_date, datetime)
+    assert put.last_trade_date == datetime(2025, 12, 18)
 
 
 class DummyOptionsRepository(IOptionsRepository):

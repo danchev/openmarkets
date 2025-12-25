@@ -23,7 +23,7 @@ def test_parse_last_trade_date_with_timestamp():
         currency="USD",
     )
 
-    assert isinstance(c.lastTradeDate, datetime)
+    assert isinstance(c.last_trade_date, datetime)
 
 
 def test_parse_last_trade_date_with_datetime_passes_through():
@@ -44,7 +44,7 @@ def test_parse_last_trade_date_with_datetime_passes_through():
         currency="USD",
     )
 
-    assert p.lastTradeDate is dt
+    assert p.last_trade_date is dt
 
 
 def test_option_expiration_date_alias():
