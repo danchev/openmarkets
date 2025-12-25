@@ -1,11 +1,12 @@
 import pandas as pd
 from yfinance import utils as utils
+from yfinance.config import YfConfig as YfConfig
 from yfinance.const import quote_summary_valid_modules as quote_summary_valid_modules
 from yfinance.data import YfData as YfData
 from yfinance.exceptions import YFException as YFException
 
 class Analysis:
-    def __init__(self, data: YfData, symbol: str, proxy=...) -> None: ...
+    def __init__(self, data: YfData, symbol: str) -> None: ...
     @property
     def earnings_estimate(self) -> pd.DataFrame: ...
     @property

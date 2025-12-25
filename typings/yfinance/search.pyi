@@ -1,7 +1,9 @@
 from _typeshed import Incomplete
 
 from . import utils as utils
+from .config import YfConfig as YfConfig
 from .data import YfData as YfData
+from .exceptions import YFDataException as YFDataException
 
 class Search:
     session: Incomplete
@@ -29,8 +31,7 @@ class Search:
         include_cultural_assets: bool = False,
         enable_fuzzy_query: bool = False,
         recommended: int = 8,
-        session: Incomplete | None = None,
-        proxy=...,
+        session=None,
         timeout: int = 30,
         raise_errors: bool = True,
     ) -> None: ...

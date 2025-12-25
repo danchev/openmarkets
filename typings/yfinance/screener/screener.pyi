@@ -23,6 +23,5 @@ def screen(
     sortAsc: bool = None,
     userId: str = None,
     userIdType: str = None,
-    session: Incomplete | None = None,
-    proxy=...,
+    session=None,
 ): ...

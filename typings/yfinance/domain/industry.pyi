@@ -1,12 +1,12 @@
 import pandas as _pd
-from _typeshed import Incomplete
 
 from .. import utils as utils
+from ..config import YfConfig as YfConfig
 from ..data import YfData as YfData
 from .domain import Domain as Domain
 
 class Industry(Domain):
-    def __init__(self, key, session: Incomplete | None = None, proxy=...) -> None: ...
+    def __init__(self, key, session=None) -> None: ...
     @property
     def sector_key(self) -> str: ...
     @property

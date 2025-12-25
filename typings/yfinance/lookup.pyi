@@ -2,8 +2,9 @@ import pandas as pd
 from _typeshed import Incomplete
 
 from . import utils as utils
+from .config import YfConfig as YfConfig
 from .data import YfData as YfData
-from .exceptions import YFException as YFException
+from .exceptions import YFDataException as YFDataException
 
 LOOKUP_TYPES: Incomplete
 
@@ -12,9 +13,7 @@ class Lookup:
     query: Incomplete
     timeout: Incomplete
     raise_errors: Incomplete
-    def __init__(
-        self, query: str, session: Incomplete | None = None, proxy=..., timeout: int = 30, raise_errors: bool = True
-    ) -> None: ...
+    def __init__(self, query: str, session=None, timeout: int = 30, raise_errors: bool = True) -> None: ...
     def get_all(self, count: int = 25) -> pd.DataFrame: ...
     def get_stock(self, count: int = 25) -> pd.DataFrame: ...
     def get_mutualfund(self, count: int = 25) -> pd.DataFrame: ...

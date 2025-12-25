@@ -1,4 +1,5 @@
 from .cache import set_tz_cache_location as set_tz_cache_location
+from .calendars import Calendars as Calendars
 from .domain.industry import Industry as Industry
 from .domain.market import Market as Market
 from .domain.sector import Sector as Sector
@@ -28,6 +29,7 @@ __all__ = [
     "Industry",
     "WebSocket",
     "AsyncWebSocket",
+    "Calendars",
     "EquityQuery",
     "FundQuery",
     "screen",
@@ -35,4 +37,4 @@ __all__ = [
     "set_config",
 ]
 
-def set_config(proxy=...) -> None: ...
+def set_config(proxy=..., retries=...) -> None: ...

@@ -9,18 +9,17 @@ class Tickers:
     symbols: Incomplete
     tickers: Incomplete
     ws: Incomplete
-    def __init__(self, tickers, session: Incomplete | None = None) -> None: ...
+    def __init__(self, tickers, session=None) -> None: ...
     def history(
         self,
-        period: str = "1mo",
+        period=None,
         interval: str = "1d",
-        start: Incomplete | None = None,
-        end: Incomplete | None = None,
+        start=None,
+        end=None,
         prepost: bool = False,
         actions: bool = True,
         auto_adjust: bool = True,
         repair: bool = False,
-        proxy=...,
         threads: bool = True,
         group_by: str = "column",
         progress: bool = True,
@@ -29,15 +28,14 @@ class Tickers:
     ): ...
     def download(
         self,
-        period: str = "1mo",
+        period=None,
         interval: str = "1d",
-        start: Incomplete | None = None,
-        end: Incomplete | None = None,
+        start=None,
+        end=None,
         prepost: bool = False,
         actions: bool = True,
         auto_adjust: bool = True,
         repair: bool = False,
-        proxy=...,
         threads: bool = True,
         group_by: str = "column",
         progress: bool = True,
@@ -45,4 +43,4 @@ class Tickers:
         **kwargs,
     ): ...
     def news(self): ...
-    def live(self, message_handler: Incomplete | None = None, verbose: bool = True) -> None: ...
+    def live(self, message_handler=None, verbose: bool = True) -> None: ...

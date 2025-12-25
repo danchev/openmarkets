@@ -1,8 +1,7 @@
 import pandas as _pd
-from _typeshed import Incomplete
 
-from ..const import SECTOR_INDUSTY_MAPPING as SECTOR_INDUSTY_MAPPING
-from ..data import YfData as YfData
+from ..config import YfConfig as YfConfig
+from ..const import SECTOR_INDUSTY_MAPPING_LC as SECTOR_INDUSTY_MAPPING_LC
 from ..utils import (
     dynamic_docstring as dynamic_docstring,
 )
@@ -15,7 +14,7 @@ from ..utils import (
 from .domain import Domain as Domain
 
 class Sector(Domain):
-    def __init__(self, key, session: Incomplete | None = None, proxy=...) -> None: ...
+    def __init__(self, key, session=None) -> None: ...
     @property
     def top_etfs(self) -> dict[str, str]: ...
     @property

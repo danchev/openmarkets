@@ -3,6 +3,9 @@ from _typeshed import Incomplete
 fundamentals_keys: Incomplete
 quote_summary_valid_modules: Incomplete
 SECTOR_INDUSTY_MAPPING: Incomplete
+SECTOR_INDUSTY_MAPPING_LC: Incomplete
+k2: Incomplete
+v2: Incomplete
 
 def merge_two_level_dicts(dict1, dict2): ...
 

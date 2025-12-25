@@ -1,10 +1,11 @@
 import pandas as pd
 from yfinance import utils as utils
+from yfinance.config import YfConfig as YfConfig
 from yfinance.data import YfData as YfData
 from yfinance.exceptions import YFDataException as YFDataException
 
 class Holders:
-    def __init__(self, data: YfData, symbol: str, proxy=...) -> None: ...
+    def __init__(self, data: YfData, symbol: str) -> None: ...
     @property
     def major(self) -> pd.DataFrame: ...
     @property
