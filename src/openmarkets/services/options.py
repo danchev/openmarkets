@@ -1,3 +1,10 @@
+"""Service layer for options data operations.
+
+Provides business logic for retrieving option chains, expiration dates,
+call/put options, volume analysis, moneyness filtering, and options skew.
+Acts as an intermediary between the MCP tools layer and repository layer.
+"""
+
 from datetime import date
 from typing import Annotated
 
@@ -20,11 +27,11 @@ class OptionsService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: IOptionsRepository | None = None, session: Session | None = None):
-        """
-        Initialize the OptionsService with a repository dependency.
+        """Initialize the OptionsService.
 
         Args:
-            repository (IOptionsRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceOptionsRepository.
+            session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceOptionsRepository()
         self.session = session or Session(impersonate="chrome")

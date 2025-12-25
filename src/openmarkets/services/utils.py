@@ -1,3 +1,10 @@
+"""Utility classes and mixins for service layer.
+
+Provides reusable components for automatic MCP tool registration,
+enabling services to expose their methods as MCP tools through
+a declarative mixin pattern.
+"""
+
 import inspect
 from typing import Any, Callable, Protocol, TypeVar
 

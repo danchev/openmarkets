@@ -1,3 +1,10 @@
+"""Service layer for cryptocurrency operations.
+
+Provides business logic for retrieving cryptocurrency information, historical data,
+top cryptocurrencies by market cap, and sentiment indicators. Acts as an intermediary
+between the MCP tools layer and repository layer.
+"""
+
 from typing import Annotated
 
 from curl_cffi.requests import Session
@@ -14,11 +21,11 @@ class CryptoService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: ICryptoRepository | None = None, session: None = None):
-        """
-        Initialize the CryptoService with a repository dependency.
+        """Initialize the CryptoService.
 
         Args:
-            repository (ICryptoRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceCryptoRepository.
+            session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceCryptoRepository()
         self.session = session or Session(impersonate="chrome")

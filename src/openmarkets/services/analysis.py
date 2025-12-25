@@ -1,3 +1,10 @@
+"""Service layer for stock analysis operations.
+
+Provides business logic layer for retrieving analyst recommendations,
+earnings estimates, revenue estimates, growth projections, and price targets.
+Acts as an intermediary between the MCP tools layer and repository layer.
+"""
+
 from typing import Annotated
 
 from curl_cffi.requests import Session
@@ -13,11 +20,11 @@ class AnalysisService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: IAnalysisRepository | None = None, session: None = None):
-        """
-        Initialize the AnalysisService with a repository dependency.
+        """Initialize the AnalysisService.
 
         Args:
-            repository (IAnalysisRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceAnalysisRepository.
+            session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceAnalysisRepository()
         self.session = session or Session(impersonate="chrome")

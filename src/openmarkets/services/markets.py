@@ -1,3 +1,10 @@
+"""Service layer for market data operations.
+
+Provides business logic for retrieving market summaries, market status,
+and overall market performance data. Acts as an intermediary between
+the MCP tools layer and repository layer.
+"""
+
 from typing import Annotated
 
 from curl_cffi.requests import Session
@@ -14,11 +21,11 @@ class MarketsService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: IMarketsRepository | None = None, session: None = None):
-        """
-        Initialize the MarketsService with a repository dependency.
+        """Initialize the MarketsService.
 
         Args:
-            repository (IMarketsRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceMarketsRepository.
+            session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceMarketsRepository()
         self.session = session or Session(impersonate="chrome")

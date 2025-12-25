@@ -1,3 +1,10 @@
+"""Service layer for technical analysis operations.
+
+Provides business logic for retrieving technical indicators, volatility metrics,
+support and resistance levels for stock analysis. Acts as an intermediary between
+the MCP tools layer and repository layer.
+"""
+
 from typing import Annotated
 
 from curl_cffi.requests import Session
@@ -21,11 +28,11 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: ITechnicalAnalysisRepository | None = None, session: Session | None = None):
-        """
-        Initialize the TechnicalAnalysisService with a repository dependency.
+        """Initialize the TechnicalAnalysisService.
 
         Args:
-            repository (ITechnicalAnalysisRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceTechnicalAnalysisRepository.
+            session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceTechnicalAnalysisRepository()
         self.session = session or Session(impersonate="chrome")

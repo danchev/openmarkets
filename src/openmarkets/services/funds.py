@@ -1,3 +1,10 @@
+"""Service layer for fund data operations.
+
+Provides business logic for retrieving fund information, holdings, sector weightings,
+operations data, and fund overviews. Acts as an intermediary between the MCP tools
+layer and repository layer.
+"""
+
 from typing import Annotated
 
 from curl_cffi.requests import Session
@@ -23,11 +30,11 @@ class FundsService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: IFundsRepository | None = None, session: None = None):
-        """
-        Initialize the FundsService with a repository dependency.
+        """Initialize the FundsService.
 
         Args:
-            repository (IFundsRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceFundsRepository.
+            session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceFundsRepository()
         self.session = session or Session(impersonate="chrome")

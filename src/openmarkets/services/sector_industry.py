@@ -1,3 +1,10 @@
+"""Service layer for sector and industry data operations.
+
+Provides business logic for retrieving sector overviews, industry information,
+top companies, ETFs, mutual funds, and research reports. Acts as an intermediary
+between the MCP tools layer and repository layer.
+"""
+
 from typing import Annotated
 
 from openmarkets.repositories.sector_industry import ISectorIndustryRepository, YFinanceSectorIndustryRepository
@@ -23,11 +30,10 @@ class SectorIndustryService(ToolRegistrationMixin):
     """
 
     def __init__(self, repository: ISectorIndustryRepository | None = None):
-        """
-        Initialize the SectorIndustryService with a repository dependency.
+        """Initialize the SectorIndustryService.
 
         Args:
-            repository (ISectorIndustryRepository): The repository instance for data access.
+            repository: Repository instance for data access. Defaults to YFinanceSectorIndustryRepository.
         """
         self.repository = repository or YFinanceSectorIndustryRepository()
 

@@ -1,3 +1,9 @@
+"""Repository layer for stock data operations.
+
+Provides abstractions and implementations for fetching stock information,
+historical prices, dividends, splits, and other stock-level data.
+"""
+
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -16,7 +22,7 @@ from openmarkets.schemas.stock import (
 
 
 class IStockRepository(ABC):
-    """Repository interface for stock data access."""
+    """Abstract interface for stock data repositories."""
 
     @abstractmethod
     def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo:
@@ -74,32 +80,89 @@ class IStockRepository(ABC):
 
 
 class YFinanceStockRepository(IStockRepository):
+    """Repository for accessing stock data from yfinance."""
+
     def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo:
-        fast_info = yf.Ticker(ticker, session=session).fast_info
+        """Retrieve fast info for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Fast info data for the stock.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        fast_info = ticker_obj.fast_info
         return StockFastInfo(**fast_info)
 
     def get_info(self, ticker: str, session: Session | None = None) -> StockInfo:
-        info = yf.Ticker(ticker, session=session).info
+        """Retrieve detailed info for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Detailed stock information.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        info = ticker_obj.info
         return StockInfo(**info)
 
     def get_history(
         self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
     ) -> list[StockHistory]:
+        """Retrieve historical price data for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            period: Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max).
+            interval: Data interval (1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo).
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            List of historical data points.
+
+        Raises:
+            ValueError: If period or interval is invalid.
+        """
         if period not in ("1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"):
             raise ValueError("Invalid period. Must be one of: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max.")
         if interval not in ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"):
             raise ValueError(
                 "Invalid interval. Must be one of: 1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo."
             )
-        df: pd.DataFrame = yf.Ticker(ticker, session=session).history(period=period, interval=interval)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        df: pd.DataFrame = ticker_obj.history(period=period, interval=interval)
         df.reset_index(inplace=True)
         return [StockHistory(**row.to_dict()) for _, row in df.iterrows()]
 
     def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]:
-        dividends = yf.Ticker(ticker, session=session).dividends
-        return [StockDividends(Date=row[0], Dividends=row[1]) for row in dividends.to_dict().items()]
+        """Retrieve dividend history for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            List of dividend records.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        dividends = ticker_obj.dividends
+        dividend_dict = dividends.to_dict()
+        return [StockDividends(Date=row[0], Dividends=row[1]) for row in dividend_dict.items()]
 
     def get_financial_summary(self, ticker: str, session: Session | None = None) -> dict:
+        """Retrieve financial summary metrics for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Dictionary containing financial summary metrics.
+        """
         include_fields: set[str] = {
             "totalRevenue",
             "revenueGrowth",
@@ -119,10 +182,21 @@ class YFinanceStockRepository(IStockRepository):
             "returnOnEquity",
             "debtToEquity",
         }
-        data = yf.Ticker(ticker, session=session).info
-        return StockInfo(**data).model_dump(include=include_fields)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        data = ticker_obj.info
+        stock_info = StockInfo(**data)
+        return stock_info.model_dump(include=include_fields)
 
     def get_risk_metrics(self, ticker: str, session: Session | None = None) -> dict:
+        """Retrieve risk metrics for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Dictionary containing risk metrics.
+        """
         include_fields: set[str] = {
             "auditRisk",
             "boardRisk",
@@ -132,10 +206,21 @@ class YFinanceStockRepository(IStockRepository):
             "overallRisk",
             "shareHolderRightsRisk",
         }
-        data = yf.Ticker(ticker, session=session).info
-        return StockInfo(**data).model_dump(include=include_fields)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        data = ticker_obj.info
+        stock_info = StockInfo(**data)
+        return stock_info.model_dump(include=include_fields)
 
     def get_dividend_summary(self, ticker: str, session: Session | None = None) -> dict:
+        """Retrieve dividend summary for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Dictionary containing dividend metrics.
+        """
         include_fields: set[str] = {
             "dividendRate",
             "dividendYield",
@@ -147,10 +232,21 @@ class YFinanceStockRepository(IStockRepository):
             "lastDividendDate",
             "lastDividendValue",
         }
-        data = yf.Ticker(ticker, session=session).info
-        return StockInfo(**data).model_dump(include=include_fields)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        data = ticker_obj.info
+        stock_info = StockInfo(**data)
+        return stock_info.model_dump(include=include_fields)
 
     def get_price_target(self, ticker: str, session: Session | None = None) -> dict:
+        """Retrieve analyst price targets for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Dictionary containing price target data.
+        """
         include_fields: set[str] = {
             "targetHighPrice",
             "targetLowPrice",
@@ -160,10 +256,21 @@ class YFinanceStockRepository(IStockRepository):
             "recommendationKey",
             "numberOfAnalystOpinions",
         }
-        data = yf.Ticker(ticker, session=session).info
-        return StockInfo(**data).model_dump(include=include_fields)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        data = ticker_obj.info
+        stock_info = StockInfo(**data)
+        return stock_info.model_dump(include=include_fields)
 
     def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
+        """Retrieve extended financial summary metrics for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Dictionary containing extended financial metrics.
+        """
         include_fields: set[str] = {
             "marketCap",
             "enterpriseValue",
@@ -190,10 +297,21 @@ class YFinanceStockRepository(IStockRepository):
             "returnOnEquity",
             "debtToEquity",
         }
-        data = yf.Ticker(ticker, session=session).info
-        return StockInfo(**data).model_dump(include=include_fields)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        data = ticker_obj.info
+        stock_info = StockInfo(**data)
+        return stock_info.model_dump(include=include_fields)
 
     def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:
+        """Retrieve quick technical indicators for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Dictionary containing technical indicators.
+        """
         include_fields: set[str] = {
             "currentPrice",
             "fiftyDayAverage",
@@ -205,20 +323,53 @@ class YFinanceStockRepository(IStockRepository):
             "fiftyTwoWeekLow",
             "fiftyTwoWeekHigh",
         }
-        data = yf.Ticker(ticker, session=session).info
-        return StockInfo(**data).model_dump(include=include_fields)
+        ticker_obj = yf.Ticker(ticker, session=session)
+        data = ticker_obj.info
+        stock_info = StockInfo(**data)
+        return stock_info.model_dump(include=include_fields)
 
     def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]:
-        splits = yf.Ticker(ticker, session=session).splits
+        """Retrieve stock split history for a ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            List of stock split records.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        splits = ticker_obj.splits
         return [
             StockSplit(date=pd.Timestamp(str(index)).to_pydatetime(), stock_splits=value)
             for index, value in splits.items()
         ]
 
     def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]:
-        actions = yf.Ticker(ticker, session=session).actions
-        return [CorporateActions(**row.to_dict()) for _, row in actions.reset_index().iterrows()]
+        """Retrieve corporate actions for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            List of corporate action records.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        actions = ticker_obj.actions
+        reset_actions = actions.reset_index()
+        return [CorporateActions(**row.to_dict()) for _, row in reset_actions.iterrows()]
 
     def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]:
-        news = yf.Ticker(ticker, session=session).news
+        """Retrieve news items for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            List of news items.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        news = ticker_obj.news
         return [NewsItem(**item) for item in news]
