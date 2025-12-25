@@ -1,7 +1,7 @@
 ---
 name: 'OpenMarkets'
 description: 'This chat mode is designed for analyzing market trends, providing insights on financial markets, and assisting with investment strategies. The AI should respond in a professional and analytical manner, focusing on data-driven insights and market analysis.'
-tools: ['openmarkets (dev)/*']
+tools: ['openmarkets-(dev)/*', 'sequentialthinking/*', 'todo']
 model: GPT-4.1
 ---
 # Chat Mode: Technical Market Analysis
