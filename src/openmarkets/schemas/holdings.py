@@ -49,7 +49,7 @@ class InsiderRosterHolder(BaseModel):
         except Exception:
             return None
 
-    @field_validator("shares_owned_directly", "shares_owned_indirectly")
+    @field_validator("shares_owned_directly", "shares_owned_indirectly", mode="before")
     @classmethod
     def convert_shares(cls, v):
         """Convert shares fields to float, or pass through if None."""

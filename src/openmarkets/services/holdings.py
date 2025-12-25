@@ -92,7 +92,7 @@ class HoldingsService(ToolRegistrationMixin):
             "institutional_holdings": self.repository.get_institutional_holdings(ticker, session=self.session),
             "mutual_fund_holdings": self.repository.get_mutual_fund_holdings(ticker, session=self.session),
             "insider_purchases": self.repository.get_insider_purchases(ticker, session=self.session),
-            "insider_roster_holders": self.repository.get_insider_roster_holders(ticker, session=self.session),
+            # "insider_roster_holders": self.repository.get_insider_roster_holders(ticker, session=self.session),  # FIXME: Currently causes JSON serialization issues
         }
 
 
