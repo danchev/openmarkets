@@ -193,13 +193,13 @@ class SectorOverview(BaseModel):
     Sector Overview Schema
     """
 
-    companies_count: int = Field(..., alias="companies_count")
-    market_cap: int = Field(..., alias="market_cap")
-    message_board_id: str = Field(..., alias="message_board_id")
-    description: str = Field(..., alias="description")
-    industries_count: int = Field(..., alias="industries_count")
-    market_weight: float = Field(..., alias="market_weight")
-    employee_count: int = Field(..., alias="employee_count")
+    companies_count: int = Field(..., description="Number of companies in the sector", alias="companies_count")
+    market_cap: int = Field(..., description="Total market capitalization of the sector", alias="market_cap")
+    message_board_id: str = Field(..., description="Message board identifier", alias="message_board_id")
+    description: str = Field(..., description="Sector description", alias="description")
+    industries_count: int = Field(..., description="Number of industries in the sector", alias="industries_count")
+    market_weight: float = Field(..., description="Market weight of the sector", alias="market_weight")
+    employee_count: int = Field(..., description="Total number of employees in the sector", alias="employee_count")
 
 
 class SectorTopCompaniesEntry(BaseModel):
@@ -236,14 +236,13 @@ class IndustryOverview(BaseModel):
     Industry Overview Schema
     """
 
-    # {'companies_count': 4, 'market_cap': 17122720768, 'message_board_id': 'INDEXYH10150010', 'description': 'Companies that produce, refine, market, and distribute aluminum and related aluminum-based products.', 'industries_count': None, 'market_weight': 0.0087670535, 'employee_count': 19101}
-    companies_count: int = Field(..., alias="companies_count")
-    market_cap: int = Field(..., alias="market_cap")
-    message_board_id: str = Field(..., alias="message_board_id")
-    description: str = Field(..., alias="description")
-    industries_count: int | None = Field(None, alias="industries_count")
-    market_weight: float = Field(..., alias="market_weight")
-    employee_count: int = Field(..., alias="employee_count")
+    companies_count: int = Field(..., description="Number of companies in the industry", alias="companies_count")
+    market_cap: int = Field(..., description="Total market capitalization of the industry", alias="market_cap")
+    message_board_id: str = Field(..., description="Message board identifier", alias="message_board_id")
+    description: str = Field(..., description="Industry description", alias="description")
+    industries_count: int | None = Field(None, description="Number of sub-industries", alias="industries_count")
+    market_weight: float = Field(..., description="Market weight of the industry", alias="market_weight")
+    employee_count: int = Field(..., description="Total number of employees in the industry", alias="employee_count")
 
 
 class IndustryTopCompaniesEntry(BaseModel):
