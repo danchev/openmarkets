@@ -63,6 +63,29 @@ def test_create_mcp_registers_all(monkeypatch):
     assert mcp is mcp_instance
 
 
+def test_create_mcp_uses_get_settings_when_not_provided(monkeypatch):
+    mcp_instance = mock.Mock()
+    monkeypatch.setattr(fastmcp, "FastMCP", mock.Mock(return_value=mcp_instance))
+    get_settings_mock = mock.Mock()
+    monkeypatch.setattr(fastmcp, "get_settings", get_settings_mock)
+    for svc in [
+        "analysis_service",
+        "crypto_service",
+        "financials_service",
+        "funds_service",
+        "holdings_service",
+        "markets_service",
+        "options_service",
+        "sector_industry_service",
+        "stock_service",
+        "technical_analysis_service",
+    ]:
+        monkeypatch.setattr(getattr(fastmcp, svc), "register_tool_methods", mock.Mock())
+    mcp = fastmcp.create_mcp()
+    get_settings_mock.assert_called_once()
+    assert mcp is mcp_instance
+
+
 def test_create_mcp_register_exception(monkeypatch):
     config = mock.Mock()
     mcp_instance = mock.Mock()

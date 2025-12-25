@@ -53,13 +53,13 @@ def test_putoption_lasttradedate_accepts_pandas_timestamp():
 
 
 class DummyOptionsRepository(IOptionsRepository):
-    def get_option_expiration_dates(self, ticker, **kwargs):
+    def get_option_expiration_dates(self, ticker, session=None):
         return [OptionExpirationDate(date=datetime(2025, 12, 19))]
 
-    def get_option_chain(self, ticker, expiration, **kwargs):
+    def get_option_chain(self, ticker, expiration, session=None):
         return OptionContractChain(calls=[], puts=[], underlying=None)
 
-    def get_call_options(self, ticker, expiration, **kwargs):
+    def get_call_options(self, ticker, expiration, session=None):
         return [
             CallOption(
                 contractSymbol="AAPL231215C00100000",
@@ -79,7 +79,7 @@ class DummyOptionsRepository(IOptionsRepository):
             )
         ]
 
-    def get_put_options(self, ticker, expiration, **kwargs):
+    def get_put_options(self, ticker, expiration, session=None):
         return [
             PutOption(
                 contractSymbol="AAPL231215P00100000",
@@ -99,13 +99,13 @@ class DummyOptionsRepository(IOptionsRepository):
             )
         ]
 
-    def get_options_volume_analysis(self, ticker, expiration_date, **kwargs):
+    def get_options_volume_analysis(self, ticker, expiration_date, session=None):
         return {"total_call_volume": 100, "total_put_volume": 50}
 
-    async def get_options_by_moneyness(self, ticker, expiration_date, moneyness_range, **kwargs):
+    def get_options_by_moneyness(self, ticker, expiration_date, moneyness_range, session=None):
         return {"calls": [], "puts": []}
 
-    async def get_options_skew(self, ticker, expiration_date, **kwargs):
+    def get_options_skew(self, ticker, expiration_date, session=None):
         return {"call_skew": [], "put_skew": []}
 
 
@@ -144,15 +144,13 @@ def test_get_options_volume_analysis(service):
     assert "total_put_volume" in result
 
 
-@pytest.mark.asyncio
-async def test_get_options_by_moneyness(service):
-    result = await service.get_options_by_moneyness("AAPL", "2025-12-19", 0.1)
+def test_get_options_by_moneyness(service):
+    result = service.get_options_by_moneyness("AAPL", "2025-12-19", 0.1)
     assert "calls" in result
     assert "puts" in result
 
 
-@pytest.mark.asyncio
-async def test_get_options_skew(service):
-    result = await service.get_options_skew("AAPL", "2025-12-19")
+def test_get_options_skew(service):
+    result = service.get_options_skew("AAPL", "2025-12-19")
     assert "call_skew" in result
     assert "put_skew" in result
