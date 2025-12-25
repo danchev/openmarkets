@@ -4,34 +4,42 @@ from pydantic import BaseModel, Field
 
 
 class CryptoFastInfo(BaseModel):
-    """Fast info snapshot for a stock ticker, typically from yfinance or similar APIs."""
+    """Fast info snapshot for a crypto ticker, typically from yfinance or similar APIs."""
 
     currency: str = Field(..., description="Currency of the ticker.")
-    dayHigh: float = Field(..., description="Day's high price.")
-    dayLow: float = Field(..., description="Day's low price.")
+    day_high: float = Field(..., alias="dayHigh", description="Day's high price.")
+    day_low: float = Field(..., alias="dayLow", description="Day's low price.")
     exchange: str = Field(..., description="Exchange where the ticker is listed.")
-    fiftyDayAverage: float = Field(..., description="50-day average price.")
-    lastPrice: float = Field(..., description="Last traded price.")
-    lastVolume: int = Field(..., description="Last traded volume.")
+    fifty_day_average: float = Field(..., alias="fiftyDayAverage", description="50-day average price.")
+    last_price: float = Field(..., alias="lastPrice", description="Last traded price.")
+    last_volume: int = Field(..., alias="lastVolume", description="Last traded volume.")
     open: float = Field(..., description="Opening price.")
-    previousClose: float = Field(..., description="Previous closing price.")
-    quoteType: str = Field(..., description="Type of quote (e.g., CRYPTOCURRENCY).")
-    regularMarketPreviousClose: float = Field(..., description="Regular market previous close.")
-    tenDayAverageVolume: int = Field(..., description="10-day average volume.")
-    threeMonthAverageVolume: int = Field(..., description="3-month average volume.")
+    previous_close: float = Field(..., alias="previousClose", description="Previous closing price.")
+    quote_type: str = Field(..., alias="quoteType", description="Type of quote (e.g., CRYPTOCURRENCY).")
+    regular_market_previous_close: float = Field(
+        ..., alias="regularMarketPreviousClose", description="Regular market previous close."
+    )
+    ten_day_average_volume: int = Field(..., alias="tenDayAverageVolume", description="10-day average volume.")
+    three_month_average_volume: int = Field(..., alias="threeMonthAverageVolume", description="3-month average volume.")
     timezone: str = Field(..., description="Timezone of the exchange.")
-    twoHundredDayAverage: float = Field(..., description="200-day average price.")
-    yearChange: float = Field(..., description="Change over the past year.")
-    yearHigh: float = Field(..., description="52-week high price.")
-    yearLow: float = Field(..., description="52-week low price.")
+    two_hundred_day_average: float = Field(..., alias="twoHundredDayAverage", description="200-day average price.")
+    year_change: float = Field(..., alias="yearChange", description="Change over the past year.")
+    year_high: float = Field(..., alias="yearHigh", description="52-week high price.")
+    year_low: float = Field(..., alias="yearLow", description="52-week low price.")
+
+    class Config:
+        allow_population_by_field_name = True
 
 
 class CryptoHistory(BaseModel):
     """Schema for historical crypto data (OHLCV)."""
 
-    Date: datetime = Field(..., description="Date of record")
-    Open: float = Field(..., description="Opening price")
-    High: float = Field(..., description="Highest price")
-    Low: float = Field(..., description="Lowest price")
-    Close: float = Field(..., description="Closing price")
-    Volume: int = Field(..., description="Volume traded")
+    date: datetime = Field(..., alias="Date", description="Date of record")
+    open: float = Field(..., alias="Open", description="Opening price")
+    high: float = Field(..., alias="High", description="Highest price")
+    low: float = Field(..., alias="Low", description="Lowest price")
+    close: float = Field(..., alias="Close", description="Closing price")
+    volume: int = Field(..., alias="Volume", description="Volume traded")
+
+    class Config:
+        allow_population_by_field_name = True

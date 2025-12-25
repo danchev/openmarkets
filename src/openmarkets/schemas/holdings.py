@@ -6,39 +6,39 @@ from pydantic import BaseModel, Field, field_validator
 class InsiderPurchase(BaseModel):
     """Schema for insider purchase data."""
 
-    Insider_Purchases_Last_6m: str | None = Field(
+    insider_purchases_last_6m: str | None = Field(
         None, alias="Insider Purchases Last 6m", description="Insider purchases in last 6 months"
     )
-    Shares: float | None = Field(None, alias="Shares", description="Number of shares purchased")
-    Trans: int | None = Field(None, alias="Trans", description="Number of transactions")
+    shares: float | None = Field(None, alias="Shares", description="Number of shares purchased")
+    trans: int | None = Field(None, alias="Trans", description="Number of transactions")
 
 
 class InsiderRosterHolder(BaseModel):
     """Schema for insider roster holder data."""
 
-    Name: str | None = Field(None, alias="Name", description="Holder's name")
-    Position: str | None = Field(None, alias="Position", description="Position held")
-    URL: str | None = Field(None, alias="URL", description="Profile URL")
-    Most_Recent_Transaction: str | None = Field(
+    name: str | None = Field(None, alias="Name", description="Holder's name")
+    position: str | None = Field(None, alias="Position", description="Position held")
+    url: str | None = Field(None, alias="URL", description="Profile URL")
+    most_recent_transaction: str | None = Field(
         None, alias="Most Recent Transaction", description="Most recent transaction type"
     )
-    Latest_Transaction_Date: datetime | None = Field(
+    latest_transaction_date: datetime | None = Field(
         None, alias="Latest Transaction Date", description="Date of latest transaction"
     )
-    Shares_Owned_Directly: float | None = Field(
+    shares_owned_directly: float | None = Field(
         None, alias="Shares Owned Directly", description="Shares owned directly"
     )
-    Position_Direct_Date: datetime | None = Field(
+    position_direct_date: datetime | None = Field(
         None, alias="Position Direct Date", description="Direct position date"
     )
-    Shares_Owned_Indirectly: float | None = Field(
+    shares_owned_indirectly: float | None = Field(
         None, alias="Shares Owned Indirectly", description="Shares owned indirectly"
     )
-    Position_Indirect_Date: datetime | None = Field(
+    position_indirect_date: datetime | None = Field(
         None, alias="Position Indirect Date", description="Indirect position date"
     )
 
-    @field_validator("Latest_Transaction_Date", "Position_Direct_Date", "Position_Indirect_Date", mode="before")
+    @field_validator("latest_transaction_date", "position_direct_date", "position_indirect_date", mode="before")
     @classmethod
     def convert_dates(cls, v):
         """Convert date fields from string to datetime, or pass through if already datetime/None."""
@@ -49,7 +49,7 @@ class InsiderRosterHolder(BaseModel):
         except Exception:
             return None
 
-    @field_validator("Shares_Owned_Directly", "Shares_Owned_Indirectly")
+    @field_validator("shares_owned_directly", "shares_owned_indirectly")
     @classmethod
     def convert_shares(cls, v):
         """Convert shares fields to float, or pass through if None."""
@@ -64,16 +64,16 @@ class InsiderRosterHolder(BaseModel):
 class StockInstitutionalHoldings(BaseModel):
     """Schema for institutional holdings data."""
 
-    Holder: str | None = Field(None, alias="Holder", description="Name of the institutional holder")
-    Shares: int | None = Field(None, alias="Shares", description="Number of shares held")
-    Date_Report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
-    Value: int | None = Field(None, alias="Value", description="Value of the holdings")
-    Percent_Out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
+    holder: str | None = Field(None, alias="Holder", description="Name of the institutional holder")
+    shares: int | None = Field(None, alias="Shares", description="Number of shares held")
+    date_report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
+    value: int | None = Field(None, alias="Value", description="Value of the holdings")
+    percent_out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
 
-    @field_validator("Date_Report", mode="before")
+    @field_validator("date_report", mode="before")
     @classmethod
     def convert_date(cls, v):
-        """Convert Date_Report field from string to datetime, or pass through if already datetime/None."""
+        """Convert date_report field from string to datetime, or pass through if already datetime/None."""
         if v is None or isinstance(v, datetime):
             return v
         try:
@@ -85,16 +85,16 @@ class StockInstitutionalHoldings(BaseModel):
 class StockMutualFundHoldings(BaseModel):
     """Schema for mutual fund holdings data."""
 
-    Holder: str | None = Field(None, alias="Holder", description="Name of the mutual fund holder")
-    Shares: int | None = Field(None, alias="Shares", description="Number of shares held")
-    Date_Report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
-    Value: int | None = Field(None, alias="Value", description="Value of the holdings")
-    Percent_Out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
+    holder: str | None = Field(None, alias="Holder", description="Name of the mutual fund holder")
+    shares: int | None = Field(None, alias="Shares", description="Number of shares held")
+    date_report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
+    value: int | None = Field(None, alias="Value", description="Value of the holdings")
+    percent_out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
 
-    @field_validator("Date_Report", mode="before")
+    @field_validator("date_report", mode="before")
     @classmethod
     def convert_date(cls, v):
-        """Convert Date_Report field from string to datetime, or pass through if already datetime/None."""
+        """Convert date_report field from string to datetime, or pass through if already datetime/None."""
         if v is None or isinstance(v, datetime):
             return v
         try:
@@ -106,7 +106,15 @@ class StockMutualFundHoldings(BaseModel):
 class StockMajorHolders(BaseModel):
     """Schema for major holders data."""
 
-    insidersPercentHeld: float | None = Field(None, description="Percentage of shares held by insiders")
-    institutionsPercentHeld: float | None = Field(None, description="Percentage of shares held by institutions")
-    institutionsFloatPercentHeld: float | None = Field(None, description="Percentage of float held by institutions")
-    institutionsCount: int | None = Field(None, description="Number of institutional holders")
+    insiders_percent_held: float | None = Field(
+        None, description="Percentage of shares held by insiders", alias="insidersPercentHeld"
+    )
+    institutions_percent_held: float | None = Field(
+        None, description="Percentage of shares held by institutions", alias="institutionsPercentHeld"
+    )
+    institutions_float_percent_held: float | None = Field(
+        None, description="Percentage of float held by institutions", alias="institutionsFloatPercentHeld"
+    )
+    institutions_count: int | None = Field(
+        None, description="Number of institutional holders", alias="institutionsCount"
+    )
