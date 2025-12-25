@@ -250,3 +250,106 @@ def test_get_options_skew_various_errors(monkeypatch):
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T4}))
     out4 = repo.get_options_skew("AAPL")
     assert "call_skew" in out4 and "put_skew" in out4
+
+
+def test_get_option_chain_with_data(monkeypatch):
+    """Test get_option_chain with both calls and puts"""
+    calls = FakeDF(
+        [
+            {
+                "contractSymbol": "C1",
+                "lastTradeDate": pd.Timestamp("2023-01-01"),
+                "strike": 100,
+                "lastPrice": 1.0,
+                "bid": 0.9,
+                "ask": 1.1,
+                "change": 0.1,
+                "percentChange": 10.0,
+                "volume": 10,
+                "openInterest": 5,
+                "impliedVolatility": 0.5,
+                "inTheMoney": True,
+                "contractSize": "100",
+                "currency": "USD",
+            }
+        ]
+    )
+    puts = FakeDF(
+        [
+            {
+                "contractSymbol": "P1",
+                "lastTradeDate": pd.Timestamp("2023-01-01"),
+                "strike": 90,
+                "lastPrice": 1.5,
+                "bid": 1.4,
+                "ask": 1.6,
+                "change": -0.1,
+                "percentChange": -5.0,
+                "volume": 20,
+                "openInterest": 10,
+                "impliedVolatility": 0.6,
+                "inTheMoney": False,
+                "contractSize": "100",
+                "currency": "USD",
+            }
+        ]
+    )
+    dummy_chain = DummyOptionChain(calls=calls, puts=puts, underlying={"symbol": "AAPL"})
+    monkeypatch.setattr(
+        "openmarkets.repositories.options.yf",
+        type("Y", (), {"Ticker": lambda t, session=None: DummyTicker(option_chain=dummy_chain)}),
+    )
+    repo = YFinanceOptionsRepository()
+    result = repo.get_option_chain("AAPL")
+    assert result.calls is not None
+    assert result.puts is not None
+    assert len(result.calls) == 1
+    assert len(result.puts) == 1
+
+
+def test_get_options_by_moneyness_no_chain(monkeypatch):
+    """Test get_options_by_moneyness when chain is not available"""
+
+    class Maker:
+        def __init__(self, t, session=None):
+            self.info = {"currentPrice": 100}
+            self.options = []
+
+        def option_chain(self, date=None):
+            return None
+
+    monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": Maker}))
+    repo = YFinanceOptionsRepository()
+    res = repo.get_options_by_moneyness("AAPL")
+    assert res == {"error": "No options data available"}
+
+
+def test_safe_ratio_zero_denominator(monkeypatch):
+    """Test _safe_ratio with zero denominator"""
+    repo = YFinanceOptionsRepository()
+    assert repo._safe_ratio(10.0, 0.0) is None
+    assert repo._safe_ratio(10.0, 5.0) == 2.0
+
+
+def test_get_column_sum_missing_column(monkeypatch):
+    """Test _get_column_sum with missing column"""
+    repo = YFinanceOptionsRepository()
+    df = FakeDF([{"volume": 10}])
+    assert repo._get_column_sum(df, "volume") == 10
+    assert repo._get_column_sum(df, "missing_col") == 0
+
+
+def test_option_chain_exception_handling(monkeypatch):
+    """Test exception handling in _get_option_chain_for_expiration"""
+
+    class FailingTicker:
+        def __init__(self, t, session=None):
+            self.options = ["2023-01-01"]
+
+        def option_chain(self, date=None):
+            raise Exception("Simulated failure")
+
+    monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": FailingTicker}))
+    repo = YFinanceOptionsRepository()
+    res = repo.get_options_volume_analysis("AAPL")
+    assert res == {"error": "No options data available"}

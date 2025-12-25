@@ -158,3 +158,13 @@ class TestYFinanceStockRepository:
         result = self.repo.get_quick_technical_indicators(self.ticker)
         assert isinstance(result, dict)
         assert "currentPrice" in result
+
+    def test_get_history_invalid_period(self):
+        """Test get_history with invalid period"""
+        with pytest.raises(ValueError, match="Invalid period"):
+            self.repo.get_history(self.ticker, period="invalid")
+
+    def test_get_history_invalid_interval(self):
+        """Test get_history with invalid interval"""
+        with pytest.raises(ValueError, match="Invalid interval"):
+            self.repo.get_history(self.ticker, interval="invalid")
