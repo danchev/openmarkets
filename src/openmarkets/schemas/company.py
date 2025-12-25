@@ -1,5 +1,3 @@
-"""Pydantic schemas for stock information tools."""
-
 from pydantic import BaseModel, Field
 
 

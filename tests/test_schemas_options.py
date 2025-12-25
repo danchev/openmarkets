@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -27,7 +27,7 @@ def test_parse_last_trade_date_with_timestamp():
 
 
 def test_parse_last_trade_date_with_datetime_passes_through():
-    dt = datetime.utcnow()
+    dt = datetime.now(timezone.utc)
 
     p = PutOption(
         contractSymbol="P1",

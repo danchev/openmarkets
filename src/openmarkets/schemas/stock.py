@@ -1,15 +1,3 @@
-"""
-Ticker Stock Schemas:
-    dividends
-    splits
-    actions
-    capital_gains
-    shares_full
-    info
-    fast_info
-    news
-"""
-
 from datetime import date, datetime
 from typing import Any
 

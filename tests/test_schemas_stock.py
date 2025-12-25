@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -12,7 +12,7 @@ def test_stockinfo_timestamp_conversion():
     s2 = StockInfo(exDividendDate=None)
     assert s2.exDividendDate is None
 
-    dt = datetime.utcnow()
+    dt = datetime.now(timezone.utc)
     s3 = StockInfo(exDividendDate=dt)
     assert s3.exDividendDate is dt
 

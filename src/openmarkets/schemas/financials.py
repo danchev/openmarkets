@@ -1,18 +1,3 @@
-"""
-Ticker Financial Schemas:
-    income_stmt
-    quarterly_income_stmt
-    ttm_income_stmt
-    balance_sheet
-    cashflow
-    quarterly_cashflow
-    ttm_cashflow
-    earnings
-    calendar
-    earnings_dates
-    sec_filings
-"""
-
 from datetime import date, datetime
 
 import pandas as pd

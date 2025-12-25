@@ -1,18 +1,3 @@
-"""
-Ticker Analysis Schemas:
-    recommendations
-    recommendations_summary
-    upgrades_downgrades
-    sustainability
-    analyst_price_targets
-    earnings_estimate
-    revenue_estimate
-    earnings_history
-    eps_trend
-    eps_revisions
-    growth_estimates
-"""
-
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator

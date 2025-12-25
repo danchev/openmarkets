@@ -1,13 +1,3 @@
-"""
-Ticker Holdings Schemas:
-    insider_purchases
-    insider_transactions
-    insider_roster_holders
-    major_holders
-    institutional_holders
-    mutualfund_holders
-"""
-
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
