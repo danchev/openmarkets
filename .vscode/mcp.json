@@ -7,8 +7,6 @@
       "args": [
         "-m",
         "openmarkets",
-        "--toolset",
-        "openmarkets.services.yfinance",
       ],
       "dev": {
         "debug": {

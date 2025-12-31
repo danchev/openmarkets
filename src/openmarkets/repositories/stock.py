@@ -136,6 +136,9 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         df: pd.DataFrame = ticker_obj.history(period=period, interval=interval)
         df.reset_index(inplace=True)
+        # Normalize column name: yfinance uses "Datetime" for intraday, "Date" for daily+
+        if "Datetime" in df.columns:
+            df.rename(columns={"Datetime": "Date"}, inplace=True)
         return [StockHistory(**row.to_dict()) for _, row in df.iterrows()]
 
     def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]:

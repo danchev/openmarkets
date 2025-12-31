@@ -73,6 +73,40 @@ def test_get_history_returns_models(stock_repository, stock_ticker, patch_yf, oh
     assert isinstance(result[0], StockHistory)
 
 
+def test_get_history_with_datetime_column_intraday(stock_repository, stock_ticker, patch_yf, ohlcv_history_factory):
+    """Test that get_history handles 'Datetime' column from intraday data."""
+    dataframe = ohlcv_history_factory(
+        [
+            {
+                "Datetime": datetime(2023, 1, 1, 9, 30),
+                "Open": 100.0,
+                "High": 110.0,
+                "Low": 90.0,
+                "Close": 105.0,
+                "Volume": 1000,
+                "Dividends": 0.0,
+                "Stock Splits": 0.0,
+            }
+        ]
+    )
+
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            pass
+
+        def history(self, period="1d", interval="1m") -> pd.DataFrame:
+            return dataframe
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    result = stock_repository.get_history(stock_ticker, period="1d", interval="1m")
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], StockHistory)
+    assert result[0].open == 100.0
+    assert result[0].date.year == 2023
+
+
 def test_get_dividends_returns_models(stock_repository, stock_ticker, patch_yf):
     class FakeDividends:
         def to_dict(self):
