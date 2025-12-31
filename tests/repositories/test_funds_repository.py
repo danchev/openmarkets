@@ -18,11 +18,14 @@ class TestYFinanceFundsRepository:
     @patch("yfinance.Ticker")
     def test_get_fund_info(self, mock_ticker):
         """Test fund info retrieval."""
-        info_data = {"fundFamily": "Test Family", "category": "Large Blend"}
+        info_data = {
+            "symbol": "SPY",
+            "yield": 1.5,
+            "category": "Large Blend",
+        }
         mock_ticker.return_value.info = info_data
 
         result = self.repo.get_fund_info(self.ticker)
-
         assert result is not None
 
     @patch("yfinance.Ticker")
