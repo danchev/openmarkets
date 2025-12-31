@@ -1,6 +1,6 @@
 [project]
 name = "openmarkets"
-version = "0.1.0.alpha"
+version = "0.1.0.a1"
 description = "OpenMarkets is a modular Model Context Protocol (MCP) server that unifies access to financial market data for AI, research, and quantitative finance. It offers robust APIs for historical prices, corporate actions, fundamentals, and more, enabling advanced agentic retrieval, RAG, and LLM-powered workflows."
 authors = [{ name = "Dobri Danchev" }]
 classifiers = [
@@ -118,7 +118,7 @@ plugins = ["mypy_ruff"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0.alpha"
+version = "0.1.0.a1"
 tag_format = "$version"
 version_files = [
     "pyproject.toml:version"
