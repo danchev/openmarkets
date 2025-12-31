@@ -8,11 +8,22 @@ from openmarkets.schemas.options import CallOption, OptionContractChain, OptionE
 from openmarkets.services.options import OptionsService
 
 
-def test_calloption_lasttradedate_accepts_pandas_timestamp():
-    ts = pd.Timestamp("2025-12-18T00:00:00")
-    call = CallOption(
-        contractSymbol="AAPL231215C00100000",
-        lastTradeDate=ts,
+@pytest.fixture
+def last_trade_timestamp() -> pd.Timestamp:
+    return pd.Timestamp("2025-12-18T00:00:00")
+
+
+@pytest.mark.parametrize(
+    ("model", "contract_symbol", "in_the_money"),
+    [
+        (CallOption, "AAPL231215C00100000", True),
+        (PutOption, "AAPL231215P00100000", False),
+    ],
+)
+def test_option_last_trade_date_accepts_pandas_timestamp(model, contract_symbol, in_the_money, last_trade_timestamp):
+    option = model(
+        contractSymbol=contract_symbol,
+        lastTradeDate=last_trade_timestamp,
         strike=100,
         lastPrice=5.0,
         bid=4.9,
@@ -22,37 +33,16 @@ def test_calloption_lasttradedate_accepts_pandas_timestamp():
         volume=10,
         openInterest=100,
         impliedVolatility=0.2,
-        inTheMoney=True,
+        inTheMoney=in_the_money,
         contractSize="REGULAR",
         currency="USD",
     )
-    assert isinstance(call.last_trade_date, datetime)
-    assert call.last_trade_date == datetime(2025, 12, 18)
+
+    assert isinstance(option.last_trade_date, datetime)
+    assert option.last_trade_date == datetime(2025, 12, 18)
 
 
-def test_putoption_last_trade_date_accepts_pandas_timestamp():
-    ts = pd.Timestamp("2025-12-18T00:00:00")
-    put = PutOption(
-        contractSymbol="AAPL231215P00100000",
-        lastTradeDate=ts,
-        strike=100,
-        lastPrice=5.0,
-        bid=4.9,
-        ask=5.1,
-        change=0.1,
-        percentChange=0.02,
-        volume=10,
-        openInterest=100,
-        impliedVolatility=0.2,
-        inTheMoney=False,
-        contractSize="REGULAR",
-        currency="USD",
-    )
-    assert isinstance(put.last_trade_date, datetime)
-    assert put.last_trade_date == datetime(2025, 12, 18)
-
-
-class DummyOptionsRepository(IOptionsRepository):
+class OptionsRepositoryStub(IOptionsRepository):
     def get_option_expiration_dates(self, ticker, session=None):
         return [OptionExpirationDate(date=datetime(2025, 12, 19))]
 
@@ -110,47 +100,47 @@ class DummyOptionsRepository(IOptionsRepository):
 
 
 @pytest.fixture
-def service():
-    return OptionsService(repository=DummyOptionsRepository())
+def options_service() -> OptionsService:
+    return OptionsService(repository=OptionsRepositoryStub())
 
 
-def test_get_option_expiration_dates(service):
-    result = service.get_option_expiration_dates("AAPL")
+def test_get_option_expiration_dates(options_service):
+    result = options_service.get_option_expiration_dates("AAPL")
     assert isinstance(result, list)
     assert isinstance(result[0], OptionExpirationDate)
 
 
-def test_get_option_chain(service):
-    result = service.get_option_chain("AAPL", date(2025, 12, 19))
+def test_get_option_chain(options_service):
+    result = options_service.get_option_chain("AAPL", date(2025, 12, 19))
     assert hasattr(result, "calls")
     assert hasattr(result, "puts")
 
 
-def test_get_call_options(service):
-    result = service.get_call_options("AAPL", date(2025, 12, 19))
+def test_get_call_options(options_service):
+    result = options_service.get_call_options("AAPL", date(2025, 12, 19))
     assert isinstance(result, list)
     assert isinstance(result[0], CallOption)
 
 
-def test_get_put_options(service):
-    result = service.get_put_options("AAPL", date(2025, 12, 19))
+def test_get_put_options(options_service):
+    result = options_service.get_put_options("AAPL", date(2025, 12, 19))
     assert isinstance(result, list)
     assert isinstance(result[0], PutOption)
 
 
-def test_get_options_volume_analysis(service):
-    result = service.get_options_volume_analysis("AAPL", "2025-12-19")
+def test_get_options_volume_analysis(options_service):
+    result = options_service.get_options_volume_analysis("AAPL", "2025-12-19")
     assert "total_call_volume" in result
     assert "total_put_volume" in result
 
 
-def test_get_options_by_moneyness(service):
-    result = service.get_options_by_moneyness("AAPL", "2025-12-19", 0.1)
+def test_get_options_by_moneyness(options_service):
+    result = options_service.get_options_by_moneyness("AAPL", "2025-12-19", 0.1)
     assert "calls" in result
     assert "puts" in result
 
 
-def test_get_options_skew(service):
-    result = service.get_options_skew("AAPL", "2025-12-19")
+def test_get_options_skew(options_service):
+    result = options_service.get_options_skew("AAPL", "2025-12-19")
     assert "call_skew" in result
     assert "put_skew" in result
