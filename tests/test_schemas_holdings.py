@@ -1,4 +1,5 @@
 import math
+import types
 from datetime import datetime
 
 import pytest
@@ -8,6 +9,35 @@ from openmarkets.schemas.holdings import (
     StockInstitutionalHoldings,
     StockMutualFundHoldings,
 )
+
+
+@pytest.fixture
+def dummy_class():
+    class Dummy:
+        pass
+
+    return Dummy
+
+
+@pytest.mark.parametrize("bad_value", [object(), [], {}, set(), types.SimpleNamespace()])
+def test_insider_roster_shares_convert_shares_exception(bad_value):
+    # This triggers the except Exception branch in convert_shares
+    r = InsiderRosterHolder(**{"Shares Owned Directly": bad_value})
+    assert r.shares_owned_directly is None
+
+
+def test_stock_institutional_holdings_date_report_datetime():
+    # This triggers the isinstance(v, datetime) branch
+    now = datetime.now()
+    s = StockInstitutionalHoldings(**{"Date Report": now})
+    assert s.date_report is now
+
+
+@pytest.mark.parametrize("bad_value", [object(), [], {}, set(), types.SimpleNamespace()])
+def test_stock_mutual_fund_holdings_date_report_exception(bad_value):
+    # This triggers the except Exception branch in convert_date
+    m = StockMutualFundHoldings(**{"Date Report": bad_value})
+    assert m.date_report is None
 
 
 def test_insider_roster_convert_dates_and_shares():
