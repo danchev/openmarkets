@@ -28,7 +28,7 @@ class CryptoFastInfo(BaseModel):
     year_low: float = Field(..., alias="yearLow", description="52-week low price.")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
 
 
 class CryptoHistory(BaseModel):
@@ -42,4 +42,4 @@ class CryptoHistory(BaseModel):
     volume: int = Field(..., alias="Volume", description="Volume traded")
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name = True
