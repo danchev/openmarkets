@@ -48,6 +48,85 @@ def stock_repository() -> YFinanceStockRepository:
     return YFinanceStockRepository()
 
 
+class FakeDataFrame:
+    """Fake DataFrame for options testing."""
+
+    def __init__(self, rows: list[dict[str, Any]] | None = None):
+        self._rows = rows or []
+        self.columns = list(self._rows[0].keys()) if self._rows else []
+
+    @property
+    def empty(self) -> bool:
+        return len(self._rows) == 0
+
+    def iterrows(self):
+        for i, r in enumerate(self._rows):
+
+            class Row:
+                def __init__(self, d: dict[str, Any]):
+                    self._d = d
+
+                def to_dict(self) -> dict[str, Any]:
+                    return dict(self._d)
+
+            yield i, Row(r)
+
+    def to_dict(self, orient: str | None = None) -> dict[int, dict[str, Any]] | list[dict[str, Any]]:
+        if orient == "records":
+            return [dict(r) for r in self._rows]
+        return {i: dict(r) for i, r in enumerate(self._rows)}
+
+    def __getitem__(self, key: str):
+        class Col:
+            def __init__(self, rows: list[dict[str, Any]], key: str):
+                self._rows = rows
+                self._key = key
+
+            def sum(self) -> float:
+                return sum(r.get(self._key, 0) for r in self._rows)
+
+        return Col(self._rows, key)
+
+
+@pytest.fixture
+def fake_dataframe() -> type[FakeDataFrame]:
+    """Factory for creating fake DataFrames in options tests."""
+    return FakeDataFrame
+
+
+class DummyTicker:
+    """Dummy ticker for options testing."""
+
+    def __init__(self, options: list[str] | None = None, info: dict[str, Any] | None = None, option_chain=None):
+        self.options = options or []
+        self.info = info or {}
+        self._option_chain = option_chain
+
+    def option_chain(self, date: str | None = None):
+        return self._option_chain
+
+
+@pytest.fixture
+def dummy_ticker() -> type[DummyTicker]:
+    """Factory for creating dummy tickers in options tests."""
+    return DummyTicker
+
+
+class DummyOptionChain:
+    """Dummy option chain for options testing."""
+
+    def __init__(self, calls=None, puts=None, underlying: dict[str, Any] | None = None):
+        self.calls = calls if calls is not None else FakeDataFrame()
+        self.puts = puts if puts is not None else FakeDataFrame()
+        self.underlying = underlying or {}
+
+
+@pytest.fixture
+def dummy_option_chain() -> type[DummyOptionChain]:
+    """Factory for creating dummy option chains in options tests."""
+    return DummyOptionChain
+
+
 @pytest.fixture
 def options_repository() -> YFinanceOptionsRepository:
     return YFinanceOptionsRepository()
