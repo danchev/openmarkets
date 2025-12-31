@@ -5,40 +5,23 @@ import pytest
 import openmarkets.core.fastmcp as fastmcp
 
 
-def test_streamable_http_app_adds_cors(monkeypatch):
-    class DummyApp:
-        def __init__(self):
-            self.middleware_added = False
+@pytest.mark.parametrize(
+    ("wrapper_method", "base_method", "args"),
+    [
+        ("streamable_http_app", "streamable_http_app", ()),
+        ("sse_app", "sse_app", (None,)),
+    ],
+)
+def test_cors_wrapped_apps_add_cors_middleware(monkeypatch, make_middleware_spy_app, wrapper_method, base_method, args):
+    monkeypatch.setattr(
+        fastmcp.FastMCP,
+        base_method,
+        lambda self, *a, **k: make_middleware_spy_app(),
+    )
 
-        def add_middleware(self, *args, **kwargs):
-            self.middleware_added = True
-
-    class DummyFastMCP(fastmcp.FastMCP):
-        def streamable_http_app(self):
-            return DummyApp()
-
-    obj = fastmcp.FastMCPWithCORS()
-    obj.__class__ = DummyFastMCP
-    app = obj.streamable_http_app()
-    assert hasattr(app, "middleware_added")
-
-
-def test_sse_app_adds_cors(monkeypatch):
-    class DummyApp:
-        def __init__(self):
-            self.middleware_added = False
-
-        def add_middleware(self, *args, **kwargs):
-            self.middleware_added = True
-
-    class DummyFastMCP(fastmcp.FastMCP):
-        def sse_app(self, mount_path=None):
-            return DummyApp()
-
-    obj = fastmcp.FastMCPWithCORS()
-    obj.__class__ = DummyFastMCP
-    app = obj.sse_app()
-    assert hasattr(app, "middleware_added")
+    mcp = fastmcp.FastMCPWithCORS()
+    app = getattr(mcp, wrapper_method)(*args)
+    assert app.middleware_calls
 
 
 def test_create_mcp_registers_all(monkeypatch):

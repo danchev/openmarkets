@@ -12,57 +12,41 @@ import pytest
 
 from openmarkets.core.exceptions import APIError, InvalidSymbolError, OpenMarketsException
 
-# =========================
-# APIError Section
-# =========================
+
+@pytest.mark.parametrize(
+    ("exc_type", "message"),
+    [
+        (APIError, "This is an API error"),
+        (InvalidSymbolError, "This is an invalid symbol error"),
+    ],
+)
+def test_custom_exceptions_can_be_raised(exc_type, message):
+    with pytest.raises(exc_type):
+        raise exc_type(message)
 
 
-def test_raise_api_error():
-    """Test that APIError can be raised and caught."""
-    with pytest.raises(APIError):
-        raise APIError("This is an API error")
-
-
-# =========================
-# InvalidSymbolError Section
-# =========================
-
-
-def test_raise_invalid_symbol_error():
-    """Test that InvalidSymbolError can be raised and caught."""
-    with pytest.raises(InvalidSymbolError):
-        raise InvalidSymbolError("This is an invalid symbol error")
-
-
-# =========================
-# OpenMarketsException Hierarchy Section
-# =========================
-
-
-def test_exceptions_are_openmarkets_exception():
-    """Test that APIError and InvalidSymbolError are instances of OpenMarketsException."""
+@pytest.mark.parametrize(
+    ("exc_type", "message"),
+    [
+        (APIError, "API error instance"),
+        (InvalidSymbolError, "Invalid symbol instance"),
+    ],
+)
+def test_custom_exceptions_are_openmarkets_exception_subclasses(exc_type, message):
     try:
-        raise APIError("API error instance")
+        raise exc_type(message)
     except OpenMarketsException:
-        pass  # Expected
-    except Exception:
-        pytest.fail("APIError is not an instance of OpenMarketsException")
-
-    try:
-        raise InvalidSymbolError("Invalid symbol instance")
-    except OpenMarketsException:
-        pass  # Expected
-    except Exception:
-        pytest.fail("InvalidSymbolError is not an instance of OpenMarketsException")
+        return
+    except Exception:  # pragma: no cover
+        pytest.fail(f"{exc_type.__name__} is not an instance of OpenMarketsException")
 
 
-def test_api_error_is_instance_of_openmarkets_exception():
-    """Test isinstance for APIError and OpenMarketsException."""
-    api_err = APIError("API error for isinstance check")
-    assert isinstance(api_err, OpenMarketsException)
-
-
-def test_invalid_symbol_error_is_instance_of_openmarkets_exception():
-    """Test isinstance for InvalidSymbolError and OpenMarketsException."""
-    invalid_symbol_err = InvalidSymbolError("Invalid symbol for isinstance check")
-    assert isinstance(invalid_symbol_err, OpenMarketsException)
+@pytest.mark.parametrize(
+    "exc",
+    [
+        APIError("API error for isinstance check"),
+        InvalidSymbolError("Invalid symbol for isinstance check"),
+    ],
+)
+def test_custom_exception_instances_are_openmarkets_exception(exc):
+    assert isinstance(exc, OpenMarketsException)

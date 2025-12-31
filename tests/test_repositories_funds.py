@@ -2,48 +2,30 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from openmarkets.repositories.funds import YFinanceFundsRepository
 from openmarkets.schemas.funds import FundAssetClassHolding, FundSectorWeighting
 
 
-class _RowLike:
-    def __init__(self, data):
-        self._data = data
+def test_get_fund_info(patch_yf_with_attributes):
+    """Test that repository correctly retrieves fund info."""
+    info_data = {"symbol": "FND", "yield": 1.23}
 
-    def to_dict(self):
-        return self._data
+    def ticker_factory(ticker, session=None):
+        return SimpleNamespace(info=info_data)
 
+    yf_mock = type("YFinance", (), {"Ticker": ticker_factory})
+    pytest.MonkeyPatch().setattr("openmarkets.repositories.funds.yf", yf_mock)
 
-class _FakeDF:
-    def __init__(self, rows):
-        self._rows = rows
-
-    def reset_index(self):
-        return self
-
-    def transpose(self):
-        return self
-
-    def iterrows(self):
-        for i, row in enumerate(self._rows):
-            yield i, row
-
-
-def test_get_fund_info(monkeypatch):
     repo = YFinanceFundsRepository()
-
-    info = {"symbol": "FND", "yield": 1.23}
-    monkeypatch.setattr(
-        "openmarkets.repositories.funds.yf.Ticker", lambda ticker, session=None: SimpleNamespace(info=info)
-    )
-
     res = repo.get_fund_info("FND")
     assert res.symbol == "FND"
     assert res.yield_ == 1.23
 
 
 def test_get_fund_sector_weighting_variants(monkeypatch):
+    """Test that repository handles None, missing attribute, and present sector weighting data."""
     repo = YFinanceFundsRepository()
 
     # None
@@ -73,6 +55,7 @@ def test_get_fund_sector_weighting_variants(monkeypatch):
 
 
 def test_normalize_fund_operations_handles_numpy_and_series_and_to_dict(monkeypatch):
+    """Test that repository normalizes fund operations data from various formats."""
     repo = YFinanceFundsRepository()
 
     ops = {
@@ -101,7 +84,8 @@ def test_normalize_fund_operations_handles_numpy_and_series_and_to_dict(monkeypa
     assert hasattr(out, "index")
 
 
-def test_get_fund_overview_and_asset_classes_and_top_holdings_and_bond_equity_holdings(monkeypatch):
+def test_get_fund_overview_and_asset_classes_and_top_holdings_and_bond_equity_holdings(monkeypatch, fake_dataframe):
+    """Test that repository retrieves fund overview, holdings, and asset class data."""
     repo = YFinanceFundsRepository()
 
     # None funds data
@@ -116,13 +100,9 @@ def test_get_fund_overview_and_asset_classes_and_top_holdings_and_bond_equity_ho
     assert repo.get_fund_asset_class_holdings("F") is None
 
     # provide data
-    top_row = _RowLike({"Symbol": "A", "Name": "Alpha", "Holding Percent": 0.1})
-    bond_row = _RowLike({"index": "B", "Duration": 1.2, "Maturity": 5.0, "Credit Quality": 7})
-    equity_row = _RowLike({"index": "E", "Price/Earnings": 10.0})
-
-    df_top = _FakeDF([top_row])
-    df_bond = _FakeDF([bond_row])
-    df_equity = _FakeDF([equity_row])
+    df_top = fake_dataframe([{"Symbol": "A", "Name": "Alpha", "Holding Percent": 0.1}])
+    df_bond = fake_dataframe([{"index": "B", "Duration": 1.2, "Maturity": 5.0, "Credit Quality": 7}])
+    df_equity = fake_dataframe([{"index": "E", "Price/Earnings": 10.0}])
 
     fund_data = SimpleNamespace(
         fund_overview={"categoryName": "cat"},

@@ -27,60 +27,44 @@ def test_core_version_fallback_on_packagenotfound(monkeypatch):
 def test_fastmcp_streamable_http_app_adds_cors(monkeypatch):
     class DummyApp:
         def __init__(self):
-            self.middleware_added = False
+            self.middleware_calls = []
 
         def add_middleware(self, *args, **kwargs):
-            self.middleware_added = True
+            self.middleware_calls.append((args, kwargs))
 
-    # Ensure the "super" implementation returns our DummyApp
     monkeypatch.setattr(fastmcp.FastMCP, "streamable_http_app", lambda self: DummyApp())
 
     obj = fastmcp.FastMCPWithCORS()
     app: DummyApp = obj.streamable_http_app()  # type: ignore[arg-type]
     assert isinstance(app, DummyApp)
-    assert app.middleware_added is True
+    assert app.middleware_calls
 
 
 def test_fastmcp_sse_app_adds_cors(monkeypatch):
     class DummyApp:
         def __init__(self):
-            self.middleware_added = False
+            self.middleware_calls = []
 
         def add_middleware(self, *args, **kwargs):
-            self.middleware_added = True
+            self.middleware_calls.append((args, kwargs))
 
     monkeypatch.setattr(fastmcp.FastMCP, "sse_app", lambda self, mount_path=None: DummyApp())
 
     obj = fastmcp.FastMCPWithCORS()
     app: DummyApp = obj.sse_app()  # type: ignore[arg-type]
     assert isinstance(app, DummyApp)
-    assert app.middleware_added is True
+    assert app.middleware_calls
 
 
-def test_server_run_http_success(monkeypatch):
+def test_server_run_http_success(monkeypatch, dummy_mcp, uvicorn_run_spy, preserve_server_settings):
     """Ensure that when uvicorn.run succeeds, no SystemExit is raised and the call is made with expected args."""
-    mcp = types.SimpleNamespace()
-
-    class DummyApp:
-        def add_middleware(self, *args, **kwargs):
-            pass
-
-    def dummy_streamable():
-        return DummyApp()
-
-    mcp.streamable_http_app = dummy_streamable
-
-    called = {}
-
-    def fake_run(app, host, port):
-        called["host"] = host
-        called["port"] = port
-
-    monkeypatch.setattr(server, "uvicorn", types.SimpleNamespace(run=fake_run))
+    run, calls = uvicorn_run_spy
+    monkeypatch.setattr(server, "uvicorn", types.SimpleNamespace(run=run))
     # Ensure settings are set
     server.settings.host = "127.0.0.1"
     server.settings.port = 9999
     # Should not raise
-    server.run_http_server(mcp, server.settings)
-    assert called["host"] == "127.0.0.1"
-    assert called["port"] == 9999
+    server.run_http_server(dummy_mcp, server.settings)
+
+    assert calls["host"] == "127.0.0.1"
+    assert calls["port"] == 9999

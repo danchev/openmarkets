@@ -63,8 +63,8 @@ class DummyOptionChain:
     """Dummy option chain class for testing."""
 
     def __init__(self, calls=None, puts=None, underlying=None):
-        self.calls = calls or FakeDF()
-        self.puts = puts or FakeDF()
+        self.calls = calls if calls is not None else FakeDF()
+        self.puts = puts if puts is not None else FakeDF()
         self.underlying = underlying or {}
 
 
@@ -179,7 +179,6 @@ class TestYFinanceOptionsRepository:
         res = self.repo.get_options_by_moneyness("AAPL")
         assert res == {"error": "Could not get current stock price"}
 
-    @pytest.mark.xfail(reason="pandas boolean indexing not reliably emulated in this test harness", strict=False)
     def test_get_options_by_moneyness_success(self, monkeypatch):
         """Test successful options by moneyness calculation."""
         calls = pd.DataFrame([{"strike": 100, "impliedVolatility": 0.2}])
@@ -200,7 +199,6 @@ class TestYFinanceOptionsRepository:
         assert res["current_price"] == 100
         assert res["calls"] and res["puts"]
 
-    @pytest.mark.xfail(reason="pandas boolean indexing not reliably emulated in this test harness", strict=False)
     def test_get_options_skew_various_errors(self, monkeypatch):
         """Test various error conditions in options skew calculation."""
 

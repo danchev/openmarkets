@@ -5,24 +5,25 @@ import pytest
 import openmarkets.core.server as server
 
 
-def test_main_stdio(monkeypatch):
-    monkeypatch.setattr(server, "settings", mock.Mock(transport="stdio"))
-    called = {}
+@pytest.mark.parametrize(
+    ("transport", "expected"),
+    [
+        ("stdio", "stdio"),
+        ("http", "http"),
+    ],
+)
+def test_main_selects_transport(monkeypatch, transport, expected):
+    monkeypatch.setattr(server, "settings", mock.Mock(transport=transport))
+
+    called: dict[str, bool] = {}
     monkeypatch.setattr(server, "run_stdio_server", lambda mcp: called.setdefault("stdio", True))
     monkeypatch.setattr(server, "run_http_server", lambda mcp, settings: called.setdefault("http", True))
-    server.main()
-    assert called.get("stdio")
-    assert not called.get("http")
 
-
-def test_main_http(monkeypatch):
-    monkeypatch.setattr(server, "settings", mock.Mock(transport="http"))
-    called = {}
-    monkeypatch.setattr(server, "run_stdio_server", lambda mcp: called.setdefault("stdio", True))
-    monkeypatch.setattr(server, "run_http_server", lambda mcp, settings: called.setdefault("http", True))
     server.main()
-    assert called.get("http")
-    assert not called.get("stdio")
+
+    assert called.get(expected)
+    other = "http" if expected == "stdio" else "stdio"
+    assert not called.get(other)
 
 
 def test_main_invalid(monkeypatch):
@@ -41,7 +42,7 @@ def test_run_stdio_server_exception(monkeypatch):
         server.run_stdio_server(mcp)
 
 
-def test_run_http_server_keyboard(monkeypatch):
+def test_run_http_server_keyboard(monkeypatch, preserve_server_settings):
     mcp = mock.Mock()
     app = mock.Mock()
     mcp.streamable_http_app.return_value = app
@@ -62,7 +63,7 @@ def test_run_http_server_keyboard(monkeypatch):
     assert logger_mock.info.called
 
 
-def test_run_http_server_exception(monkeypatch):
+def test_run_http_server_exception(monkeypatch, preserve_server_settings):
     mcp = mock.Mock()
     app = mock.Mock()
     mcp.streamable_http_app.return_value = app
@@ -81,7 +82,7 @@ def test_run_http_server_exception(monkeypatch):
     assert excinfo.value.code == 1
 
 
-def test_run_http_server_logs_exception(monkeypatch):
+def test_run_http_server_logs_exception(monkeypatch, preserve_server_settings):
     mcp = mock.Mock()
     app = mock.Mock()
     mcp.streamable_http_app.return_value = app

@@ -1,90 +1,34 @@
 from datetime import datetime
 
+import pytest
+
 from openmarkets.schemas.options import CallOption, PutOption
 
 
-def test_calloption_lasttradedate_accepts_datetime():
-    dt = datetime(2025, 12, 18)
-    call = CallOption(
-        contractSymbol="AAPL231215C00100000",
-        lastTradeDate=dt,
-        strike=100,
-        lastPrice=5.0,
-        bid=4.9,
-        ask=5.1,
-        change=0.1,
-        percentChange=0.02,
-        volume=10,
-        openInterest=100,
-        impliedVolatility=0.2,
-        inTheMoney=True,
-        contractSize="REGULAR",
-        currency="USD",
-    )
-    assert call.last_trade_date == dt
+@pytest.mark.parametrize(
+    ("model_class", "base_data_fixture"),
+    [
+        (CallOption, "call_option_base_data"),
+        (PutOption, "put_option_base_data"),
+    ],
+)
+def test_option_lasttradedate_accepts_datetime(model_class, base_data_fixture, test_datetime, request):
+    base_data = request.getfixturevalue(base_data_fixture)
+    option = model_class(lastTradeDate=test_datetime, **base_data)
+    assert option.last_trade_date == test_datetime
 
 
-def test_calloption_lasttradedate_accepts_str():
-    # Should parse ISO string to datetime
-    s = "2025-12-18T00:00:00"
-    call = CallOption(
-        contractSymbol="AAPL231215C00100000",
-        lastTradeDate=s,
-        strike=100,
-        lastPrice=5.0,
-        bid=4.9,
-        ask=5.1,
-        change=0.1,
-        percentChange=0.02,
-        volume=10,
-        openInterest=100,
-        impliedVolatility=0.2,
-        inTheMoney=True,
-        contractSize="REGULAR",
-        currency="USD",
-    )
-    assert isinstance(call.last_trade_date, datetime)
-    assert call.last_trade_date == datetime(2025, 12, 18)
-
-
-def test_putoption_lasttradedate_accepts_datetime():
-    dt = datetime(2025, 12, 18)
-    put = PutOption(
-        contractSymbol="AAPL231215P00100000",
-        lastTradeDate=dt,
-        strike=100,
-        lastPrice=5.0,
-        bid=4.9,
-        ask=5.1,
-        change=0.1,
-        percentChange=0.02,
-        volume=10,
-        openInterest=100,
-        impliedVolatility=0.2,
-        inTheMoney=False,
-        contractSize="REGULAR",
-        currency="USD",
-    )
-    assert put.last_trade_date == dt
-
-
-def test_putoption_lasttradedate_accepts_str():
-    s = "2025-12-18T00:00:00"
-    put = PutOption(
-        contractSymbol="AAPL231215P00100000",
-        lastTradeDate=s,
-        strike=100,
-        lastPrice=5.0,
-        bid=4.9,
-        ask=5.1,
-        change=0.1,
-        percentChange=0.02,
-        volume=10,
-        openInterest=100,
-        impliedVolatility=0.2,
-        inTheMoney=False,
-        contractSize="REGULAR",
-        currency="USD",
-    )
-    assert isinstance(put.last_trade_date, datetime)
-    assert put.last_trade_date == datetime(2025, 12, 18)
+@pytest.mark.parametrize(
+    ("model_class", "base_data_fixture"),
+    [
+        (CallOption, "call_option_base_data"),
+        (PutOption, "put_option_base_data"),
+    ],
+)
+def test_option_lasttradedate_accepts_iso_string(
+    model_class, base_data_fixture, test_datetime_iso_string, test_datetime, request
+):
+    base_data = request.getfixturevalue(base_data_fixture)
+    option = model_class(lastTradeDate=test_datetime_iso_string, **base_data)
+    assert isinstance(option.last_trade_date, datetime)
+    assert option.last_trade_date == test_datetime

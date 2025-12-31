@@ -4,30 +4,28 @@ Tests for openmarkets.schemas.analysis.AnalystRecommendationChange Date validato
 
 from datetime import datetime
 
+import pytest
+
 from openmarkets.schemas.analysis import AnalystRecommendationChange
 
 
-def test_date_validator_none():
-    # Should return None if Date is None
-    obj = AnalystRecommendationChange(Date=None)
-    assert obj.date is None
-
-
-def test_date_validator_datetime():
-    # Should return the datetime as-is if Date is already a datetime
-    dt = datetime(2023, 1, 1)
-    obj = AnalystRecommendationChange(Date=dt)
-    assert obj.date == dt
-
-
-def test_date_validator_valid_string():
-    # Should parse a valid date string
-    obj = AnalystRecommendationChange(Date="2023-01-01")
-    assert isinstance(obj.date, datetime)
-    assert obj.date.year == 2023 and obj.date.month == 1 and obj.date.day == 1
-
-
-def test_date_validator_invalid_string():
-    # Should return None for an invalid date string
-    obj = AnalystRecommendationChange(Date="not-a-date")
-    assert obj.date is None
+@pytest.mark.parametrize(
+    ("date_input", "expected_output"),
+    [
+        (None, None),
+        (datetime(2023, 1, 1), datetime(2023, 1, 1)),
+        ("2023-01-01", datetime(2023, 1, 1)),
+        ("not-a-date", None),
+    ],
+)
+def test_date_validator(date_input, expected_output):
+    """Test AnalystRecommendationChange date validator with various inputs."""
+    obj = AnalystRecommendationChange(Date=date_input)
+    if expected_output is None:
+        assert obj.date is None
+    elif isinstance(expected_output, datetime):
+        assert isinstance(obj.date, datetime)
+        if date_input == "2023-01-01":
+            assert obj.date.year == 2023 and obj.date.month == 1 and obj.date.day == 1
+        else:
+            assert obj.date == expected_output

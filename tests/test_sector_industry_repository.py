@@ -1,13 +1,14 @@
 import pandas as pd
 import pytest
+from pydantic import ValidationError
 
 from openmarkets.repositories.sector_industry import YFinanceSectorIndustryRepository
 
 
 def test_get_sector_overview(monkeypatch):
-    from pydantic import ValidationError
+    """Test that repository correctly retrieves sector overview data."""
 
-    class S:
+    class SectorMock:
         def __init__(self, sector, session=None):
             self.overview = {
                 "companies_count": 1,
@@ -19,7 +20,9 @@ def test_get_sector_overview(monkeypatch):
                 "employee_count": 10,
             }
 
-    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
+    yf_mock = type("YFinance", (), {"Sector": SectorMock})
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", yf_mock)
+
     repo = YFinanceSectorIndustryRepository()
     try:
         out = repo.get_sector_overview("technology")
@@ -29,21 +32,20 @@ def test_get_sector_overview(monkeypatch):
         assert out.companies_count == 1
 
 
-def test_get_sector_overview_for_ticker_missing(monkeypatch):
-    class T:
-        def __init__(self, t, session=None):
-            self.info = {}
+def test_get_sector_overview_for_ticker_missing(patch_yf_with_attributes):
+    """Test that repository raises ValueError when ticker info missing sector."""
+    patch_yf_with_attributes("openmarkets.repositories.sector_industry.yf", {"info": {}})
 
-    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Ticker": T}))
     repo = YFinanceSectorIndustryRepository()
     with pytest.raises(ValueError):
         repo.get_sector_overview_for_ticker("AAPL")
 
 
 def test_get_sector_top_companies_and_industries(monkeypatch):
+    """Test that repository retrieves top companies, ETFs, mutual funds, and research reports."""
     df = pd.DataFrame([{"symbol": "A", "name": "Alpha", "rating": "A", "market weight": 0.05}]).set_index("symbol")
 
-    class S:
+    class SectorWithData:
         def __init__(self, sector, session=None):
             self.top_companies = df
             self.top_etfs = {"ETF1": "Name"}
@@ -58,7 +60,9 @@ def test_get_sector_top_companies_and_industries(monkeypatch):
                 }
             ]
 
-    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
+    yf_mock = type("YFinance", (), {"Sector": SectorWithData})
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", yf_mock)
+
     repo = YFinanceSectorIndustryRepository()
     comps = repo.get_sector_top_companies("technology")
     assert comps and comps[0].name == "Alpha"
@@ -73,11 +77,12 @@ def test_get_sector_top_companies_and_industries(monkeypatch):
 
 
 def test_get_all_industries_and_industry_overview(monkeypatch):
+    """Test that repository retrieves all industries and specific industry overview."""
     repo = YFinanceSectorIndustryRepository()
     all_inds = repo.get_all_industries()
     assert "semiconductors" in all_inds
 
-    class DummyIndustry:
+    class IndustryMock:
         def __init__(self, industry, session=None):
             self.overview = {
                 "companies_count": 4,
@@ -89,6 +94,8 @@ def test_get_all_industries_and_industry_overview(monkeypatch):
                 "employee_count": 100,
             }
 
-    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": DummyIndustry}))
+    yf_mock = type("YFinance", (), {"Industry": IndustryMock})
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", yf_mock)
+
     out = repo.get_industry_overview("semiconductors")
     assert out.market_cap == 17122720768

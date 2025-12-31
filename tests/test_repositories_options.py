@@ -8,6 +8,7 @@ from openmarkets.schemas.options import OptionExpirationDate
 
 
 def test_get_option_expiration_dates(monkeypatch):
+    """Test that repository retrieves option expiration dates."""
     repo = YFinanceOptionsRepository()
 
     monkeypatch.setattr(
@@ -20,14 +21,11 @@ def test_get_option_expiration_dates(monkeypatch):
     assert isinstance(out[0], OptionExpirationDate)
 
 
-def _make_option_df(rows):
-    return pd.DataFrame(rows)
-
-
 def test_get_option_chain_and_call_put_options(monkeypatch):
+    """Test that repository retrieves option chain with calls and puts."""
     repo = YFinanceOptionsRepository()
 
-    calls = _make_option_df(
+    calls = pd.DataFrame(
         [
             {
                 "contractSymbol": "C1",
@@ -48,7 +46,7 @@ def test_get_option_chain_and_call_put_options(monkeypatch):
         ]
     )
 
-    puts = _make_option_df([])
+    puts = pd.DataFrame([])
 
     class FakeOptionChain:
         def __init__(self, calls, puts):

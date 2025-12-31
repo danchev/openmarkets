@@ -12,8 +12,6 @@ This test ensures:
     - Handles empty resource templates or prompts gracefully.
 """
 
-import os
-
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -28,7 +26,7 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.asyncio
-async def test_server_starts_and_lists_resources():
+async def test_server_starts_and_lists_resources(mcp_server_params: StdioServerParameters):
     """
     End-to-end test to verify that the MCP server starts via stdio and basic API calls
     (list_resource_templates, list_prompts, and completions) succeed without errors.
@@ -39,11 +37,7 @@ async def test_server_starts_and_lists_resources():
     - Completions for at least one resource template and prompt work as expected.
     - Handles empty resource templates or prompts gracefully.
     """
-    server_params = StdioServerParameters(
-        command="uv",
-        args=["run", "openmarkets", "--transport", "stdio"],
-        env={"UV_INDEX": os.environ.get("UV_INDEX", "")},
-    )
+    server_params = mcp_server_params
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
