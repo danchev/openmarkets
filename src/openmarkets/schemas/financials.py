@@ -510,7 +510,17 @@ class EPSHistoryEntry(BaseModel):
     @field_validator("earnings_date", mode="before")
     @classmethod
     def coerce_date_to_timestamp(cls, v):
-        """Coerce date fields to pd.Timestamp."""
+        """Coerce date fields to datetime."""
         if isinstance(v, pd.Timestamp):
             return v.to_pydatetime()
+        if isinstance(v, datetime):
+            return v
+        if isinstance(v, date):
+            # Convert date to datetime
+            return datetime.combine(v, datetime.min.time())
+        if isinstance(v, str):
+            try:
+                return datetime.fromisoformat(v)
+            except Exception:
+                return None
         return v
