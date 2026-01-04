@@ -111,6 +111,7 @@ addopts = "-n auto --cov=src/openmarkets --cov-report=html --cov-report=term-mis
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
+filterwarnings = ["once::Warning"]
 
 [tool.mypy]
 custom_typeshed_dir = "typings"
