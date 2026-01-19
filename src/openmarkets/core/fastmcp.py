@@ -4,6 +4,7 @@ try:
     from fastmcp import FastMCP
 except ImportError:
     from mcp.server.fastmcp import FastMCP
+    from mcp.server.transport_security import TransportSecuritySettings
 
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
@@ -111,10 +112,19 @@ def _create_server(configuration: Settings) -> FastMCP:
     Returns:
         FastMCP: New server instance.
     """
-    return FastMCP(
-        name="Open Markets Server",
-        instructions="This server allows for the integration of various market data tools.",
-    )
+    try:
+        mcp = FastMCP(
+            name="Open Markets Server",
+            instructions="This server allows for the integration of various market data tools.",
+            transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+        )
+    except NameError as exc:
+        logger.warning("TransportSecuritySettings not available or failed: %s", exc)
+        mcp = FastMCP(
+            name="Open Markets Server",
+            instructions="This server allows for the integration of various market data tools.",
+        )
+    return mcp
 
 
 def create_mcp(config: Settings | None = None) -> FastMCP:
