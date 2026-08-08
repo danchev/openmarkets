@@ -1,8 +1,10 @@
 """Repository layer for stock data operations.
 
-Provides abstractions and implementations for fetching stock information,
-historical prices, dividends, splits, and other stock-level data.
+Fetches stock information, historical prices, dividends, splits, and other
+stock-level data from yfinance.
 """
+
+from typing import Protocol
 
 import pandas as pd
 import yfinance as yf
@@ -24,6 +26,51 @@ from openmarkets.schemas.stock import (
     StockInfo,
     StockSplit,
 )
+
+
+class StockRepository(Protocol):
+    """Structural type for stock data access.
+
+    Exists so ``StockService`` can be typed against an interface rather
+    than the concrete ``YFinanceStockRepository`` - test doubles satisfy
+    this by matching method signatures, with no inheritance and no
+    ``@abstractmethod`` bodies to keep in sync. The ``I*Repository`` ABCs
+    this replaces had exactly one implementation each and were removed as
+    767 lines of unused polymorphism; a Protocol restores the type-checked
+    substitutability that removal cost, at a fraction of the size.
+    """
+
+    def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo: ...
+
+    def get_info(self, ticker: str, session: Session | None = None) -> StockInfo: ...
+
+    def get_history(
+        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
+    ) -> list[StockHistory]: ...
+
+    def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]: ...
+
+    def get_financial_summary(self, ticker: str, session: Session | None = None) -> FinancialSummary: ...
+
+    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> RiskMetrics: ...
+
+    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> DividendSummary: ...
+
+    def get_price_target(self, ticker: str, session: Session | None = None) -> PriceTarget: ...
+
+    def get_extended_financial_summary(
+        self, ticker: str, session: Session | None = None
+    ) -> ExtendedFinancialSummary: ...
+
+    def get_quick_technical_indicators(
+        self, ticker: str, session: Session | None = None
+    ) -> QuickTechnicalIndicators: ...
+
+    def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]: ...
+
+    def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]: ...
+
+    def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]: ...
 
 
 class YFinanceStockRepository:

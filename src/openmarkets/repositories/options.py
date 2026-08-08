@@ -4,6 +4,7 @@ Provides access to option chains, contracts, and analytics using yfinance.
 """
 
 from datetime import date
+from typing import Protocol
 
 import yfinance as yf
 from curl_cffi.requests import Session
@@ -21,6 +22,46 @@ from openmarkets.schemas.options import (
     PutOption,
     SkewPoint,
 )
+
+
+class OptionsRepository(Protocol):
+    """Structural type for options data access.
+
+    See ``StockRepository`` in ``repositories.stock`` for why a Protocol is
+    used here rather than the ``IOptionsRepository`` ABC that was removed.
+    """
+
+    def get_option_expiration_dates(
+        self, ticker: str, session: Session | None = None
+    ) -> list[OptionExpirationDate]: ...
+
+    def get_option_chain(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> OptionContractChain: ...
+
+    def get_call_options(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> list[CallOption] | None: ...
+
+    def get_put_options(
+        self, ticker: str, expiration: date | None = None, session: Session | None = None
+    ) -> list[PutOption] | None: ...
+
+    def get_options_volume_analysis(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
+    ) -> OptionsVolumeAnalysis: ...
+
+    def get_options_by_moneyness(
+        self,
+        ticker: str,
+        expiration_date: str | None = None,
+        moneyness_range: float = 0.1,
+        session: Session | None = None,
+    ) -> OptionsByMoneyness: ...
+
+    def get_options_skew(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
+    ) -> OptionsSkew: ...
 
 
 class YFinanceOptionsRepository:
