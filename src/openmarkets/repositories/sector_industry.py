@@ -4,10 +4,16 @@ Provides abstractions and implementations for fetching sector overviews,
 industry information, top companies, and related sector/industry analytics.
 
 Every method accepts a ``region`` (ISO 3166-1 alpha-2 country code, e.g.
-"US", "GB", "DE", "JP") that scopes which regional exchange's companies,
-ETFs and mutual funds are returned - yfinance defaults ``Sector``/
-``Industry`` to "US" and accepts any code without validating it against a
-fixed list, so this stays a plain string rather than an enum.
+"US", "GB", "DE", "JP") - yfinance defaults ``Sector``/``Industry`` to
+"US" and accepts any code without validating it against a fixed list, so
+this stays a plain string rather than an enum. Region scoping is only
+observable upstream on the *_companies endpoints (confirmed: GB returns
+distinct ``.L``-suffixed symbols). ``overview`` and ``research_reports``
+return identical data regardless of region (confirmed against 'US' vs.
+'GB' vs. even non-ISO garbage codes), and ``top_etfs``/``top_mutual_funds``
+return empty for any non-US region (confirmed for 'GB') rather than
+region-specific funds - both are upstream yfinance limitations, not bugs
+in this wrapper.
 """
 
 import yfinance as yf
@@ -40,7 +46,9 @@ class YFinanceSectorIndustryRepository:
 
         Args:
             sector: Sector identifier.
-            region: ISO 3166-1 alpha-2 country code scoping the sector data.
+            region: ISO 3166-1 alpha-2 country code. Accepted for a
+                consistent signature; has no observable effect on this
+                endpoint upstream (see module docstring).
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -128,7 +136,10 @@ class YFinanceSectorIndustryRepository:
 
         Args:
             sector: Sector identifier.
-            region: ISO 3166-1 alpha-2 country code scoping the sector data.
+            region: ISO 3166-1 alpha-2 country code. Accepted for a
+                consistent signature; any non-US region returns an empty
+                list upstream rather than region-specific ETFs (see module
+                docstring).
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -145,7 +156,10 @@ class YFinanceSectorIndustryRepository:
 
         Args:
             sector: Sector identifier.
-            region: ISO 3166-1 alpha-2 country code scoping the sector data.
+            region: ISO 3166-1 alpha-2 country code. Accepted for a
+                consistent signature; any non-US region returns an empty
+                list upstream rather than region-specific funds (see module
+                docstring).
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -179,7 +193,9 @@ class YFinanceSectorIndustryRepository:
 
         Args:
             sector: Sector identifier.
-            region: ISO 3166-1 alpha-2 country code scoping the sector data.
+            region: ISO 3166-1 alpha-2 country code. Accepted for a
+                consistent signature; has no observable effect on this
+                endpoint upstream (see module docstring).
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -217,7 +233,9 @@ class YFinanceSectorIndustryRepository:
 
         Args:
             industry: Industry identifier.
-            region: ISO 3166-1 alpha-2 country code scoping the industry data.
+            region: ISO 3166-1 alpha-2 country code. Accepted for a
+                consistent signature; has no observable effect on this
+                endpoint upstream (see module docstring).
             session: Optional HTTP session for request handling.
 
         Returns:

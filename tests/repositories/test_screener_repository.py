@@ -77,6 +77,22 @@ def test_screen_rejects_unknown_query(screener_repository):
         screener_repository.screen("not_a_real_screen")  # type: ignore[arg-type]
 
 
+def test_screen_rejects_non_positive_count(screener_repository):
+    """yfinance silently ignores a non-positive count rather than
+    rejecting it (confirmed against the real API: count=-5 returns a
+    normal 25-result page instead of raising), so this must be validated
+    here to fail loudly instead of returning misleading results."""
+    with pytest.raises(ValueError, match="count must be positive"):
+        screener_repository.screen("day_gainers", count=0)
+    with pytest.raises(ValueError, match="count must be positive"):
+        screener_repository.screen("day_gainers", count=-5)
+
+
+def test_screen_rejects_negative_offset(screener_repository):
+    with pytest.raises(ValueError, match="offset must be non-negative"):
+        screener_repository.screen("day_gainers", offset=-1)
+
+
 def test_screen_handles_missing_response_keys(screener_repository, monkeypatch):
     """A response missing 'total' or 'quotes' entirely must not raise -
     treated as zero matches, not a construction error."""

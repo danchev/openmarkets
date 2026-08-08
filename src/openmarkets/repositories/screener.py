@@ -77,17 +77,27 @@ class YFinanceScreenerRepository:
             query: Name of a predefined screen, e.g. "day_gainers" or
                 "undervalued_large_caps". See PREDEFINED_SCREENS for the
                 full list.
-            count: Maximum number of results to return.
-            offset: Number of results to skip, for pagination.
+            count: Maximum number of results to return. Must be positive;
+                Yahoo caps this at 250 (confirmed: yfinance raises
+                ValueError above that).
+            offset: Number of results to skip, for pagination. Must be
+                non-negative.
             session: Optional HTTP session for request handling.
 
         Returns:
             Matching instruments and the total match count.
 
         Raises:
-            ValueError: If query is not a known predefined screen.
+            ValueError: If query is not a known predefined screen, or count
+                or offset is not a positive/non-negative integer
+                respectively (confirmed: yfinance silently ignores a
+                negative count rather than rejecting it).
         """
         if query not in PREDEFINED_SCREENS:
             raise ValueError(f"Unknown predefined screen '{query}'. Must be one of: {', '.join(PREDEFINED_SCREENS)}.")
+        if count <= 0:
+            raise ValueError(f"count must be positive, got {count}.")
+        if offset < 0:
+            raise ValueError(f"offset must be non-negative, got {offset}.")
         response = yf.screen(query, count=count, offset=offset, session=session)
         return ScreenerResult(total=response.get("total", 0), quotes=response.get("quotes", []))

@@ -46,8 +46,10 @@ Region = Annotated[
     str,
     Field(
         description=(
-            "ISO 3166-1 alpha-2 country code scoping which regional exchange's "
-            "data is returned, for example 'US', 'GB', 'DE' or 'JP'. Defaults to 'US'."
+            "ISO 3166-1 alpha-2 country code, for example 'US', 'GB', 'DE' or 'JP'. "
+            "Defaults to 'US'. Only scopes company-listing results (e.g. top "
+            "companies); overview and research-report data is not region-specific "
+            "upstream, and ETF/mutual-fund listings return empty for non-US regions."
         )
     ),
 ]
