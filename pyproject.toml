@@ -66,10 +66,10 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "debugpy>=1.8.17",
-    "pyright>=1.1.407",
-    "refurb>=2.2.0",
-    "ruff>=0.14.10",
-    "ty>=0.0.8",
+    "pyright>=1.1.411",
+    "refurb>=2.3.1",
+    "ruff>=0.16.1",
+    "ty>=0.0.68",
     {include-group = "test"},
     {include-group = "commit"},
 ]
@@ -87,7 +87,7 @@ docs = [
     "mkdocstrings-python>=1.18.2",
 ]
 commit = [
-    "commitizen>=4.11.0", 
+    "commitizen>=4.17.0",
     "pre-commit>=4.5.1",
 ]
 
