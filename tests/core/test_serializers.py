@@ -107,3 +107,33 @@ class TestSafeJsonDumps:
 
 if __name__ == "__main__":
     pytest.main()
+
+
+class TestNonFiniteHandling:
+    """Non-finite values must serialise as null, not the bare NaN literal."""
+
+    @pytest.mark.parametrize(
+        "value",
+        [float("nan"), float("inf"), float("-inf"), np.float64("nan"), pd.NaT],
+    )
+    def test_non_finite_becomes_null(self, value):
+        """NaN previously reached the output as the invalid literal NaN.
+
+        JSONEncoder.default is only consulted for types the encoder does not
+        understand, so a plain float never reached the NaN branch.
+        """
+        payload = safe_json_dumps({"x": value})
+
+        assert payload == '{"x": null}'
+        assert json.loads(payload) == {"x": None}
+
+    def test_nested_non_finite_becomes_null(self):
+        payload = safe_json_dumps({"a": [1.0, float("nan"), {"b": float("-inf")}]})
+
+        assert json.loads(payload) == {"a": [1.0, None, {"b": None}]}
+
+    def test_output_is_always_strict_json(self):
+        """A strict RFC 8259 parser must accept the output."""
+        payload = safe_json_dumps({"x": float("nan"), "t": pd.Timestamp("2024-01-01")})
+
+        json.loads(payload, parse_constant=lambda c: pytest.fail(f"invalid JSON constant: {c}"))
