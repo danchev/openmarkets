@@ -1,18 +1,26 @@
 import runpy
 from typing import get_args
 
+from pydantic.fields import FieldInfo
+
 from openmarkets.core import config, types
 from openmarkets.core.constants import SECTORS
 
 
 def test_sector_annotated_contains_expected_sectors():
-    # Annotated[type, metadata] -> get_args returns (type, metadata)
+    """The sector description must carry the permitted values.
+
+    The metadata is a pydantic FieldInfo rather than a bare string: a plain
+    string in Annotated[...] is ignored by schema generation, so the previous
+    form never reached the generated tool definition.
+    """
     args = get_args(types.Sector)
     assert len(args) == 2
     metadata = args[1]
-    assert isinstance(metadata, str)
-    # Ensure at least one known sector is mentioned
-    assert SECTORS[0] in metadata
+
+    assert isinstance(metadata, FieldInfo)
+    assert metadata.description is not None
+    assert SECTORS[0] in metadata.description
 
 
 def test_main_entry_calls_server_main(monkeypatch):

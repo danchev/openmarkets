@@ -5,12 +5,10 @@ support and resistance levels for stock analysis. Acts as an intermediary betwee
 the MCP tools layer and repository layer.
 """
 
-from typing import Annotated
-
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
-from openmarkets.core.types import Period
+from openmarkets.core.types import Period, Ticker
 from openmarkets.repositories.technical_analysis import (
     ITechnicalAnalysisRepository,
     YFinanceTechnicalAnalysisRepository,
@@ -49,9 +47,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_technical_indicators(
-        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "6mo"
-    ) -> TechnicalIndicatorsDict:
+    def get_technical_indicators(self, ticker: Ticker, period: Period = "6mo") -> TechnicalIndicatorsDict:
         """
         Retrieve technical indicators for a given ticker and period.
 
@@ -65,9 +61,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         return self.repository.get_technical_indicators(ticker, period, session=self.session)
 
     @tool
-    def get_volatility_metrics(
-        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "1y"
-    ) -> VolatilityMetricsDict:
+    def get_volatility_metrics(self, ticker: Ticker, period: Period = "1y") -> VolatilityMetricsDict:
         """
         Retrieve volatility metrics for a given ticker and period.
 
@@ -81,9 +75,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         return self.repository.get_volatility_metrics(ticker, period, session=self.session)
 
     @tool
-    def get_support_resistance_levels(
-        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "6mo"
-    ) -> SupportResistanceLevelsDict:
+    def get_support_resistance_levels(self, ticker: Ticker, period: Period = "6mo") -> SupportResistanceLevelsDict:
         """
         Retrieve support and resistance levels for a given ticker and period.
 

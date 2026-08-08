@@ -10,43 +10,32 @@ validation.
 
 from typing import Annotated, Literal, get_args
 
+from pydantic import Field
+
 from openmarkets.core.constants import INDUSTRIES, MARKETS, SECTORS
 
+# Descriptions are attached with pydantic Field rather than a bare string.
+# A plain string in Annotated[...] is ignored by schema generation, so the
+# many hand-written "The symbol of the security." annotations never actually
+# reached the tool definition.
 Ticker = Annotated[
     str,
-    """
-    Security ticker string.
-
-    Example:
-        'AAPL', 'GOOG', 'MSFT'
-    """,
+    Field(description="Security ticker symbol, for example 'AAPL', 'GOOG' or 'MSFT'."),
 ]
 
 Sector = Annotated[
     str,
-    """
-    Sector name.
-    Example:
-        {SECTORS}
-    """.format(SECTORS=", ".join(f"'{sec}'" for sec in SECTORS)),
+    Field(description="Sector name. One of: " + ", ".join(f"'{sector}'" for sector in SECTORS) + "."),
 ]
 
 Industry = Annotated[
     str,
-    """
-    Industry name.
-    Example:
-        {INDUSTRIES}
-    """.format(INDUSTRIES=", ".join(f"'{ind}'" for ind in INDUSTRIES)),
+    Field(description="Industry name. For example: " + ", ".join(f"'{ind}'" for ind in list(INDUSTRIES)[:5]) + "."),
 ]
 
 Market = Annotated[
     str,
-    """
-    Market type.
-    Example:
-        {MARKETS}
-    """.format(MARKETS=", ".join(f"'{m}'" for m in MARKETS)),
+    Field(description="Market identifier. One of: " + ", ".join(f"'{market}'" for market in MARKETS) + "."),
 ]
 
 #: Historical range accepted by the upstream provider.

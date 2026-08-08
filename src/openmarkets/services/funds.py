@@ -5,11 +5,10 @@ operations data, and fund overviews. Acts as an intermediary between the MCP too
 layer and repository layer.
 """
 
-from typing import Annotated
-
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Ticker
 from openmarkets.repositories.funds import IFundsRepository, YFinanceFundsRepository
 from openmarkets.schemas.funds import (
     FundAssetClassHolding,
@@ -50,7 +49,7 @@ class FundsService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_fund_info(self, ticker: Annotated[str, "The symbol of the security."]) -> FundInfo:
+    def get_fund_info(self, ticker: Ticker) -> FundInfo:
         """
         Retrieve general information for a specific fund.
 
@@ -63,9 +62,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_info(ticker, session=self.session)
 
     @tool
-    def get_fund_sector_weighting(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> FundSectorWeighting | None:
+    def get_fund_sector_weighting(self, ticker: Ticker) -> FundSectorWeighting | None:
         """
         Retrieve sector weighting data for a specific fund.
 
@@ -78,7 +75,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_sector_weighting(ticker, session=self.session)
 
     @tool
-    def get_fund_operations(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOperations | None:
+    def get_fund_operations(self, ticker: Ticker) -> FundOperations | None:
         """
         Retrieve operations data for a specific fund.
 
@@ -91,7 +88,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_operations(ticker, session=self.session)
 
     @tool
-    def get_fund_overview(self, ticker: Annotated[str, "The symbol of the security."]) -> FundOverview | None:
+    def get_fund_overview(self, ticker: Ticker) -> FundOverview | None:
         """
         Retrieve an overview for a specific fund.
 
@@ -104,7 +101,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_overview(ticker, session=self.session)
 
     @tool
-    def get_fund_top_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundTopHolding]:
+    def get_fund_top_holdings(self, ticker: Ticker) -> list[FundTopHolding]:
         """
         Retrieve the top holdings for a specific fund.
 
@@ -117,7 +114,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_top_holdings(ticker, session=self.session)
 
     @tool
-    def get_fund_bond_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[FundBondHolding]:
+    def get_fund_bond_holdings(self, ticker: Ticker) -> list[FundBondHolding]:
         """
         Retrieve the bond holdings for a specific fund.
 
@@ -130,9 +127,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_bond_holdings(ticker, session=self.session)
 
     @tool
-    def get_fund_equity_holdings(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[FundEquityHolding]:
+    def get_fund_equity_holdings(self, ticker: Ticker) -> list[FundEquityHolding]:
         """
         Retrieve the equity holdings for a specific fund.
 
@@ -145,9 +140,7 @@ class FundsService(ToolRegistrationMixin):
         return self.repository.get_fund_equity_holdings(ticker, session=self.session)
 
     @tool
-    def get_fund_asset_class_holdings(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> FundAssetClassHolding | None:
+    def get_fund_asset_class_holdings(self, ticker: Ticker) -> FundAssetClassHolding | None:
         """
         Retrieve asset class holdings for a specific fund.
 

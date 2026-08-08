@@ -5,12 +5,11 @@ mutual fund holdings, insider transactions, and comprehensive holdings reports.
 Acts as an intermediary between the MCP tools layer and repository layer.
 """
 
-from typing import Annotated
-
 from curl_cffi.requests import Session
 
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Ticker
 from openmarkets.repositories.holdings import IHoldingsRepository, YFinanceHoldingsRepository
 from openmarkets.schemas.holdings import (
     FullHoldings,
@@ -49,7 +48,7 @@ class HoldingsService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_major_holders(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockMajorHolders]:
+    def get_major_holders(self, ticker: Ticker) -> list[StockMajorHolders]:
         """
         Retrieve major holders for a given ticker.
 
@@ -62,9 +61,7 @@ class HoldingsService(ToolRegistrationMixin):
         return self.repository.get_major_holders(ticker, session=self.session)
 
     @tool
-    def get_institutional_holdings(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[StockInstitutionalHoldings]:
+    def get_institutional_holdings(self, ticker: Ticker) -> list[StockInstitutionalHoldings]:
         """
         Retrieve institutional holdings for a given ticker.
 
@@ -77,9 +74,7 @@ class HoldingsService(ToolRegistrationMixin):
         return self.repository.get_institutional_holdings(ticker, session=self.session)
 
     @tool
-    def get_mutual_fund_holdings(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[StockMutualFundHoldings]:
+    def get_mutual_fund_holdings(self, ticker: Ticker) -> list[StockMutualFundHoldings]:
         """
         Retrieve mutual fund holdings for a given ticker.
 
@@ -92,7 +87,7 @@ class HoldingsService(ToolRegistrationMixin):
         return self.repository.get_mutual_fund_holdings(ticker, session=self.session)
 
     @tool
-    def get_insider_purchases(self, ticker: Annotated[str, "The symbol of the security."]) -> list[InsiderPurchase]:
+    def get_insider_purchases(self, ticker: Ticker) -> list[InsiderPurchase]:
         """
         Retrieve insider purchases for a given ticker.
 
@@ -105,9 +100,7 @@ class HoldingsService(ToolRegistrationMixin):
         return self.repository.get_insider_purchases(ticker, session=self.session)
 
     @tool
-    def get_insider_roster_holders(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[InsiderRosterHolder]:
+    def get_insider_roster_holders(self, ticker: Ticker) -> list[InsiderRosterHolder]:
         """
         Retrieve the insider roster for a given ticker.
 
@@ -120,7 +113,7 @@ class HoldingsService(ToolRegistrationMixin):
         return self.repository.get_insider_roster_holders(ticker, session=self.session)
 
     @tool
-    def get_full_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> FullHoldings:
+    def get_full_holdings(self, ticker: Ticker) -> FullHoldings:
         """
         Retrieve a full set of holdings data for a given ticker, aggregating all available holdings information.
 

@@ -5,12 +5,11 @@ cash flow statements, financial calendars, SEC filings, and EPS history.
 Acts as an intermediary between the MCP tools layer and repository layer.
 """
 
-from typing import Annotated
-
 from curl_cffi.requests import Session
 
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Ticker
 from openmarkets.repositories.financials import IFinancialsRepository, YFinanceFinancialsRepository
 from openmarkets.schemas.financials import (
     BalanceSheetEntry,
@@ -51,7 +50,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_balance_sheet(self, ticker: Annotated[str, "The symbol of the security."]) -> list[BalanceSheetEntry]:
+    def get_balance_sheet(self, ticker: Ticker) -> list[BalanceSheetEntry]:
         """
         Retrieve the balance sheet for a given ticker.
 
@@ -64,7 +63,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_balance_sheet(ticker, session=self.session)
 
     @tool
-    def get_income_statement(self, ticker: Annotated[str, "The symbol of the security."]) -> list[IncomeStatementEntry]:
+    def get_income_statement(self, ticker: Ticker) -> list[IncomeStatementEntry]:
         """
         Retrieve the income statement for a given ticker.
 
@@ -77,9 +76,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_income_statement(ticker, session=self.session)
 
     @tool
-    def get_ttm_income_statement(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[TTMIncomeStatementEntry]:
+    def get_ttm_income_statement(self, ticker: Ticker) -> list[TTMIncomeStatementEntry]:
         """
         Retrieve the trailing twelve months (TTM) income statement for a given ticker.
 
@@ -92,9 +89,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_ttm_income_statement(ticker, session=self.session)
 
     @tool
-    def get_ttm_cash_flow_statement(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[TTMCashFlowStatementEntry]:
+    def get_ttm_cash_flow_statement(self, ticker: Ticker) -> list[TTMCashFlowStatementEntry]:
         """
         Retrieve the trailing twelve months (TTM) cash flow statement for a given ticker.
 
@@ -107,7 +102,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_ttm_cash_flow_statement(ticker, session=self.session)
 
     @tool
-    def get_financial_calendar(self, ticker: Annotated[str, "The symbol of the security."]) -> FinancialCalendar:
+    def get_financial_calendar(self, ticker: Ticker) -> FinancialCalendar:
         """
         Retrieve the financial calendar for a given ticker.
 
@@ -120,7 +115,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_financial_calendar(ticker, session=self.session)
 
     @tool
-    def get_sec_filings(self, ticker: Annotated[str, "The symbol of the security."]) -> list[SecFilingRecord]:
+    def get_sec_filings(self, ticker: Ticker) -> list[SecFilingRecord]:
         """
         Retrieve SEC filings for a given ticker.
 
@@ -133,7 +128,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_sec_filings(ticker, session=self.session)
 
     @tool
-    def get_eps_history(self, ticker: Annotated[str, "The symbol of the security."]) -> list[EPSHistoryEntry]:
+    def get_eps_history(self, ticker: Ticker) -> list[EPSHistoryEntry]:
         """
         Retrieve EPS (Earnings Per Share) history for a given ticker.
 
@@ -146,7 +141,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_eps_history(ticker, session=self.session)
 
     @tool
-    def get_full_financials(self, ticker: Annotated[str, "The symbol of the security."]) -> FullFinancials:
+    def get_full_financials(self, ticker: Ticker) -> FullFinancials:
         """
         Retrieve a full set of financial data for a given ticker, aggregating all available financial statements and records.
 

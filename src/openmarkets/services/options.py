@@ -6,11 +6,11 @@ Acts as an intermediary between the MCP tools layer and repository layer.
 """
 
 from datetime import date
-from typing import Annotated
 
 from curl_cffi import Session
 
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Ticker
 from openmarkets.repositories.options import IOptionsRepository, YFinanceOptionsRepository
 from openmarkets.schemas.options import (
     CallOption,
@@ -50,9 +50,7 @@ class OptionsService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_option_expiration_dates(
-        self, ticker: Annotated[str, "The symbol of the security."]
-    ) -> list[OptionExpirationDate]:
+    def get_option_expiration_dates(self, ticker: Ticker) -> list[OptionExpirationDate]:
         """
         Retrieve available option expiration dates for a given ticker.
 
@@ -65,9 +63,7 @@ class OptionsService(ToolRegistrationMixin):
         return self.repository.get_option_expiration_dates(ticker, session=self.session)
 
     @tool
-    def get_option_chain(
-        self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
-    ) -> OptionContractChain:
+    def get_option_chain(self, ticker: Ticker, expiration: date | None = None) -> OptionContractChain:
         """
         Retrieve the option contract chain for a given ticker and expiration date.
 
@@ -81,9 +77,7 @@ class OptionsService(ToolRegistrationMixin):
         return self.repository.get_option_chain(ticker, expiration, session=self.session)
 
     @tool
-    def get_call_options(
-        self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
-    ) -> list[CallOption] | None:
+    def get_call_options(self, ticker: Ticker, expiration: date | None = None) -> list[CallOption] | None:
         """
         Retrieve call options for a given ticker and expiration date.
 
@@ -97,9 +91,7 @@ class OptionsService(ToolRegistrationMixin):
         return self.repository.get_call_options(ticker, expiration, session=self.session)
 
     @tool
-    def get_put_options(
-        self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
-    ) -> list[PutOption] | None:
+    def get_put_options(self, ticker: Ticker, expiration: date | None = None) -> list[PutOption] | None:
         """
         Retrieve put options for a given ticker and expiration date.
 
@@ -113,9 +105,7 @@ class OptionsService(ToolRegistrationMixin):
         return self.repository.get_put_options(ticker, expiration, session=self.session)
 
     @tool
-    def get_options_volume_analysis(
-        self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
-    ) -> OptionsVolumeAnalysis:
+    def get_options_volume_analysis(self, ticker: Ticker, expiration_date: str | None = None) -> OptionsVolumeAnalysis:
         """
         Retrieve options volume analysis for a given ticker and expiration date.
 
@@ -131,7 +121,7 @@ class OptionsService(ToolRegistrationMixin):
     @tool
     def get_options_by_moneyness(
         self,
-        ticker: Annotated[str, "The symbol of the security."],
+        ticker: Ticker,
         expiration_date: str | None = None,
         moneyness_range: float = 0.1,
     ) -> OptionsByMoneyness:
@@ -149,9 +139,7 @@ class OptionsService(ToolRegistrationMixin):
         return self.repository.get_options_by_moneyness(ticker, expiration_date, moneyness_range, session=self.session)
 
     @tool
-    def get_options_skew(
-        self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
-    ) -> OptionsSkew:
+    def get_options_skew(self, ticker: Ticker, expiration_date: str | None = None) -> OptionsSkew:
         """
         Retrieve options skew analysis for a given ticker and expiration date.
 

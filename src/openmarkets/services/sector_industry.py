@@ -7,6 +7,7 @@ between the MCP tools layer and repository layer.
 
 from typing import Annotated
 
+from openmarkets.core.types import Ticker
 from openmarkets.repositories.sector_industry import ISectorIndustryRepository, YFinanceSectorIndustryRepository
 from openmarkets.schemas.sector_industry import (
     IndustryOverview,
@@ -50,7 +51,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         return self.repository.get_sector_overview(sector)
 
     @tool
-    def get_sector_overview_for_ticker(self, ticker: str) -> SectorOverview:
+    def get_sector_overview_for_ticker(self, ticker: Ticker) -> SectorOverview:
         """
         Retrieve overview information for a specific sector based on a stock ticker.
 
@@ -74,7 +75,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         return self.repository.get_sector_top_companies(sector)
 
     @tool
-    def get_sector_top_companies_for_ticker(self, ticker: str) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies_for_ticker(self, ticker: Ticker) -> list[SectorTopCompaniesEntry]:
         """
         Retrieve a list of top companies within a specific sector based on a stock ticker.
 
