@@ -9,6 +9,7 @@ from typing import Annotated
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.repositories.financials import IFinancialsRepository, YFinanceFinancialsRepository
 from openmarkets.schemas.financials import (
@@ -155,14 +156,21 @@ class FinancialsService(ToolRegistrationMixin):
         Returns:
             FullFinancials: All financial data for the ticker.
         """
+        session = self.session
         return FullFinancials(
-            balance_sheet=self.repository.get_balance_sheet(ticker, session=self.session),
-            income_statement=self.repository.get_income_statement(ticker, session=self.session),
-            ttm_income_statement=self.repository.get_ttm_income_statement(ticker, session=self.session),
-            ttm_cash_flow_statement=self.repository.get_ttm_cash_flow_statement(ticker, session=self.session),
-            financial_calendar=self.repository.get_financial_calendar(ticker, session=self.session),
-            sec_filings=self.repository.get_sec_filings(ticker, session=self.session),
-            eps_history=self.repository.get_eps_history(ticker, session=self.session),
+            **gather(
+                {
+                    "balance_sheet": lambda: self.repository.get_balance_sheet(ticker, session=session),
+                    "income_statement": lambda: self.repository.get_income_statement(ticker, session=session),
+                    "ttm_income_statement": lambda: self.repository.get_ttm_income_statement(ticker, session=session),
+                    "ttm_cash_flow_statement": lambda: self.repository.get_ttm_cash_flow_statement(
+                        ticker, session=session
+                    ),
+                    "financial_calendar": lambda: self.repository.get_financial_calendar(ticker, session=session),
+                    "sec_filings": lambda: self.repository.get_sec_filings(ticker, session=session),
+                    "eps_history": lambda: self.repository.get_eps_history(ticker, session=session),
+                }
+            )
         )
 
 

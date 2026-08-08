@@ -9,6 +9,7 @@ from typing import Annotated
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.repositories.analysis import IAnalysisRepository, YFinanceAnalysisRepository
 from openmarkets.schemas.analysis import (
@@ -155,14 +156,21 @@ class AnalysisService(ToolRegistrationMixin):
         Returns:
             FullAnalysis: All analysis data for the ticker.
         """
+        session = self.session
         return FullAnalysis(
-            recommendations=self.repository.get_analyst_recommendations(ticker, session=self.session),
-            recommendation_changes=self.repository.get_recommendation_changes(ticker, session=self.session),
-            revenue_estimates=self.repository.get_revenue_estimates(ticker, session=self.session),
-            earnings_estimates=self.repository.get_earnings_estimates(ticker, session=self.session),
-            growth_estimates=self.repository.get_growth_estimates(ticker, session=self.session),
-            eps_trends=self.repository.get_eps_trends(ticker, session=self.session),
-            price_targets=self.repository.get_price_targets(ticker, session=self.session),
+            **gather(
+                {
+                    "recommendations": lambda: self.repository.get_analyst_recommendations(ticker, session=session),
+                    "recommendation_changes": lambda: self.repository.get_recommendation_changes(
+                        ticker, session=session
+                    ),
+                    "revenue_estimates": lambda: self.repository.get_revenue_estimates(ticker, session=session),
+                    "earnings_estimates": lambda: self.repository.get_earnings_estimates(ticker, session=session),
+                    "growth_estimates": lambda: self.repository.get_growth_estimates(ticker, session=session),
+                    "eps_trends": lambda: self.repository.get_eps_trends(ticker, session=session),
+                    "price_targets": lambda: self.repository.get_price_targets(ticker, session=session),
+                }
+            )
         )
 
 

@@ -9,6 +9,7 @@ from typing import Annotated
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.repositories.holdings import IHoldingsRepository, YFinanceHoldingsRepository
 from openmarkets.schemas.holdings import (
@@ -129,12 +130,21 @@ class HoldingsService(ToolRegistrationMixin):
         Returns:
             FullHoldings: All holdings data for the ticker.
         """
+        session = self.session
         return FullHoldings(
-            major_holders=self.repository.get_major_holders(ticker, session=self.session),
-            institutional_holdings=self.repository.get_institutional_holdings(ticker, session=self.session),
-            mutual_fund_holdings=self.repository.get_mutual_fund_holdings(ticker, session=self.session),
-            insider_purchases=self.repository.get_insider_purchases(ticker, session=self.session),
-            insider_roster_holders=self.repository.get_insider_roster_holders(ticker, session=self.session),
+            **gather(
+                {
+                    "major_holders": lambda: self.repository.get_major_holders(ticker, session=session),
+                    "institutional_holdings": lambda: self.repository.get_institutional_holdings(
+                        ticker, session=session
+                    ),
+                    "mutual_fund_holdings": lambda: self.repository.get_mutual_fund_holdings(ticker, session=session),
+                    "insider_purchases": lambda: self.repository.get_insider_purchases(ticker, session=session),
+                    "insider_roster_holders": lambda: self.repository.get_insider_roster_holders(
+                        ticker, session=session
+                    ),
+                }
+            )
         )
 
 
