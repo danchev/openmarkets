@@ -9,6 +9,7 @@ from typing import Annotated
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.http import get_session
 from openmarkets.repositories.funds import IFundsRepository, YFinanceFundsRepository
 from openmarkets.schemas.funds import (
     FundAssetClassHolding,
@@ -29,7 +30,7 @@ class FundsService(ToolRegistrationMixin):
     Provides methods to retrieve fund information, holdings, sector weightings, operations, and overviews for a given ticker.
     """
 
-    def __init__(self, repository: IFundsRepository | None = None, session: None = None):
+    def __init__(self, repository: IFundsRepository | None = None, session: Session | None = None):
         """Initialize the FundsService.
 
         Args:
@@ -37,7 +38,16 @@ class FundsService(ToolRegistrationMixin):
             session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceFundsRepository()
-        self.session = session or Session(impersonate="chrome")
+        self._session = session
+
+    @property
+    def session(self) -> Session:
+        """Return the HTTP session to use for requests.
+
+        Falls back to the process-wide shared session so that no session is
+        created at import time.
+        """
+        return self._session if self._session is not None else get_session()
 
     def get_fund_info(self, ticker: Annotated[str, "The symbol of the security."]) -> FundInfo:
         """

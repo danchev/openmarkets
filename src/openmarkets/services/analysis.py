@@ -9,6 +9,7 @@ from typing import Annotated
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.http import get_session
 from openmarkets.repositories.analysis import IAnalysisRepository, YFinanceAnalysisRepository
 from openmarkets.services.utils import ToolRegistrationMixin
 
@@ -19,7 +20,7 @@ class AnalysisService(ToolRegistrationMixin):
     Provides methods to retrieve analyst recommendations, estimates, trends, and price targets for a given ticker.
     """
 
-    def __init__(self, repository: IAnalysisRepository | None = None, session: None = None):
+    def __init__(self, repository: IAnalysisRepository | None = None, session: Session | None = None):
         """Initialize the AnalysisService.
 
         Args:
@@ -27,7 +28,16 @@ class AnalysisService(ToolRegistrationMixin):
             session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceAnalysisRepository()
-        self.session = session or Session(impersonate="chrome")
+        self._session = session
+
+    @property
+    def session(self) -> Session:
+        """Return the HTTP session to use for requests.
+
+        Falls back to the process-wide shared session so that no session is
+        created at import time.
+        """
+        return self._session if self._session is not None else get_session()
 
     def get_analyst_recommendations(self, ticker: Annotated[str, "The symbol of the security."]):
         """
