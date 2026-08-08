@@ -17,6 +17,7 @@ from openmarkets.schemas.stock import (
     StockHistory,
     StockInfo,
     StockSplit,
+    ValuationMeasuresEntry,
 )
 
 
@@ -212,3 +213,97 @@ def test_get_history_invalid_period_raises(stock_repository, stock_ticker):
 def test_get_history_invalid_interval_raises(stock_repository, stock_ticker):
     with pytest.raises(ValueError, match="Invalid interval"):
         stock_repository.get_history(stock_ticker, interval="invalid")
+
+
+def test_get_valuation_history_transposes_periods_to_records(stock_repository, stock_ticker, patch_yf):
+    """yfinance returns metrics as rows and periods as columns; the
+    repository must transpose that into one record per period."""
+    df = pd.DataFrame(
+        {
+            "Current": [100.0, 20.5],
+            "6/30/2026": [90.0, 18.0],
+        },
+        index=["Market Cap", "Trailing P/E"],
+    )
+
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            pass
+
+        def get_valuation_measures(self, freq="quarterly", periods=5):
+            return df
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    result = stock_repository.get_valuation_history(stock_ticker)
+
+    assert len(result) == 2
+    assert all(isinstance(entry, ValuationMeasuresEntry) for entry in result)
+    assert result[0].period == "Current"
+    assert result[0].market_cap == 100.0
+    assert result[0].trailing_pe == 20.5
+    assert result[1].period == "6/30/2026"
+    assert result[1].market_cap == 90.0
+
+
+def test_get_valuation_history_empty_for_unsupported_instrument(stock_repository, stock_ticker, patch_yf):
+    """Valuation measures do not apply to some instruments (e.g.
+    cryptocurrencies); yfinance returns an empty DataFrame, and this must
+    become an empty list rather than a construction error."""
+
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            pass
+
+        def get_valuation_measures(self, freq="quarterly", periods=5):
+            return pd.DataFrame()
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    result = stock_repository.get_valuation_history(stock_ticker)
+
+    assert result == []
+
+
+def test_get_valuation_history_normalizes_nan_metrics_to_none(stock_repository, stock_ticker, patch_yf):
+    """A company without 5-year growth estimates legitimately has no PEG
+    ratio; yfinance represents that gap as float NaN, which must become
+    None rather than the invalid JSON literal NaN."""
+    df = pd.DataFrame(
+        {"Current": [float("nan")]},
+        index=["PEG Ratio (5yr expected)"],
+    )
+
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            pass
+
+        def get_valuation_measures(self, freq="quarterly", periods=5):
+            return df
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    result = stock_repository.get_valuation_history(stock_ticker)
+
+    assert result[0].peg_ratio is None
+
+
+def test_get_valuation_history_forwards_freq_and_periods(stock_repository, stock_ticker, patch_yf):
+    """freq and periods must actually reach yfinance, not be silently
+    dropped."""
+    captured = {}
+
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            pass
+
+        def get_valuation_measures(self, freq="quarterly", periods=5):
+            captured["freq"] = freq
+            captured["periods"] = periods
+            return pd.DataFrame()
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    stock_repository.get_valuation_history(stock_ticker, freq="yearly", periods=2)
+
+    assert captured == {"freq": "yearly", "periods": 2}

@@ -9,7 +9,7 @@ layer and repository layer.
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
-from openmarkets.core.types import Interval, Period, Ticker
+from openmarkets.core.types import Interval, Period, Ticker, ValuationFrequency
 from openmarkets.repositories.stock import StockRepository, YFinanceStockRepository
 from openmarkets.schemas.stock import (
     CorporateActions,
@@ -25,6 +25,7 @@ from openmarkets.schemas.stock import (
     StockHistory,
     StockInfo,
     StockSplit,
+    ValuationMeasuresEntry,
 )
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
@@ -231,6 +232,33 @@ class StockService(ToolRegistrationMixin):
             list[NewsItem]: List of news items.
         """
         return self.repository.get_news(ticker, session=self.session)
+
+    @tool
+    def get_valuation_history(
+        self, ticker: Ticker, freq: ValuationFrequency = "quarterly", periods: int | None = 5
+    ) -> list[ValuationMeasuresEntry]:
+        """
+        Retrieve historical valuation ratios (P/E, P/S, P/B, EV/EBITDA, PEG, market cap,
+        enterprise value) for a stock, one entry per period.
+
+        Unlike get_financial_summary or get_extended_financial_summary, which are a
+        current snapshot, this returns a short history so trend can be seen across
+        recent quarters or years.
+
+        Args:
+            ticker (str): The symbol of the stock.
+            freq (str, optional): Period-column grouping: 'quarterly', 'monthly',
+                'yearly' or 'trailing'. Defaults to 'quarterly'.
+            periods (int | None, optional): Number of period columns to return, newest
+                first. None returns all available history; 0 returns only the current
+                value. Defaults to 5.
+
+        Returns:
+            list[ValuationMeasuresEntry]: Valuation ratios per period, newest first.
+                Empty for instruments valuation measures do not apply to (e.g.
+                cryptocurrencies).
+        """
+        return self.repository.get_valuation_history(ticker, freq, periods, session=self.session)
 
 
 stock_service = StockService()

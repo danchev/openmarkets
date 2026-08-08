@@ -10,7 +10,7 @@ import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
 
-from openmarkets.core.types import Interval, Period
+from openmarkets.core.types import Interval, Period, ValuationFrequency
 from openmarkets.schemas.stock import (
     CorporateActions,
     DividendSummary,
@@ -25,6 +25,7 @@ from openmarkets.schemas.stock import (
     StockHistory,
     StockInfo,
     StockSplit,
+    ValuationMeasuresEntry,
 )
 
 
@@ -71,6 +72,14 @@ class StockRepository(Protocol):
     def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]: ...
 
     def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]: ...
+
+    def get_valuation_history(
+        self,
+        ticker: str,
+        freq: ValuationFrequency = "quarterly",
+        periods: int | None = 5,
+        session: Session | None = None,
+    ) -> list[ValuationMeasuresEntry]: ...
 
 
 class YFinanceStockRepository:
@@ -370,3 +379,33 @@ class YFinanceStockRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         news = ticker_obj.news
         return [NewsItem(**item) for item in news]
+
+    def get_valuation_history(
+        self,
+        ticker: str,
+        freq: ValuationFrequency = "quarterly",
+        periods: int | None = 5,
+        session: Session | None = None,
+    ) -> list[ValuationMeasuresEntry]:
+        """Retrieve historical valuation ratios for a stock ticker.
+
+        Args:
+            ticker: Stock ticker symbol.
+            freq: Period-column grouping: "quarterly", "monthly", "yearly"
+                or "trailing".
+            periods: Number of period columns to return, newest first.
+                None returns all available history; 0 returns only the
+                "Current" column.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            One entry per period (newest first), each with the 9 valuation
+            ratios for that period. Empty for instruments valuation
+            measures do not apply to (e.g. cryptocurrencies).
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        measures = ticker_obj.get_valuation_measures(freq=freq, periods=periods)
+        if measures.empty:
+            return []
+        records = measures.T.reset_index().rename(columns={"index": "period"}).to_dict("records")
+        return [ValuationMeasuresEntry(**record) for record in records]

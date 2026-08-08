@@ -568,3 +568,64 @@ class ExtendedFinancialSummary(FinancialSummary):
     shares_short: int | None = Field(None, alias="sharesShort", description="Shares short.")
     book_value: float | None = Field(None, alias="bookValue", description="Book value.")
     price_to_book: float | None = Field(None, alias="priceToBook", description="Price to book ratio.")
+
+
+class ValuationMeasuresEntry(BaseModel):
+    """Valuation ratios for a single period, from yfinance's Statistics
+    page valuation-measures table (added in yfinance 1.3.0).
+
+    Unlike FinancialSummary/ExtendedFinancialSummary, which are a current
+    snapshot, this is one entry per historical period so trend can be seen
+    across quarters or years - the same metric can differ meaningfully
+    between "Current" and even one quarter prior.
+    """
+
+    period: str = Field(
+        ...,
+        description=(
+            "'Current' for the latest value, otherwise the period end date as yfinance reports it (e.g. '6/30/2026')."
+        ),
+        alias="period",
+    )
+    market_cap: float | None = Field(None, alias="Market Cap", description="Market capitalization.")
+    enterprise_value: float | None = Field(None, alias="Enterprise Value", description="Enterprise value.")
+    trailing_pe: float | None = Field(None, alias="Trailing P/E", description="Trailing price-to-earnings ratio.")
+    forward_pe: float | None = Field(None, alias="Forward P/E", description="Forward price-to-earnings ratio.")
+    peg_ratio: float | None = Field(
+        None, alias="PEG Ratio (5yr expected)", description="Price/earnings-to-growth ratio (5-year expected)."
+    )
+    price_to_sales: float | None = Field(None, alias="Price/Sales", description="Price-to-sales ratio.")
+    price_to_book: float | None = Field(None, alias="Price/Book", description="Price-to-book ratio.")
+    enterprise_value_to_revenue: float | None = Field(
+        None, alias="Enterprise Value/Revenue", description="Enterprise value to revenue ratio."
+    )
+    enterprise_value_to_ebitda: float | None = Field(
+        None, alias="Enterprise Value/EBITDA", description="Enterprise value to EBITDA ratio."
+    )
+
+    @field_validator(
+        "market_cap",
+        "enterprise_value",
+        "trailing_pe",
+        "forward_pe",
+        "peg_ratio",
+        "price_to_sales",
+        "price_to_book",
+        "enterprise_value_to_revenue",
+        "enterprise_value_to_ebitda",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_missing_metric(cls, value: object) -> object:
+        """Map a pandas float NaN to None.
+
+        A company without 5-year growth estimates (e.g. GME) legitimately
+        has no PEG ratio; yfinance's DataFrame represents that gap as float
+        NaN rather than None, and NaN passes float validation unchanged -
+        it is a valid float that is just never equal to itself - so it
+        would otherwise reach the client as the literal `NaN` in JSON,
+        which is invalid per RFC 8259.
+        """
+        if isinstance(value, float) and value != value:  # NaN is the only float that is != itself
+            return None
+        return value

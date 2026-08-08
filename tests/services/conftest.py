@@ -73,6 +73,12 @@ class StockRepositorySpy:
         self.calls.append(("get_news", ticker, session))
         return []
 
+    def get_valuation_history(
+        self, ticker: str, freq: str = "quarterly", periods: int | None = 5, session: Session | None = None
+    ):
+        self.calls.append(("get_valuation_history", ticker, freq, periods, session))
+        return []
+
 
 class McpToolRegistrySpy:
     """Captures functions decorated via mcp.tool()."""

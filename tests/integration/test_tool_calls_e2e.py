@@ -118,3 +118,29 @@ async def test_call_options_tools_with_a_real_wire_serialized_date(mcp_server_pa
             assert chain_result.is_error is False
             assert skew_result.is_error is False
             assert isinstance(skew_result.structured_content, dict)
+
+
+async def test_call_get_valuation_history_with_real_wire_serialized_metrics(mcp_server_params: StdioServerParameters):
+    """Exercises the region-scoping and valuation-history features added
+    from a review of yfinance's own release notes: both were new to this
+    project and had never been called through the real protocol until
+    this test."""
+    async with stdio_client(mcp_server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            valuation_result = await session.call_tool("get_valuation_history", {"ticker": "AAPL"})
+            region_result = await session.call_tool(
+                "get_sector_top_companies", {"sector": "technology", "region": "GB"}
+            )
+
+            assert valuation_result.is_error is False
+            assert region_result.is_error is False
+
+            entries = valuation_result.structured_content["result"]
+            assert entries[0]["period"] == "Current"
+            assert entries[0]["Market Cap"] > 0
+
+            companies = region_result.structured_content["result"]
+            assert companies
+            assert companies[0]["symbol"].endswith(".L")

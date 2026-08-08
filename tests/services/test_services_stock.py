@@ -14,6 +14,7 @@ def test_stock_service_delegates_to_repository(stock_service, stock_repository_s
     assert stock_service.get_splits(ticker) == []
     assert stock_service.get_corporate_actions(ticker) == []
     assert stock_service.get_news(ticker) == []
+    assert stock_service.get_valuation_history(ticker) == []
 
     assert stock_repository_spy.calls == [
         ("get_fast_info", ticker, stock_service.session),
@@ -29,4 +30,5 @@ def test_stock_service_delegates_to_repository(stock_service, stock_repository_s
         ("get_splits", ticker, stock_service.session),
         ("get_corporate_actions", ticker, stock_service.session),
         ("get_news", ticker, stock_service.session),
+        ("get_valuation_history", ticker, "quarterly", 5, stock_service.session),
     ]

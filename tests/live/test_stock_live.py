@@ -19,6 +19,7 @@ from openmarkets.schemas.stock import (
     StockHistory,
     StockInfo,
     StockSplit,
+    ValuationMeasuresEntry,
 )
 from openmarkets.services.stock import StockService
 from tests.live.conftest import STABLE_TICKER
@@ -121,3 +122,29 @@ def test_get_news_against_real_api():
 
     assert isinstance(result, list)
     assert all(isinstance(entry, NewsItem) for entry in result)
+
+
+def test_get_valuation_history_against_real_api():
+    result = StockService().get_valuation_history(STABLE_TICKER)
+
+    assert isinstance(result, list)
+    assert len(result) > 0
+    assert all(isinstance(entry, ValuationMeasuresEntry) for entry in result)
+    assert result[0].period == "Current"
+
+
+def test_get_valuation_history_empty_for_crypto_against_real_api():
+    """Valuation measures do not apply to cryptocurrencies - confirmed
+    live that AAPL's history is non-empty and BTC-USD's is empty, so this
+    tests the actual boundary of the feature, not just the happy path."""
+    result = StockService().get_valuation_history("BTC-USD")
+
+    assert result == []
+
+
+def test_get_valuation_history_yearly_against_real_api():
+    result = StockService().get_valuation_history(STABLE_TICKER, freq="yearly", periods=2)
+
+    assert isinstance(result, list)
+    periods = [entry.period for entry in result]
+    assert "Current" in periods

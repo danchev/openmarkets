@@ -58,6 +58,10 @@ Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd"
 #: Sampling interval accepted by the upstream provider.
 Interval = Literal["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
 
+#: Period-column grouping accepted by get_valuation_measures. Confirmed a
+#: fixed set: yfinance itself raises ValueError for anything else.
+ValuationFrequency = Literal["quarterly", "monthly", "yearly", "trailing"]
+
 #: Runtime-checkable tuples, for validating values that arrive untyped.
 PERIODS: tuple[str, ...] = get_args(Period)
 INTERVALS: tuple[str, ...] = get_args(Interval)
