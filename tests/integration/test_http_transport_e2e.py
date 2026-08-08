@@ -20,6 +20,7 @@ import os
 import signal
 import socket
 import subprocess
+import sys
 import time
 
 import pytest
@@ -28,6 +29,13 @@ pytestmark = pytest.mark.asyncio
 
 
 def _free_port() -> int:
+    """Return a port that was free a moment ago.
+
+    Inherently racy: the socket must be closed before the server can bind
+    the port, so another process - notably a concurrent xdist worker, since
+    addopts includes -n auto - can take it in between. The http_server
+    fixture retries on that rather than failing the test.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
@@ -84,26 +92,61 @@ def _initialize_session(port: int) -> str:
     return session_id
 
 
+def _terminate(process: subprocess.Popen) -> None:
+    """Stop a server process, escalating to kill if it does not exit."""
+    if process.poll() is None:
+        process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
+def _close_pipes(process: subprocess.Popen) -> None:
+    """Close the process's stdout/stderr pipes.
+
+    Popen is used without a context manager here so the fixture can retry,
+    so the pipes must be closed explicitly to avoid a ResourceWarning.
+    """
+    for stream in (process.stdout, process.stderr):
+        if stream is not None:
+            stream.close()
+
+
 @pytest.fixture
 def http_server():
-    port = _free_port()
-    with subprocess.Popen(
-        ["uv", "run", "openmarkets", "--transport", "http", "--port", str(port)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    ) as process:
+    """Start a real server on a free port, retrying if the port is stolen.
+
+    _free_port cannot hold the port open, so a concurrent xdist worker can
+    claim it before the server binds. Retrying keeps this fixture from
+    failing intermittently under the default -n auto.
+    """
+    attempts = 3
+    for attempt in range(1, attempts + 1):
+        port = _free_port()
+        process = subprocess.Popen(
+            ["uv", "run", "openmarkets", "--transport", "http", "--port", str(port)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
         try:
             _wait_for_port(port)
+        except TimeoutError:
+            _terminate(process)
+            stderr = process.stderr.read() if process.stderr else ""
+            _close_pipes(process)
+            if "address already in use" in stderr.lower() and attempt < attempts:
+                continue
+            raise
+
+        try:
             yield port, process
         finally:
-            if process.poll() is None:
-                process.terminate()
-                try:
-                    process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait()
+            _terminate(process)
+            _close_pipes(process)
+        return
 
 
 async def test_session_delete_actually_invalidates_the_session(http_server):
@@ -164,6 +207,14 @@ def _assert_terminated_by_sigterm_after_graceful_shutdown(process: subprocess.Po
     assert "Application shutdown complete" in stderr
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason=(
+        "POSIX signal semantics: on Windows Popen.send_signal(SIGTERM) maps to "
+        "TerminateProcess, so no signal is delivered, uvicorn's handler never runs, "
+        "and the exit code is not 128 + SIGTERM."
+    ),
+)
 async def test_sigterm_shuts_down_gracefully(http_server):
     """A real SIGTERM must run the full graceful-shutdown sequence, not hang
     or crash - verified against the actual process, not the except
@@ -178,12 +229,22 @@ async def test_sigterm_shuts_down_gracefully(http_server):
     _assert_terminated_by_sigterm_after_graceful_shutdown(process)
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason=(
+        "POSIX signal semantics: on Windows Popen.send_signal(SIGTERM) maps to "
+        "TerminateProcess, so no signal is delivered, uvicorn's handler never runs, "
+        "and the exit code is not 128 + SIGTERM."
+    ),
+)
 async def test_sigterm_during_an_open_session_still_exits_cleanly(http_server):
     """A signal arriving while a session is open must not hang the
     shutdown and must not leave the process running."""
     port, process = http_server
-    _initialize_session(port)
-    _post(port, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}, session_id=_initialize_session(port))
+    session_id = _initialize_session(port)
+
+    status, _, _ = _post(port, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}, session_id=session_id)
+    assert status == 200
 
     process.send_signal(signal.SIGTERM)
     process.wait(timeout=10)
@@ -195,7 +256,13 @@ async def test_sigterm_during_an_open_session_still_exits_cleanly(http_server):
 async def test_bind_conflict_on_an_occupied_port_exits_non_zero(http_server):
     """Starting a second server on the same port must fail cleanly, not
     hang or silently succeed - this is uvicorn's own sys.exit(3) path,
-    which bypasses our except Exception branch entirely."""
+    which bypasses our except Exception branch entirely.
+
+    Asserts on the specific bind error rather than just a non-zero exit:
+    a bare `!= 0` would pass for the wrong reason if the second process
+    died for any unrelated cause (a missing dependency, an import error,
+    a port stolen by a concurrent xdist worker).
+    """
     port, _ = http_server
 
     with subprocess.Popen(
@@ -207,7 +274,10 @@ async def test_bind_conflict_on_an_occupied_port_exits_non_zero(http_server):
     ) as conflicting:
         try:
             exit_code = conflicting.wait(timeout=15)
+            stderr = conflicting.stderr.read() if conflicting.stderr else ""
+
             assert exit_code != 0
+            assert "address already in use" in stderr.lower()
         finally:
             if conflicting.poll() is None:
                 conflicting.terminate()
