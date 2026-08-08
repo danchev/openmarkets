@@ -9,12 +9,12 @@ default_install_hook_types:
 
 repos:
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.9.21
+    rev: 0.12.1
     hooks:
       - id: uv-sync
         args: ["--all-packages"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.16.1
     hooks:
       - id: ruff-check
         args: [--fix, --exit-non-zero-on-fix]
@@ -23,7 +23,7 @@ repos:
   #  Install the configuration into the git hook through pre-commit:
   #  `pre-commit install --hook-type commit-msg`
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.11.0
+    rev: v4.17.0
     hooks:
       - id: commitizen
       - id: commitizen-branch
