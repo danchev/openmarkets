@@ -82,7 +82,7 @@ def test_cors_middleware_defaults_to_wildcard(monkeypatch, make_middleware_spy_a
 
 
 def test_create_mcp_registers_all(monkeypatch):
-    config = mock.Mock()
+    config = mock.Mock(cors_allow_origins="*")
     mcp_instance = mock.Mock()
     monkeypatch.setattr(mcpserver, "CORSMCPServer", mock.Mock(return_value=mcp_instance))
     monkeypatch.setattr(mcpserver, "get_settings", mock.Mock(return_value=config))
@@ -110,10 +110,27 @@ def test_create_mcp_passes_configured_origins(monkeypatch):
     ]
 
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("*", ["*"]),
+        ("https://a.example,https://b.example", ["https://a.example", "https://b.example"]),
+        ("https://a.example, https://b.example", ["https://a.example", "https://b.example"]),
+        ("https://a.example,", ["https://a.example"]),
+        ("", []),
+        (" , ", []),
+    ],
+)
+def test_parse_allowed_origins_trims_and_drops_empty(raw, expected):
+    """Whitespace around commas and trailing commas must not produce
+    origins that silently fail to match a real Origin header."""
+    assert mcpserver._parse_allowed_origins(raw) == expected
+
+
 def test_create_mcp_uses_get_settings_when_not_provided(monkeypatch):
     mcp_instance = mock.Mock()
     monkeypatch.setattr(mcpserver, "CORSMCPServer", mock.Mock(return_value=mcp_instance))
-    get_settings_mock = mock.Mock()
+    get_settings_mock = mock.Mock(return_value=mock.Mock(cors_allow_origins="*"))
     monkeypatch.setattr(mcpserver, "get_settings", get_settings_mock)
     _stub_all_services(monkeypatch)
 
@@ -124,7 +141,7 @@ def test_create_mcp_uses_get_settings_when_not_provided(monkeypatch):
 
 
 def test_create_mcp_register_exception(monkeypatch):
-    config = mock.Mock()
+    config = mock.Mock(cors_allow_origins="*")
     mcp_instance = mock.Mock()
     monkeypatch.setattr(mcpserver, "CORSMCPServer", mock.Mock(return_value=mcp_instance))
     monkeypatch.setattr(mcpserver, "get_settings", mock.Mock(return_value=config))

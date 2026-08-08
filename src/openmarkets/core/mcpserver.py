@@ -129,6 +129,23 @@ def _register_all_services(tool_registrar: MCPServer) -> None:
         raise RuntimeError("Tool registration failed. See logs for details.") from exception
 
 
+def _parse_allowed_origins(cors_allow_origins: str) -> list[str]:
+    """Parse a comma-separated origins string into a clean list.
+
+    Tolerates the whitespace operators naturally add around commas
+    (``"a, b"``) and trailing commas, both of which would otherwise
+    produce origins that never match a real ``Origin`` header and so
+    silently break CORS for that origin.
+
+    Args:
+        cors_allow_origins: Raw comma-separated origins setting.
+
+    Returns:
+        list[str]: Non-empty, whitespace-trimmed origins.
+    """
+    return [origin.strip() for origin in cors_allow_origins.split(",") if origin.strip()]
+
+
 def _create_server(configuration: Settings) -> MCPServer:
     """Create a new MCP server instance.
 
@@ -141,7 +158,7 @@ def _create_server(configuration: Settings) -> MCPServer:
     return CORSMCPServer(
         name=configuration.name,
         instructions=INSTRUCTIONS,
-        allow_origins=configuration.cors_allow_origins.split(","),
+        allow_origins=_parse_allowed_origins(configuration.cors_allow_origins),
     )
 
 
