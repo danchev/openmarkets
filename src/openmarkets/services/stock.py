@@ -10,7 +10,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Interval, Period, Ticker
-from openmarkets.repositories.stock import IStockRepository, YFinanceStockRepository
+from openmarkets.repositories.stock import YFinanceStockRepository
 from openmarkets.schemas.stock import (
     CorporateActions,
     DividendSummary,
@@ -35,7 +35,7 @@ class StockService(ToolRegistrationMixin):
     Provides methods to retrieve stock info, history, dividends, financial summaries, risk metrics, technical indicators, splits, corporate actions, and news for a given ticker.
     """
 
-    def __init__(self, repository: IStockRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceStockRepository | None = None, session: Session | None = None):
         """Initialize the StockService.
 
         Args:

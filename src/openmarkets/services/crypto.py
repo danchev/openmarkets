@@ -9,7 +9,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Interval, Period, Ticker
-from openmarkets.repositories.crypto import ICryptoRepository, YFinanceCryptoRepository
+from openmarkets.repositories.crypto import YFinanceCryptoRepository
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
@@ -20,7 +20,7 @@ class CryptoService(ToolRegistrationMixin):
     Provides methods to fetch crypto info, history, top cryptocurrencies, and fear/greed proxy data.
     """
 
-    def __init__(self, repository: ICryptoRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceCryptoRepository | None = None, session: Session | None = None):
         """Initialize the CryptoService.
 
         Args:

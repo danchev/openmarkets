@@ -11,7 +11,7 @@ from curl_cffi import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
-from openmarkets.repositories.options import IOptionsRepository, YFinanceOptionsRepository
+from openmarkets.repositories.options import YFinanceOptionsRepository
 from openmarkets.schemas.options import (
     CallOption,
     OptionContractChain,
@@ -30,7 +30,7 @@ class OptionsService(ToolRegistrationMixin):
     Provides methods to retrieve option expiration dates, option chains, call/put options, volume analysis, and advanced analytics for a given ticker.
     """
 
-    def __init__(self, repository: IOptionsRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceOptionsRepository | None = None, session: Session | None = None):
         """Initialize the OptionsService.
 
         Args:

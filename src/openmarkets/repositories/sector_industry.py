@@ -4,8 +4,6 @@ Provides abstractions and implementations for fetching sector overviews,
 industry information, top companies, and related sector/industry analytics.
 """
 
-from abc import ABC, abstractmethod
-
 import yfinance as yf
 from curl_cffi.requests import Session
 
@@ -23,75 +21,7 @@ from openmarkets.schemas.sector_industry import (
 )
 
 
-class ISectorIndustryRepository(ABC):
-    """Abstract interface for sector and industry data repositories."""
-
-    @abstractmethod
-    def get_sector_overview(self, sector: str, session: Session | None = None) -> SectorOverview:
-        pass
-
-    @abstractmethod
-    def get_sector_overview_for_ticker(self, ticker: str, session: Session | None = None) -> SectorOverview:
-        pass
-
-    @abstractmethod
-    def get_sector_top_companies(self, sector: str, session: Session | None = None) -> list[SectorTopCompaniesEntry]:
-        pass
-
-    @abstractmethod
-    def get_sector_top_companies_for_ticker(
-        self, ticker: str, session: Session | None = None
-    ) -> list[SectorTopCompaniesEntry]:
-        pass
-
-    @abstractmethod
-    def get_sector_top_etfs(self, sector: str, session: Session | None = None) -> list[SectorTopETFsEntry]:
-        pass
-
-    @abstractmethod
-    def get_sector_top_mutual_funds(
-        self, sector: str, session: Session | None = None
-    ) -> list[SectorTopMutualFundsEntry]:
-        pass
-
-    @abstractmethod
-    def get_sector_industries(self, sector: str, session: Session | None = None) -> list[str]:
-        pass
-
-    @abstractmethod
-    def get_sector_research_reports(
-        self, sector: str, session: Session | None = None
-    ) -> list[IndustryResearchReportEntry]:
-        pass
-
-    @abstractmethod
-    def get_all_industries(self, sector: str | None = None, session: Session | None = None) -> list[str]:
-        pass
-
-    @abstractmethod
-    def get_industry_overview(self, industry: str, session: Session | None = None) -> IndustryOverview:
-        pass
-
-    @abstractmethod
-    def get_industry_top_companies(
-        self, industry: str, session: Session | None = None
-    ) -> list[IndustryTopCompaniesEntry]:
-        pass
-
-    @abstractmethod
-    def get_industry_top_growth_companies(
-        self, industry: str, session: Session | None = None
-    ) -> list[IndustryTopGrowthCompaniesEntry]:
-        pass
-
-    @abstractmethod
-    def get_industry_top_performing_companies(
-        self, industry: str, session: Session | None = None
-    ) -> list[IndustryTopPerformingCompaniesEntry]:
-        pass
-
-
-class YFinanceSectorIndustryRepository(ISectorIndustryRepository):
+class YFinanceSectorIndustryRepository:
     """Repository for accessing sector and industry data from yfinance."""
 
     def get_sector_overview(self, sector: str, session: Session | None = None) -> SectorOverview:

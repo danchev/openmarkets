@@ -4,8 +4,6 @@ Provides abstractions and implementations for fetching stock information,
 historical prices, dividends, splits, and other stock-level data.
 """
 
-from abc import ABC, abstractmethod
-
 import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
@@ -28,65 +26,7 @@ from openmarkets.schemas.stock import (
 )
 
 
-class IStockRepository(ABC):
-    """Abstract interface for stock data repositories."""
-
-    @abstractmethod
-    def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo:
-        pass
-
-    @abstractmethod
-    def get_info(self, ticker: str, session: Session | None = None) -> StockInfo:
-        pass
-
-    @abstractmethod
-    def get_history(
-        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
-    ) -> list[StockHistory]:
-        pass
-
-    @abstractmethod
-    def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]:
-        pass
-
-    @abstractmethod
-    def get_financial_summary(self, ticker: str, session: Session | None = None) -> FinancialSummary:
-        pass
-
-    @abstractmethod
-    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> RiskMetrics:
-        pass
-
-    @abstractmethod
-    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> DividendSummary:
-        pass
-
-    @abstractmethod
-    def get_price_target(self, ticker: str, session: Session | None = None) -> PriceTarget:
-        pass
-
-    @abstractmethod
-    def get_extended_financial_summary(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
-        pass
-
-    @abstractmethod
-    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> QuickTechnicalIndicators:
-        pass
-
-    @abstractmethod
-    def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]:
-        pass
-
-    @abstractmethod
-    def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]:
-        pass
-
-    @abstractmethod
-    def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]:
-        pass
-
-
-class YFinanceStockRepository(IStockRepository):
+class YFinanceStockRepository:
     """Repository for accessing stock data from yfinance."""
 
     def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo:

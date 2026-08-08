@@ -4,8 +4,6 @@ This module provides repositories for retrieving technical analysis data
 including indicators, volatility metrics, and support/resistance levels.
 """
 
-from abc import ABC, abstractmethod
-
 import yfinance as yf
 from curl_cffi.requests import Session
 
@@ -17,59 +15,7 @@ from openmarkets.schemas.technical_analysis import (
 )
 
 
-class ITechnicalAnalysisRepository(ABC):
-    """Interface for technical analysis data repositories."""
-
-    @abstractmethod
-    def get_technical_indicators(
-        self, ticker: str, period: Period = "6mo", session: Session | None = None
-    ) -> TechnicalIndicatorsDict:
-        """Retrieve technical indicators for a given ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            period: Historical data period (default: "6mo").
-            session: Optional curl_cffi session for requests.
-
-        Returns:
-            Dictionary containing technical indicators.
-        """
-        pass
-
-    @abstractmethod
-    def get_volatility_metrics(
-        self, ticker: str, period: Period = "1y", session: Session | None = None
-    ) -> VolatilityMetricsDict:
-        """Retrieve volatility metrics for a given ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            period: Historical data period (default: "1y").
-            session: Optional curl_cffi session for requests.
-
-        Returns:
-            Dictionary containing volatility metrics.
-        """
-        pass
-
-    @abstractmethod
-    def get_support_resistance_levels(
-        self, ticker: str, period: Period = "6mo", session: Session | None = None
-    ) -> SupportResistanceLevelsDict:
-        """Retrieve support and resistance levels for a given ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            period: Historical data period (default: "6mo").
-            session: Optional curl_cffi session for requests.
-
-        Returns:
-            Dictionary containing support and resistance levels.
-        """
-        pass
-
-
-class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
+class YFinanceTechnicalAnalysisRepository:
     """YFinance-based implementation of technical analysis repository."""
 
     def get_technical_indicators(

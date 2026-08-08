@@ -1,11 +1,10 @@
 """Repository layer for cryptocurrency data operations.
 
-Provides abstractions and implementations for fetching cryptocurrency
-information, historical data, and sentiment indicators.
+Fetches cryptocurrency information, historical data and sentiment
+indicators from yfinance.
 """
 
 import math
-from abc import ABC, abstractmethod
 
 import yfinance as yf
 from curl_cffi.requests import Session
@@ -16,69 +15,7 @@ from openmarkets.core.types import INTERVALS, PERIODS, Interval, Period
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment, CryptoSentimentEntry
 
 
-class ICryptoRepository(ABC):
-    """Abstract interface for cryptocurrency data repositories."""
-
-    @abstractmethod
-    def get_crypto_info(self, ticker: str, session: Session | None = None) -> CryptoFastInfo:
-        """Retrieve fast info for a cryptocurrency.
-
-        Args:
-            ticker: Cryptocurrency symbol (e.g., 'BTC', 'ETH').
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Fast info data for the cryptocurrency.
-        """
-        pass
-
-    @abstractmethod
-    def get_crypto_history(
-        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
-    ) -> list[CryptoHistory]:
-        """Retrieve historical price data for a cryptocurrency.
-
-        Args:
-            ticker: Cryptocurrency symbol.
-            period: Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max).
-            interval: Data interval (1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo).
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of historical data points.
-        """
-        pass
-
-    @abstractmethod
-    def get_top_cryptocurrencies(self, count: int = 10, session: Session | None = None) -> list[CryptoFastInfo]:
-        """Retrieve top cryptocurrencies by market cap.
-
-        Args:
-            count: Number of cryptocurrencies to retrieve (max 20).
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of top cryptocurrencies.
-        """
-        pass
-
-    @abstractmethod
-    def get_crypto_fear_greed_proxy(
-        self, tickers: list[str] | None = None, session: Session | None = None
-    ) -> CryptoSentiment:
-        """Calculate a sentiment proxy based on cryptocurrency price movements.
-
-        Args:
-            tickers: List of cryptocurrency symbols. Uses defaults if None.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Sentiment analysis and supporting per-asset data.
-        """
-        pass
-
-
-class YFinanceCryptoRepository(ICryptoRepository):
+class YFinanceCryptoRepository:
     """Repository for fetching crypto data from yfinance."""
 
     def get_crypto_info(self, ticker: str, session: Session | None = None) -> CryptoFastInfo:

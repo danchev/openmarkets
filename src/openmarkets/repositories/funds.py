@@ -4,8 +4,6 @@ Provides abstractions and implementations for fetching fund information,
 holdings, sector weightings, and operational data.
 """
 
-from abc import ABC, abstractmethod
-
 import yfinance as yf
 from curl_cffi.requests import Session
 
@@ -21,117 +19,7 @@ from openmarkets.schemas.funds import (
 )
 
 
-class IFundsRepository(ABC):
-    """Abstract interface for fund data repositories."""
-
-    @abstractmethod
-    def get_fund_info(self, ticker: str, session: Session | None = None) -> FundInfo:
-        """Retrieve fund information for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Fund information.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_sector_weighting(self, ticker: str, session: Session | None = None) -> FundSectorWeighting | None:
-        """Retrieve fund sector weighting for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Fund sector weighting or None if unavailable.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_operations(self, ticker: str, session: Session | None = None) -> FundOperations | None:
-        """Retrieve fund operations data for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Fund operations or None if unavailable.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_overview(self, ticker: str, session: Session | None = None) -> FundOverview | None:
-        """Retrieve fund overview for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Fund overview or None if unavailable.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_top_holdings(self, ticker: str, session: Session | None = None) -> list[FundTopHolding]:
-        """Retrieve fund top holdings for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of fund top holdings.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_bond_holdings(self, ticker: str, session: Session | None = None) -> list[FundBondHolding]:
-        """Retrieve fund bond holdings for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of fund bond holdings.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_equity_holdings(self, ticker: str, session: Session | None = None) -> list[FundEquityHolding]:
-        """Retrieve fund equity holdings for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of fund equity holdings.
-        """
-        pass
-
-    @abstractmethod
-    def get_fund_asset_class_holdings(
-        self, ticker: str, session: Session | None = None
-    ) -> FundAssetClassHolding | None:
-        """Retrieve fund asset class holdings for a ticker.
-
-        Args:
-            ticker: Fund ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Fund asset class holdings or None if unavailable.
-        """
-        pass
-
-
-class YFinanceFundsRepository(IFundsRepository):
+class YFinanceFundsRepository:
     """Repository for accessing fund data from yfinance."""
 
     def get_fund_info(self, ticker: str, session: Session | None = None) -> FundInfo:

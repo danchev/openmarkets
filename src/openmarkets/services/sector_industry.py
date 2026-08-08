@@ -8,7 +8,7 @@ between the MCP tools layer and repository layer.
 from typing import Annotated
 
 from openmarkets.core.types import Ticker
-from openmarkets.repositories.sector_industry import ISectorIndustryRepository, YFinanceSectorIndustryRepository
+from openmarkets.repositories.sector_industry import YFinanceSectorIndustryRepository
 from openmarkets.schemas.sector_industry import (
     IndustryOverview,
     IndustryResearchReportEntry,
@@ -30,7 +30,7 @@ class SectorIndustryService(ToolRegistrationMixin):
     Provides methods to retrieve sector and industry overviews, top companies, ETFs, mutual funds, and research reports.
     """
 
-    def __init__(self, repository: ISectorIndustryRepository | None = None):
+    def __init__(self, repository: YFinanceSectorIndustryRepository | None = None):
         """Initialize the SectorIndustryService.
 
         Args:

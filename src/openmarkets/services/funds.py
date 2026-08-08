@@ -9,7 +9,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
-from openmarkets.repositories.funds import IFundsRepository, YFinanceFundsRepository
+from openmarkets.repositories.funds import YFinanceFundsRepository
 from openmarkets.schemas.funds import (
     FundAssetClassHolding,
     FundBondHolding,
@@ -29,7 +29,7 @@ class FundsService(ToolRegistrationMixin):
     Provides methods to retrieve fund information, holdings, sector weightings, operations, and overviews for a given ticker.
     """
 
-    def __init__(self, repository: IFundsRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceFundsRepository | None = None, session: Session | None = None):
         """Initialize the FundsService.
 
         Args:

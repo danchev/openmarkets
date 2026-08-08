@@ -10,7 +10,6 @@ from curl_cffi.requests import Session
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Period, Ticker
 from openmarkets.repositories.technical_analysis import (
-    ITechnicalAnalysisRepository,
     YFinanceTechnicalAnalysisRepository,
 )
 from openmarkets.schemas.technical_analysis import (
@@ -27,7 +26,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     Provides methods to retrieve technical indicators, volatility metrics, and support/resistance levels for a given ticker.
     """
 
-    def __init__(self, repository: ITechnicalAnalysisRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceTechnicalAnalysisRepository | None = None, session: Session | None = None):
         """Initialize the TechnicalAnalysisService.
 
         Args:

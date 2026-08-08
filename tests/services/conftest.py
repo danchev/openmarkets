@@ -7,13 +7,16 @@ import pandas as pd
 import pytest
 from curl_cffi.requests import Session
 
-from openmarkets.repositories.stock import IStockRepository
 from openmarkets.services.stock import StockService
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
-class StockRepositorySpy(IStockRepository):
-    """A minimal spy for StockService delegation tests."""
+class StockRepositorySpy:
+    """A minimal spy for StockService delegation tests.
+
+    Duck-typed rather than inheriting an interface: the repositories have a
+    single implementation each, so the ABCs were removed.
+    """
 
     def __init__(self) -> None:
         self.calls: list[tuple] = []

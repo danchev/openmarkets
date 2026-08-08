@@ -3,7 +3,6 @@ from datetime import date, datetime
 import pandas as pd
 import pytest
 
-from openmarkets.repositories.options import IOptionsRepository
 from openmarkets.schemas.options import CallOption, OptionContractChain, OptionExpirationDate, PutOption
 from openmarkets.services.options import OptionsService
 
@@ -42,7 +41,7 @@ def test_option_last_trade_date_accepts_pandas_timestamp(model, contract_symbol,
     assert option.last_trade_date == datetime(2025, 12, 18)
 
 
-class OptionsRepositoryStub(IOptionsRepository):
+class OptionsRepositoryStub:
     def get_option_expiration_dates(self, ticker, session=None):
         return [OptionExpirationDate(date=datetime(2025, 12, 19))]
 

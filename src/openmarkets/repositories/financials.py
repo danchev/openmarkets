@@ -4,8 +4,6 @@ Provides abstractions and implementations for fetching balance sheets,
 income statements, cash flow statements, and other financial data.
 """
 
-from abc import ABC, abstractmethod
-
 import yfinance as yf
 from curl_cffi.requests import Session
 
@@ -20,106 +18,7 @@ from openmarkets.schemas.financials import (
 )
 
 
-class IFinancialsRepository(ABC):
-    """Abstract interface for financial data repositories."""
-
-    """Abstract interface for financial data repositories."""
-
-    @abstractmethod
-    def get_balance_sheet(self, ticker: str, session: Session | None = None) -> list[BalanceSheetEntry]:
-        """Retrieve balance sheet data for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of balance sheet entries.
-        """
-        pass
-
-    @abstractmethod
-    def get_income_statement(self, ticker: str, session: Session | None = None) -> list[IncomeStatementEntry]:
-        """Retrieve income statement data for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of income statement entries.
-        """
-        pass
-
-    @abstractmethod
-    def get_ttm_income_statement(self, ticker: str, session: Session | None = None) -> list[TTMIncomeStatementEntry]:
-        """Retrieve trailing twelve months income statement for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of TTM income statement entries.
-        """
-        pass
-
-    @abstractmethod
-    def get_ttm_cash_flow_statement(
-        self, ticker: str, session: Session | None = None
-    ) -> list[TTMCashFlowStatementEntry]:
-        """Retrieve trailing twelve months cash flow statement for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of TTM cash flow statement entries.
-        """
-        pass
-
-    @abstractmethod
-    def get_financial_calendar(self, ticker: str, session: Session | None = None) -> FinancialCalendar:
-        """Retrieve financial calendar for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Financial calendar data.
-        """
-        pass
-
-    @abstractmethod
-    def get_sec_filings(self, ticker: str, session: Session | None = None) -> list[SecFilingRecord]:
-        """Retrieve SEC filings for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of SEC filing records.
-        """
-        pass
-
-    @abstractmethod
-    def get_eps_history(self, ticker: str, session: Session | None = None) -> list[EPSHistoryEntry]:
-        """Retrieve EPS history for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of EPS history entries.
-        """
-        pass
-
-
-class YFinanceFinancialsRepository(IFinancialsRepository):
+class YFinanceFinancialsRepository:
     """Repository for accessing financial data from yfinance."""
 
     def get_balance_sheet(self, ticker: str, session: Session | None = None) -> list[BalanceSheetEntry]:

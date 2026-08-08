@@ -1,9 +1,8 @@
-"""Options repository interfaces and implementations.
+"""Options repository.
 
 Provides access to option chains, contracts, and analytics using yfinance.
 """
 
-from abc import ABC, abstractmethod
 from datetime import date
 
 import yfinance as yf
@@ -24,125 +23,7 @@ from openmarkets.schemas.options import (
 )
 
 
-class IOptionsRepository(ABC):
-    """Abstract interface for options data repositories."""
-
-    @abstractmethod
-    def get_option_expiration_dates(self, ticker: str, session: Session | None = None) -> list[OptionExpirationDate]:
-        """Retrieve all available option expiration dates for a ticker.
-
-        Args:
-            ticker: Stock ticker symbol.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of option expiration dates.
-        """
-        pass
-
-    @abstractmethod
-    def get_option_chain(
-        self, ticker: str, expiration: date | None = None, session: Session | None = None
-    ) -> OptionContractChain:
-        """Retrieve the full option contract chain for a ticker and expiration date.
-
-        Args:
-            ticker: Stock ticker symbol.
-            expiration: Option expiration date. Uses nearest if None.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Option contract chain containing calls and puts.
-        """
-        pass
-
-    @abstractmethod
-    def get_call_options(
-        self, ticker: str, expiration: date | None = None, session: Session | None = None
-    ) -> list[CallOption] | None:
-        """Retrieve all call options for a ticker and expiration date.
-
-        Args:
-            ticker: Stock ticker symbol.
-            expiration: Option expiration date. Uses nearest if None.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of call options or None if unavailable.
-        """
-        pass
-
-    @abstractmethod
-    def get_put_options(
-        self, ticker: str, expiration: date | None = None, session: Session | None = None
-    ) -> list[PutOption] | None:
-        """Retrieve all put options for a ticker and expiration date.
-
-        Args:
-            ticker: Stock ticker symbol.
-            expiration: Option expiration date. Uses nearest if None.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            List of put options or None if unavailable.
-        """
-        pass
-
-    @abstractmethod
-    def get_options_volume_analysis(
-        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
-    ) -> OptionsVolumeAnalysis:
-        """Analyze option volumes and open interest for a ticker and expiration date.
-
-        Args:
-            ticker: Stock ticker symbol.
-            expiration_date: Option expiration date string. Uses nearest if None.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Aggregate volume and open interest metrics.
-        """
-        pass
-
-    @abstractmethod
-    def get_options_by_moneyness(
-        self,
-        ticker: str,
-        expiration_date: str | None = None,
-        moneyness_range: float = 0.1,
-        session: Session | None = None,
-    ) -> OptionsByMoneyness:
-        """Retrieve options filtered by moneyness for a ticker and expiration date.
-
-        Args:
-            ticker: Stock ticker symbol.
-            expiration_date: Option expiration date string. Uses nearest if None.
-            moneyness_range: Percentage range around current price (default 0.1 = 10%).
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Contracts filtered by moneyness.
-        """
-        pass
-
-    @abstractmethod
-    def get_options_skew(
-        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
-    ) -> OptionsSkew:
-        """Retrieve options skew (implied volatility by strike) for a ticker and expiration date.
-
-        Args:
-            ticker: Stock ticker symbol.
-            expiration_date: Option expiration date string. Uses nearest if None.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Options skew data for calls and puts.
-        """
-        pass
-
-
-class YFinanceOptionsRepository(IOptionsRepository):
+class YFinanceOptionsRepository:
     """YFinance-based implementation of options repository."""
 
     def get_option_expiration_dates(self, ticker: str, session: Session | None = None) -> list[OptionExpirationDate]:

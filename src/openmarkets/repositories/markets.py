@@ -4,45 +4,13 @@ Provides abstractions and implementations for fetching market summaries,
 market status, and related market-level information.
 """
 
-from abc import ABC, abstractmethod
-
 import yfinance as yf
 from curl_cffi.requests import Session
 
 from openmarkets.schemas.markets import MarketStatus, MarketSummary, SummaryEntry
 
 
-class IMarketsRepository(ABC):
-    """Abstract interface for market data repositories."""
-
-    @abstractmethod
-    def get_market_summary(self, market: str, session: Session | None = None) -> MarketSummary:
-        """Retrieve market summary data.
-
-        Args:
-            market: Market identifier.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Market summary data.
-        """
-        pass
-
-    @abstractmethod
-    def get_market_status(self, market: str, session: Session | None = None) -> MarketStatus:
-        """Retrieve market status information.
-
-        Args:
-            market: Market identifier.
-            session: Optional HTTP session for request handling.
-
-        Returns:
-            Market status data.
-        """
-        pass
-
-
-class YFinanceMarketsRepository(IMarketsRepository):
+class YFinanceMarketsRepository:
     """Repository for accessing market data from yfinance.
 
     Infrastructure layer: encapsulates yfinance dependency.

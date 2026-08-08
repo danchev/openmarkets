@@ -10,7 +10,7 @@ from typing import Annotated
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
-from openmarkets.repositories.markets import IMarketsRepository, YFinanceMarketsRepository
+from openmarkets.repositories.markets import YFinanceMarketsRepository
 from openmarkets.schemas.markets import MarketStatus, MarketSummary, MarketType
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
@@ -21,7 +21,7 @@ class MarketsService(ToolRegistrationMixin):
     Provides methods to retrieve market summaries, indices data, and sector performance.
     """
 
-    def __init__(self, repository: IMarketsRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceMarketsRepository | None = None, session: Session | None = None):
         """Initialize the MarketsService.
 
         Args:

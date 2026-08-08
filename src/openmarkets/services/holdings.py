@@ -10,7 +10,7 @@ from curl_cffi.requests import Session
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
-from openmarkets.repositories.holdings import IHoldingsRepository, YFinanceHoldingsRepository
+from openmarkets.repositories.holdings import YFinanceHoldingsRepository
 from openmarkets.schemas.holdings import (
     FullHoldings,
     InsiderPurchase,
@@ -28,7 +28,7 @@ class HoldingsService(ToolRegistrationMixin):
     Provides methods to retrieve major holders, institutional holdings, mutual fund holdings, insider purchases, and full holdings data for a given ticker.
     """
 
-    def __init__(self, repository: IHoldingsRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceHoldingsRepository | None = None, session: Session | None = None):
         """Initialize the HoldingsService.
 
         Args:

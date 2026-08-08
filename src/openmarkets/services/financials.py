@@ -10,7 +10,7 @@ from curl_cffi.requests import Session
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
-from openmarkets.repositories.financials import IFinancialsRepository, YFinanceFinancialsRepository
+from openmarkets.repositories.financials import YFinanceFinancialsRepository
 from openmarkets.schemas.financials import (
     BalanceSheetEntry,
     EPSHistoryEntry,
@@ -30,7 +30,7 @@ class FinancialsService(ToolRegistrationMixin):
     Provides methods to retrieve various financial statements, calendars, filings, and EPS history for a given ticker.
     """
 
-    def __init__(self, repository: IFinancialsRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceFinancialsRepository | None = None, session: Session | None = None):
         """Initialize the FinancialsService.
 
         Args:

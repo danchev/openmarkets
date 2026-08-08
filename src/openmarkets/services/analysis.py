@@ -10,7 +10,7 @@ from curl_cffi.requests import Session
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
-from openmarkets.repositories.analysis import IAnalysisRepository, YFinanceAnalysisRepository
+from openmarkets.repositories.analysis import YFinanceAnalysisRepository
 from openmarkets.schemas.analysis import (
     AnalystPriceTargets,
     AnalystRecommendation,
@@ -30,7 +30,7 @@ class AnalysisService(ToolRegistrationMixin):
     Provides methods to retrieve analyst recommendations, estimates, trends, and price targets for a given ticker.
     """
 
-    def __init__(self, repository: IAnalysisRepository | None = None, session: Session | None = None):
+    def __init__(self, repository: YFinanceAnalysisRepository | None = None, session: Session | None = None):
         """Initialize the AnalysisService.
 
         Args:
