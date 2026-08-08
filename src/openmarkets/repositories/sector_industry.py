@@ -7,6 +7,7 @@ industry information, top companies, and related sector/industry analytics.
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import DataUnavailableError
 from openmarkets.schemas.sector_industry import (
     SECTOR_INDUSTRY_MAPPING,
     IndustryOverview,
@@ -33,9 +34,16 @@ class YFinanceSectorIndustryRepository:
 
         Returns:
             Sector overview data.
+
+        Raises:
+            DataUnavailableError: If the upstream fetch fails. yfinance hides
+                the underlying exception by default and returns None instead,
+                which would otherwise surface as an opaque TypeError here.
         """
         sector_obj = yf.Sector(sector, session=session)
         data = sector_obj.overview
+        if data is None:
+            raise DataUnavailableError(f"No sector overview available for '{sector}'.")
         return SectorOverview(**data)
 
     def get_sector_overview_for_ticker(self, ticker: str, session: Session | None = None) -> SectorOverview:
@@ -178,9 +186,16 @@ class YFinanceSectorIndustryRepository:
 
         Returns:
             Industry overview data.
+
+        Raises:
+            DataUnavailableError: If the upstream fetch fails. yfinance hides
+                the underlying exception by default and returns None instead,
+                which would otherwise surface as an opaque TypeError here.
         """
         industry_obj = yf.Industry(industry, session=session)
         data = industry_obj.overview
+        if data is None:
+            raise DataUnavailableError(f"No industry overview available for '{industry}'.")
         return IndustryOverview(**data)
 
     def get_industry_top_companies(

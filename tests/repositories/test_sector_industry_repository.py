@@ -29,6 +29,42 @@ def test_get_sector_overview(monkeypatch):
         assert out.companies_count == 1
 
 
+def test_get_sector_overview_raises_when_upstream_fetch_fails(monkeypatch):
+    """A failed upstream fetch must raise a domain error, not TypeError.
+
+    yfinance's Sector hides fetch exceptions by default (hide_exceptions is
+    True) and leaves .overview as None instead of raising. Unpacking None
+    with ** previously surfaced as an opaque TypeError with no indication
+    that the real cause was an upstream failure.
+    """
+    from openmarkets.core.exceptions import DataUnavailableError
+
+    class S:
+        def __init__(self, sector, session=None):
+            self.overview = None
+
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
+    repo = YFinanceSectorIndustryRepository()
+
+    with pytest.raises(DataUnavailableError):
+        repo.get_sector_overview("technology")
+
+
+def test_get_industry_overview_raises_when_upstream_fetch_fails(monkeypatch):
+    """Mirrors test_get_sector_overview_raises_when_upstream_fetch_fails for industries."""
+    from openmarkets.core.exceptions import DataUnavailableError
+
+    class IndustryStub:
+        def __init__(self, industry, session=None):
+            self.overview = None
+
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": IndustryStub}))
+    repo = YFinanceSectorIndustryRepository()
+
+    with pytest.raises(DataUnavailableError):
+        repo.get_industry_overview("semiconductors")
+
+
 def test_get_sector_overview_for_ticker_missing(monkeypatch):
     class T:
         def __init__(self, t, session=None):
