@@ -3,9 +3,11 @@ name: Master branch checks
 on:
   push:
     branches:
+      - master
       - "v*.*.*"
     tags:
       - "v*.*.*"
+  pull_request:
   workflow_dispatch:
 
 
