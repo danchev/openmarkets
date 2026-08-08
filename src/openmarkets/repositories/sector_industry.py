@@ -72,7 +72,10 @@ class YFinanceSectorIndustryRepository:
 
         Args:
             ticker: Stock ticker symbol.
-            region: ISO 3166-1 alpha-2 country code scoping the sector data.
+            region: ISO 3166-1 alpha-2 country code. Accepted for a
+                consistent signature; has no observable effect on this
+                endpoint upstream (delegates to get_sector_overview, which
+                is region-invariant; see module docstring).
             session: Optional HTTP session for request handling.
 
         Returns:

@@ -47,7 +47,10 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             sector (str): The name of the sector.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code. Defaults to 'US'.
+                Accepted for a consistent signature; has no observable
+                effect on this endpoint upstream (overview data does not
+                vary by region).
         Returns:
             SectorOverview: Overview data for the sector.
         """
@@ -60,7 +63,10 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             ticker (str): The stock ticker symbol.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code. Defaults to 'US'.
+                Accepted for a consistent signature; has no observable
+                effect on this endpoint upstream (overview data does not
+                vary by region).
         Returns:
             SectorOverview: Overview data for the sector associated with the ticker.
         """
@@ -75,7 +81,8 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             sector (str): The name of the sector.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code scoping the returned
+                companies to that region's exchange. Defaults to 'US'.
         Returns:
             list[SectorTopCompaniesEntry]: A list of top companies in the sector.
         """
@@ -90,7 +97,8 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             ticker (str): The stock ticker symbol.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code scoping the returned
+                companies to that region's exchange. Defaults to 'US'.
         Returns:
             list[SectorTopCompaniesEntry]: A list of top companies in the sector associated with the ticker.
         """
@@ -105,7 +113,9 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             sector (str): The name of the sector.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code. Defaults to 'US'.
+                Any non-US region returns an empty list upstream rather
+                than region-specific ETFs.
         Returns:
             list[SectorTopETFsEntry]: A list of top ETFs in the sector.
         """
@@ -120,7 +130,9 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             sector (str): The name of the sector.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code. Defaults to 'US'.
+                Any non-US region returns an empty list upstream rather
+                than region-specific funds.
         Returns:
             list[SectorTopMutualFundsEntry]: A list of top mutual funds in the sector.
         """
@@ -150,7 +162,9 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             sector (str): The name of the sector.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code. Defaults to 'US'.
+                Accepted for a consistent signature; has no observable
+                effect on this endpoint upstream.
         Returns:
             list[IndustryResearchReportEntry]: A list of research reports in the sector.
         """
@@ -178,7 +192,9 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             industry (str): The name of the industry.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code. Defaults to 'US'.
+                Accepted for a consistent signature; has no observable
+                effect on this endpoint upstream.
         Returns:
             IndustryOverview: An overview of the specified industry.
         """
@@ -193,7 +209,8 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             industry (str): The name of the industry.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code scoping the returned
+                companies to that region's exchange. Defaults to 'US'.
         Returns:
             list[IndustryTopCompaniesEntry]: A list of top companies in the industry.
         """
@@ -208,7 +225,8 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             industry (str): The name of the industry.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code scoping the returned
+                companies to that region's exchange. Defaults to 'US'.
         Returns:
             list[IndustryTopGrowthCompaniesEntry]: A list of top growth companies in the industry.
         """
@@ -223,7 +241,8 @@ class SectorIndustryService(ToolRegistrationMixin):
 
         Args:
             industry (str): The name of the industry.
-            region (str): ISO 3166-1 alpha-2 country code scoping the data. Defaults to 'US'.
+            region (str): ISO 3166-1 alpha-2 country code scoping the returned
+                companies to that region's exchange. Defaults to 'US'.
         Returns:
             list[IndustryTopPerformingCompaniesEntry]: A list of top growth companies in the industry.
         """
