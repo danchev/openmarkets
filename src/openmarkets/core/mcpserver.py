@@ -133,17 +133,25 @@ def _parse_allowed_origins(cors_allow_origins: str) -> list[str]:
     """Parse a comma-separated origins string into a clean list.
 
     Tolerates the whitespace operators naturally add around commas
-    (``"a, b"``) and trailing commas, both of which would otherwise
-    produce origins that never match a real ``Origin`` header and so
-    silently break CORS for that origin.
+    (``"a, b"``) and trailing commas, and strips a trailing ``/`` - an
+    Origin header never carries a path (RFC 6454), so a trailing slash in
+    the configured value is always a typo, not a meaningful difference.
+    Left uncorrected, any of these silently prevent that origin from ever
+    matching a real browser's ``Origin`` header.
 
     Args:
         cors_allow_origins: Raw comma-separated origins setting.
 
     Returns:
-        list[str]: Non-empty, whitespace-trimmed origins.
+        list[str]: Non-empty, normalised origins, in the order given with
+        duplicates removed.
     """
-    return [origin.strip() for origin in cors_allow_origins.split(",") if origin.strip()]
+    seen: dict[str, None] = {}
+    for origin in cors_allow_origins.split(","):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned:
+            seen[cleaned] = None
+    return list(seen)
 
 
 def _create_server(configuration: Settings) -> MCPServer:

@@ -119,12 +119,27 @@ def test_create_mcp_passes_configured_origins(monkeypatch):
         ("https://a.example,", ["https://a.example"]),
         ("", []),
         (" , ", []),
+        # A trailing slash is always a typo: an Origin header never carries a
+        # path (RFC 6454), so "https://a.example/" would otherwise never
+        # match a real browser's Origin header.
+        ("https://a.example/", ["https://a.example"]),
+        ("https://a.example/, https://b.example/", ["https://a.example", "https://b.example"]),
+        # Duplicates collapse rather than being passed through verbatim.
+        ("https://a.example,https://a.example", ["https://a.example"]),
     ],
 )
 def test_parse_allowed_origins_trims_and_drops_empty(raw, expected):
-    """Whitespace around commas and trailing commas must not produce
+    """Whitespace, trailing slashes and duplicates must not produce
     origins that silently fail to match a real Origin header."""
     assert mcpserver._parse_allowed_origins(raw) == expected
+
+
+def test_parse_allowed_origins_preserves_first_occurrence_order():
+    """Deduplication must not reorder distinct origins."""
+    assert mcpserver._parse_allowed_origins("https://c.example,https://a.example,https://c.example") == [
+        "https://c.example",
+        "https://a.example",
+    ]
 
 
 def test_create_mcp_uses_get_settings_when_not_provided(monkeypatch):
