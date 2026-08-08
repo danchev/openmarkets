@@ -101,9 +101,9 @@ def test_get_options_volume_analysis_and_helpers(monkeypatch):
     monkeypatch.setattr("openmarkets.repositories.options.yf.Ticker", lambda t, session=None: FakeStock())
 
     analysis = repo.get_options_volume_analysis("A")
-    assert analysis["total_call_volume"] == 15
-    assert analysis["total_put_volume"] == 3
-    assert analysis["put_call_ratio_volume"] == pytest.approx(3 / 15)
+    assert analysis.total_call_volume == 15
+    assert analysis.total_put_volume == 3
+    assert analysis.put_call_ratio_volume == pytest.approx(3 / 15)
 
     # _safe_ratio denominator 0
     assert repo._safe_ratio(1, 0) is None
@@ -133,7 +133,7 @@ def test_get_options_by_moneyness_errors_and_success(monkeypatch):
     monkeypatch.setattr("openmarkets.repositories.options.yf.Ticker", lambda t, session=None: FakeStock())
 
     res = repo.get_options_by_moneyness("A", moneyness_range=0.1)
-    assert "calls" in res and "puts" in res
+    assert res.calls and res.puts
 
 
 def test_get_options_skew_various_cases(monkeypatch):
@@ -178,4 +178,4 @@ def test_get_options_skew_various_cases(monkeypatch):
         ),
     )
     res = repo.get_options_skew("A")
-    assert "call_skew" in res and "put_skew" in res
+    assert res.call_skew and res.put_skew

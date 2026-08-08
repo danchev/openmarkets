@@ -16,6 +16,9 @@ from openmarkets.schemas.options import (
     CallOption,
     OptionContractChain,
     OptionExpirationDate,
+    OptionsByMoneyness,
+    OptionsSkew,
+    OptionsVolumeAnalysis,
     PutOption,
 )
 from openmarkets.services.utils import ToolRegistrationMixin, tool
@@ -112,7 +115,7 @@ class OptionsService(ToolRegistrationMixin):
     @tool
     def get_options_volume_analysis(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
-    ) -> dict:
+    ) -> OptionsVolumeAnalysis:
         """
         Retrieve options volume analysis for a given ticker and expiration date.
 
@@ -131,7 +134,7 @@ class OptionsService(ToolRegistrationMixin):
         ticker: Annotated[str, "The symbol of the security."],
         expiration_date: str | None = None,
         moneyness_range: float = 0.1,
-    ) -> dict:
+    ) -> OptionsByMoneyness:
         """
         Retrieve options filtered by moneyness for a given ticker and expiration date.
 
@@ -148,7 +151,7 @@ class OptionsService(ToolRegistrationMixin):
     @tool
     def get_options_skew(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
-    ) -> dict:
+    ) -> OptionsSkew:
         """
         Retrieve options skew analysis for a given ticker and expiration date.
 

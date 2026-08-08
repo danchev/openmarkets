@@ -247,3 +247,53 @@ class OptionContractChain(BaseModel):
     calls: list[CallOption] | None = Field(None, description="Call option contracts.", alias="calls")
     puts: list[PutOption] | None = Field(None, description="Put option contracts.", alias="puts")
     underlying: OptionUnderlying | None = Field(None, description="Underlying asset information.", alias="underlying")
+
+
+class OptionsVolumeAnalysis(BaseModel):
+    """Aggregate option volume and open interest, with put/call ratios."""
+
+    total_call_volume: float = Field(..., description="Summed call contract volume.")
+    total_put_volume: float = Field(..., description="Summed put contract volume.")
+    total_call_open_interest: float = Field(..., description="Summed call open interest.")
+    total_put_open_interest: float = Field(..., description="Summed put open interest.")
+    put_call_ratio_volume: float | None = Field(
+        ..., description="Put/call volume ratio, None when call volume is zero."
+    )
+    put_call_ratio_oi: float | None = Field(
+        ..., description="Put/call open interest ratio, None when call open interest is zero."
+    )
+
+
+class PriceRange(BaseModel):
+    """Inclusive price bounds used to filter contracts."""
+
+    min: float = Field(..., description="Lower bound.")
+    max: float = Field(..., description="Upper bound.")
+
+
+class OptionsByMoneyness(BaseModel):
+    """Contracts whose strike falls within a range around the current price."""
+
+    current_price: float = Field(..., description="Current price of the underlying.")
+    price_range: PriceRange = Field(..., description="Strike range applied.")
+    calls: list[dict] = Field(..., description="Call contracts within the range.")
+    puts: list[dict] = Field(..., description="Put contracts within the range.")
+
+
+class SkewPoint(BaseModel):
+    """Implied volatility at a single strike."""
+
+    strike: float = Field(..., description="Contract strike price.")
+    implied_volatility: float | None = Field(
+        None, alias="impliedVolatility", description="Implied volatility at this strike."
+    )
+
+
+class OptionsSkew(BaseModel):
+    """Implied volatility by strike for calls and puts."""
+
+    call_skew: list[SkewPoint] = Field(..., description="Call implied volatility by strike.")
+    put_skew: list[SkewPoint] = Field(..., description="Put implied volatility by strike.")
+    warning: str | None = Field(
+        None, description="Set when one side was malformed and returned empty; the other side is still valid."
+    )

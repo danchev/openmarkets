@@ -124,9 +124,9 @@ def test_get_options_volume_analysis_with_data(
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": maker}))
     out = options_repository.get_options_volume_analysis("AAPL")
-    assert out["total_call_volume"] == 10
-    assert out["total_put_volume"] == 20
-    assert out["put_call_ratio_volume"] == pytest.approx(20 / 10)
+    assert out.total_call_volume == 10
+    assert out.total_put_volume == 20
+    assert out.put_call_ratio_volume == pytest.approx(20 / 10)
 
 
 def test_get_options_by_moneyness_errors(options_repository, monkeypatch, dummy_ticker):
@@ -156,8 +156,8 @@ def test_get_options_by_moneyness_success(options_repository, monkeypatch, dummy
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": Maker}))
     res = options_repository.get_options_by_moneyness("AAPL")
-    assert res["current_price"] == 100
-    assert res["calls"] and res["puts"]
+    assert res.current_price == 100
+    assert res.calls and res.puts
 
 
 def test_get_options_skew_no_expirations(options_repository, monkeypatch, dummy_ticker):
@@ -227,9 +227,9 @@ def test_get_options_skew_keeps_usable_side(options_repository, monkeypatch, dum
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T}))
     out = options_repository.get_options_skew("AAPL")
 
-    assert out["call_skew"] == [{"strike": 100, "impliedVolatility": 0.5}]
-    assert out["put_skew"] == []
-    assert "puts" in out["warning"]
+    assert [(p.strike, p.implied_volatility) for p in out.call_skew] == [(100, 0.5)]
+    assert out.put_skew == []
+    assert out.warning is not None and "puts" in out.warning
 
 
 def test_get_options_skew_success(options_repository, monkeypatch, dummy_ticker, dummy_option_chain):
@@ -248,7 +248,7 @@ def test_get_options_skew_success(options_repository, monkeypatch, dummy_ticker,
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T4}))
     out = options_repository.get_options_skew("AAPL")
-    assert "call_skew" in out and "put_skew" in out
+    assert out.call_skew and out.put_skew
 
 
 def test_get_option_chain_with_data(

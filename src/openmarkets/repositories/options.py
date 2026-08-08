@@ -14,8 +14,13 @@ from openmarkets.schemas.options import (
     CallOption,
     OptionContractChain,
     OptionExpirationDate,
+    OptionsByMoneyness,
+    OptionsSkew,
+    OptionsVolumeAnalysis,
     OptionUnderlying,
+    PriceRange,
     PutOption,
+    SkewPoint,
 )
 
 
@@ -86,7 +91,7 @@ class IOptionsRepository(ABC):
     @abstractmethod
     def get_options_volume_analysis(
         self, ticker: str, expiration_date: str | None = None, session: Session | None = None
-    ) -> dict:
+    ) -> OptionsVolumeAnalysis:
         """Analyze option volumes and open interest for a ticker and expiration date.
 
         Args:
@@ -95,7 +100,7 @@ class IOptionsRepository(ABC):
             session: Optional HTTP session for request handling.
 
         Returns:
-            Dictionary containing volume analysis metrics.
+            Aggregate volume and open interest metrics.
         """
         pass
 
@@ -106,7 +111,7 @@ class IOptionsRepository(ABC):
         expiration_date: str | None = None,
         moneyness_range: float = 0.1,
         session: Session | None = None,
-    ) -> dict:
+    ) -> OptionsByMoneyness:
         """Retrieve options filtered by moneyness for a ticker and expiration date.
 
         Args:
@@ -116,12 +121,14 @@ class IOptionsRepository(ABC):
             session: Optional HTTP session for request handling.
 
         Returns:
-            Dictionary containing filtered options by moneyness.
+            Contracts filtered by moneyness.
         """
         pass
 
     @abstractmethod
-    def get_options_skew(self, ticker: str, expiration_date: str | None = None, session: Session | None = None) -> dict:
+    def get_options_skew(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
+    ) -> OptionsSkew:
         """Retrieve options skew (implied volatility by strike) for a ticker and expiration date.
 
         Args:
@@ -130,7 +137,7 @@ class IOptionsRepository(ABC):
             session: Optional HTTP session for request handling.
 
         Returns:
-            Dictionary containing options skew data.
+            Options skew data for calls and puts.
         """
         pass
 
@@ -226,7 +233,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
 
     def get_options_volume_analysis(
         self, ticker: str, expiration_date: str | None = None, session: Session | None = None
-    ) -> dict:
+    ) -> OptionsVolumeAnalysis:
         """Analyze option volumes and open interest for a ticker and expiration date.
 
         Returns total call/put volume, open interest, and put/call ratios.
@@ -237,21 +244,20 @@ class YFinanceOptionsRepository(IOptionsRepository):
             raise DataUnavailableError(f"No options data available for {ticker}.")
         calls = option_chain.calls
         puts = option_chain.puts
-        analysis = {
-            "total_call_volume": self._get_column_sum(calls, "volume"),
-            "total_put_volume": self._get_column_sum(puts, "volume"),
-            "total_call_open_interest": self._get_column_sum(calls, "openInterest"),
-            "total_put_open_interest": self._get_column_sum(puts, "openInterest"),
-            "put_call_ratio_volume": self._safe_ratio(
+        return OptionsVolumeAnalysis(
+            total_call_volume=self._get_column_sum(calls, "volume"),
+            total_put_volume=self._get_column_sum(puts, "volume"),
+            total_call_open_interest=self._get_column_sum(calls, "openInterest"),
+            total_put_open_interest=self._get_column_sum(puts, "openInterest"),
+            put_call_ratio_volume=self._safe_ratio(
                 self._get_column_sum(puts, "volume"),
                 self._get_column_sum(calls, "volume"),
             ),
-            "put_call_ratio_oi": self._safe_ratio(
+            put_call_ratio_oi=self._safe_ratio(
                 self._get_column_sum(puts, "openInterest"),
                 self._get_column_sum(calls, "openInterest"),
             ),
-        }
-        return analysis
+        )
 
     def get_options_by_moneyness(
         self,
@@ -259,7 +265,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
         expiration_date: str | None = None,
         moneyness_range: float = 0.1,
         session: Session | None = None,
-    ) -> dict:
+    ) -> OptionsByMoneyness:
         """Get options filtered by moneyness for a ticker and expiration date."""
         stock = yf.Ticker(ticker, session=session)
         current_price = stock.info.get("currentPrice")
@@ -274,15 +280,16 @@ class YFinanceOptionsRepository(IOptionsRepository):
         puts = option_chain.puts
         filtered_calls = calls[(calls["strike"] >= price_min) & (calls["strike"] <= price_max)]
         filtered_puts = puts[(puts["strike"] >= price_min) & (puts["strike"] <= price_max)]
-        result = {
-            "current_price": current_price,
-            "price_range": {"min": price_min, "max": price_max},
-            "calls": filtered_calls.to_dict("records"),
-            "puts": filtered_puts.to_dict("records"),
-        }
-        return result
+        return OptionsByMoneyness(
+            current_price=current_price,
+            price_range=PriceRange(min=price_min, max=price_max),
+            calls=filtered_calls.to_dict("records"),
+            puts=filtered_puts.to_dict("records"),
+        )
 
-    def get_options_skew(self, ticker: str, expiration_date: str | None = None, session: Session | None = None) -> dict:
+    def get_options_skew(
+        self, ticker: str, expiration_date: str | None = None, session: Session | None = None
+    ) -> OptionsSkew:
         """Get options skew (implied volatility by strike) for a ticker and expiration date."""
         stock = yf.Ticker(ticker, session=session)
         option_chain = self._get_option_chain_for_expiration(stock, expiration_date)
@@ -296,16 +303,18 @@ class YFinanceOptionsRepository(IOptionsRepository):
         if call_skew is None and put_skew is None:
             raise DataUnavailableError(f"Missing 'strike' or 'impliedVolatility' in options data for {ticker}.")
 
-        result: dict = {
-            "call_skew": call_skew if call_skew is not None else [],
-            "put_skew": put_skew if put_skew is not None else [],
-        }
-
         # Report a malformed side without discarding the side that is usable.
         unavailable = [side for side, skew in (("calls", call_skew), ("puts", put_skew)) if skew is None]
-        if unavailable:
-            result["warning"] = f"Missing 'strike' or 'impliedVolatility' in {' and '.join(unavailable)} options data."
-        return result
+        warning = (
+            f"Missing 'strike' or 'impliedVolatility' in {' and '.join(unavailable)} options data."
+            if unavailable
+            else None
+        )
+        return OptionsSkew(
+            call_skew=[SkewPoint(**point) for point in (call_skew or [])],
+            put_skew=[SkewPoint(**point) for point in (put_skew or [])],
+            warning=warning,
+        )
 
     def _extract_skew(self, contracts) -> list[dict] | None:
         """Extract skew (implied volatility by strike) from an option side.
