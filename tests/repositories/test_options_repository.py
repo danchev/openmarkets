@@ -204,6 +204,32 @@ def test_get_options_skew_missing_columns(options_repository, monkeypatch, dummy
     assert "error" in out
 
 
+def test_get_options_skew_keeps_usable_side(options_repository, monkeypatch, dummy_option_chain):
+    """A malformed side must not discard the side that is usable.
+
+    Previously the error dict from one side replaced the whole response, so
+    valid call skew data was silently thrown away when puts were malformed.
+    """
+    calls = pd.DataFrame([{"strike": 100, "impliedVolatility": 0.5}])
+    puts = pd.DataFrame([{"strike": 100}])  # missing impliedVolatility
+    chain = dummy_option_chain(calls=calls, puts=puts)
+
+    class T:
+        def __init__(self, t, session=None):
+            self.options = ["2023-01-01"]
+            self._option_chain = chain
+
+        def option_chain(self, date=None):
+            return self._option_chain
+
+    monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T}))
+    out = options_repository.get_options_skew("AAPL")
+
+    assert out["call_skew"] == [{"strike": 100, "impliedVolatility": 0.5}]
+    assert out["put_skew"] == []
+    assert "puts" in out["warning"]
+
+
 def test_get_options_skew_success(options_repository, monkeypatch, dummy_ticker, dummy_option_chain):
     """Test successful options skew calculation."""
     calls = pd.DataFrame([{"strike": 100, "impliedVolatility": 0.5}])

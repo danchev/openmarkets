@@ -292,35 +292,39 @@ class YFinanceOptionsRepository(IOptionsRepository):
         if option_chain.calls.empty and option_chain.puts.empty:
             return {"error": f"No options data available for {ticker} on {expiration_date}."}
 
-        call_skew = self._extract_call_skew(option_chain.calls)
-        if isinstance(call_skew, dict):
-            return call_skew
+        call_skew = self._extract_skew(option_chain.calls)
+        put_skew = self._extract_skew(option_chain.puts)
 
-        put_skew = self._extract_put_skew(option_chain.puts)
-        if isinstance(put_skew, dict):
-            return put_skew
+        if call_skew is None and put_skew is None:
+            return {"error": f"Missing 'strike' or 'impliedVolatility' in options data for {ticker}."}
 
-        return {"call_skew": call_skew, "put_skew": put_skew}
+        result: dict = {
+            "call_skew": call_skew if call_skew is not None else [],
+            "put_skew": put_skew if put_skew is not None else [],
+        }
 
-    def _extract_call_skew(self, calls):
-        """Extract call options skew data."""
-        if calls.empty:
+        # Report a malformed side without discarding the side that is usable.
+        unavailable = [side for side, skew in (("calls", call_skew), ("puts", put_skew)) if skew is None]
+        if unavailable:
+            result["warning"] = f"Missing 'strike' or 'impliedVolatility' in {' and '.join(unavailable)} options data."
+        return result
+
+    def _extract_skew(self, contracts) -> list[dict] | None:
+        """Extract skew (implied volatility by strike) from an option side.
+
+        Args:
+            contracts: DataFrame of either call or put contracts.
+
+        Returns:
+            A list of strike/impliedVolatility records, an empty list when
+            there are no contracts, or None when the required columns are
+            absent.
+        """
+        if contracts.empty:
             return []
-        if "strike" not in calls.columns:
-            return {"error": "Missing 'strike' or 'impliedVolatility' in call options data."}
-        if "impliedVolatility" not in calls.columns:
-            return {"error": "Missing 'strike' or 'impliedVolatility' in call options data."}
-        return calls[["strike", "impliedVolatility"]].to_dict("records")
-
-    def _extract_put_skew(self, puts):
-        """Extract put options skew data."""
-        if puts.empty:
-            return []
-        if "strike" not in puts.columns:
-            return {"error": "Missing 'strike' or 'impliedVolatility' in put options data."}
-        if "impliedVolatility" not in puts.columns:
-            return {"error": "Missing 'strike' or 'impliedVolatility' in put options data."}
-        return puts[["strike", "impliedVolatility"]].to_dict("records")
+        if "strike" not in contracts.columns or "impliedVolatility" not in contracts.columns:
+            return None
+        return contracts[["strike", "impliedVolatility"]].to_dict("records")
 
     def _get_option_chain_for_expiration(self, stock, expiration_date: str | None):
         """Helper to get option chain for a given expiration date or first available."""
