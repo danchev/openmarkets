@@ -5,20 +5,15 @@ Initializes and runs the Open Markets MCP server, handling tool registration
 and server lifecycle management.
 """
 
-import inspect
 import logging
 import sys
 
-import uvicorn
 from mcp.server.transport_security import TransportSecuritySettings
 
 from openmarkets.core.config import Settings, get_settings
 from openmarkets.core.mcpserver import MCPServer, create_mcp
 
 logger = logging.getLogger(__name__)
-
-settings: Settings = get_settings()
-mcp: MCPServer = create_mcp(settings)
 
 
 def run_stdio_server(mcp: MCPServer) -> None:
@@ -38,28 +33,12 @@ def run_stdio_server(mcp: MCPServer) -> None:
         raise exc
 
 
-def _build_http_app(mcp: MCPServer):
-    """Build the streamable HTTP application for the server.
-
-    Disables DNS-rebinding protection when the underlying implementation
-    supports transport security settings (the server is expected to run
-    behind a reverse proxy where the Host header varies).
-
-    Args:
-        mcp: MCP server instance.
-
-    Returns:
-        The ASGI application serving the MCP streamable HTTP transport.
-    """
-    kwargs = {}
-    if "transport_security" in inspect.signature(mcp.streamable_http_app).parameters:
-        kwargs["transport_security"] = TransportSecuritySettings(enable_dns_rebinding_protection=False)
-    return mcp.streamable_http_app(**kwargs)
-
-
 def run_http_server(mcp: MCPServer, settings: Settings) -> None:
     """
-    Runs the MCP server using HTTP transport.
+    Runs the MCP server using the streamable HTTP transport.
+
+    DNS-rebinding protection is disabled because the server is expected to
+    run behind a reverse proxy, where the inbound Host header varies.
 
     Args:
         mcp: MCP server instance.
@@ -69,8 +48,12 @@ def run_http_server(mcp: MCPServer, settings: Settings) -> None:
         SystemExit: On shutdown request or unrecoverable server error.
     """
     try:
-        app = _build_http_app(mcp)
-        uvicorn.run(app, host=settings.host, port=settings.port)
+        mcp.run(
+            transport="streamable-http",
+            host=settings.host,
+            port=settings.port,
+            transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+        )
     except KeyboardInterrupt:
         logger.info(msg="Server shutdown requested by user.")
         sys.exit(0)
@@ -89,11 +72,14 @@ def main() -> None:
     Returns:
         None
     """
+    settings = get_settings()
     logging.basicConfig(
         level=logging.DEBUG if settings.debug else logging.INFO,
         stream=sys.stderr,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
+    mcp = create_mcp(settings)
+
     if settings.transport == "stdio":
         run_stdio_server(mcp)
     elif settings.transport == "http":

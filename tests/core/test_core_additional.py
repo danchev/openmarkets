@@ -1,10 +1,8 @@
 import importlib
-import types
 from importlib import metadata
 
 import openmarkets
 import openmarkets.core.mcpserver as mcpserver
-import openmarkets.core.server as server
 
 
 def test_openmarkets_version_fallback_on_exception(monkeypatch):
@@ -50,17 +48,3 @@ def test_mcpserver_sse_app_adds_cors(monkeypatch):
     app: DummyApp = obj.sse_app()  # type: ignore[assignment]
     assert isinstance(app, DummyApp)
     assert app.middleware_calls
-
-
-def test_server_run_http_success(monkeypatch, dummy_mcp, uvicorn_run_spy, preserve_server_settings):
-    """Ensure that when uvicorn.run succeeds, no SystemExit is raised and the call is made with expected args."""
-    run, calls = uvicorn_run_spy
-    monkeypatch.setattr(server, "uvicorn", types.SimpleNamespace(run=run))
-    # Ensure settings are set
-    server.settings.host = "127.0.0.1"
-    server.settings.port = 9999
-    # Should not raise
-    server.run_http_server(dummy_mcp, server.settings)
-
-    assert calls["host"] == "127.0.0.1"
-    assert calls["port"] == 9999
