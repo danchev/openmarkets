@@ -11,7 +11,9 @@ serialization -> back across the wire to the client.
 
 Requires network access, so this is marked live like tests/live and
 excluded from the default run. Run with:
-    uv run pytest -m live tests/integration/test_tool_calls_e2e.py -o addopts=""
+    uv run pytest -m live -o addopts=""
+
+which runs every live test in the suite, including those under tests/live.
 """
 
 import pytest

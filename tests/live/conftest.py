@@ -5,7 +5,11 @@ via yfinance. They are excluded from the default test run (see the `live`
 marker and addopts in pyproject.toml) because they are slow, flaky under
 rate limiting, and depend on a third party being reachable and unchanged.
 
-Run explicitly with: uv run pytest -m live tests/live -o addopts=""
+Run every live test with: uv run pytest -m live -o addopts=""
+
+The path is deliberately omitted: live tests also exist outside this
+directory (tests/integration/test_tool_calls_e2e.py), so passing
+`tests/live` would silently skip those.
 """
 
 from contextlib import contextmanager
