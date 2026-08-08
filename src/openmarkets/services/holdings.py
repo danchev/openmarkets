@@ -14,6 +14,7 @@ from openmarkets.repositories.holdings import IHoldingsRepository, YFinanceHoldi
 from openmarkets.schemas.holdings import (
     FullHoldings,
     InsiderPurchase,
+    InsiderRosterHolder,
     StockInstitutionalHoldings,
     StockMajorHolders,
     StockMutualFundHoldings,
@@ -98,9 +99,24 @@ class HoldingsService(ToolRegistrationMixin):
             ticker (str): The symbol of the security.
 
         Returns:
-            Any: Insider purchases data from the repository.
+            list[InsiderPurchase]: Insider purchase activity.
         """
         return self.repository.get_insider_purchases(ticker, session=self.session)
+
+    @tool
+    def get_insider_roster_holders(
+        self, ticker: Annotated[str, "The symbol of the security."]
+    ) -> list[InsiderRosterHolder]:
+        """
+        Retrieve the insider roster for a given ticker.
+
+        Args:
+            ticker (str): The symbol of the security.
+
+        Returns:
+            list[InsiderRosterHolder]: Insiders and their holdings.
+        """
+        return self.repository.get_insider_roster_holders(ticker, session=self.session)
 
     @tool
     def get_full_holdings(self, ticker: Annotated[str, "The symbol of the security."]) -> FullHoldings:
@@ -118,6 +134,7 @@ class HoldingsService(ToolRegistrationMixin):
             institutional_holdings=self.repository.get_institutional_holdings(ticker, session=self.session),
             mutual_fund_holdings=self.repository.get_mutual_fund_holdings(ticker, session=self.session),
             insider_purchases=self.repository.get_insider_purchases(ticker, session=self.session),
+            insider_roster_holders=self.repository.get_insider_roster_holders(ticker, session=self.session),
         )
 
 

@@ -1,5 +1,7 @@
+import math
 from datetime import datetime
 
+import pandas as pd
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -41,8 +43,15 @@ class InsiderRosterHolder(BaseModel):
     @field_validator("latest_transaction_date", "position_direct_date", "position_indirect_date", mode="before")
     @classmethod
     def convert_dates(cls, v):
-        """Convert date fields from string to datetime, or pass through if already datetime/None."""
-        if v is None or isinstance(v, datetime):
+        """Convert date fields to datetime, mapping missing values to None.
+
+        pandas NaT must be checked before the datetime branch: it is a
+        datetime subclass, so an isinstance test alone lets it through and it
+        then fails serialization.
+        """
+        if v is None or pd.isna(v):
+            return None
+        if isinstance(v, datetime):
             return v
         try:
             return datetime.strptime(v, "%Y-%m-%d")
@@ -52,13 +61,18 @@ class InsiderRosterHolder(BaseModel):
     @field_validator("shares_owned_directly", "shares_owned_indirectly", mode="before")
     @classmethod
     def convert_shares(cls, v):
-        """Convert shares fields to float, or pass through if None."""
-        if v in ("nan", "NaN", "Inf", "-Inf"):
+        """Convert shares fields to float, mapping missing values to None.
+
+        float("nan") survives a bare float() call, so NaN is rejected
+        explicitly rather than stored and failing serialization later.
+        """
+        if v is None or (isinstance(v, str) and v in ("nan", "NaN", "Inf", "-Inf")):
             return None
         try:
-            return float(v)
+            number = float(v)
         except Exception:
             return None
+        return None if math.isnan(number) or math.isinf(number) else number
 
 
 class StockInstitutionalHoldings(BaseModel):
@@ -127,3 +141,4 @@ class FullHoldings(BaseModel):
     institutional_holdings: list[StockInstitutionalHoldings] = Field(..., description="Institutional holders.")
     mutual_fund_holdings: list[StockMutualFundHoldings] = Field(..., description="Mutual fund holders.")
     insider_purchases: list[InsiderPurchase] = Field(..., description="Insider purchase activity.")
+    insider_roster_holders: list[InsiderRosterHolder] = Field(..., description="Insider roster holders.")

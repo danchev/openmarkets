@@ -1,7 +1,9 @@
+import json
 import math
 import types
 from datetime import datetime
 
+import pandas as pd
 import pytest
 
 from openmarkets.schemas.holdings import (
@@ -86,3 +88,29 @@ def test_institutional_and_mutual_convert_date():
 
     m2 = StockMutualFundHoldings(**{"Date Report": None})
     assert m2.date_report is None
+
+
+def test_insider_roster_holder_handles_missing_pandas_values():
+    """NaT and NaN must become None so the model can be serialised.
+
+    This was the "FIXME: Currently causes JSON serialization issues" that kept
+    insider_roster_holders commented out of the holdings aggregate. NaT is a
+    datetime subclass so it passed the isinstance check, and float("nan")
+    survived a bare float() call; both then failed model_dump.
+    """
+    holder = InsiderRosterHolder(
+        **{
+            "Name": "DOE JOHN",
+            "Latest Transaction Date": pd.Timestamp("2024-01-05"),
+            "Shares Owned Directly": float("nan"),
+            "Position Direct Date": pd.NaT,
+            "Shares Owned Indirectly": 1000.0,
+        }
+    )
+
+    assert holder.shares_owned_directly is None
+    assert holder.position_direct_date is None
+    assert holder.shares_owned_indirectly == 1000.0
+
+    payload = json.dumps(holder.model_dump(mode="json"))
+    assert "NaN" not in payload
