@@ -38,6 +38,20 @@ Market = Annotated[
     Field(description="Market identifier. One of: " + ", ".join(f"'{market}'" for market in MARKETS) + "."),
 ]
 
+# Not a Literal like Period/Interval: yfinance accepts any ISO 3166-1
+# alpha-2 country code here and does not validate it against a fixed list
+# (an unknown code is silently treated as the "US" default upstream), so
+# constraining it to an enum would reject codes the API actually accepts.
+Region = Annotated[
+    str,
+    Field(
+        description=(
+            "ISO 3166-1 alpha-2 country code scoping which regional exchange's "
+            "data is returned, for example 'US', 'GB', 'DE' or 'JP'. Defaults to 'US'."
+        )
+    ),
+]
+
 #: Historical range accepted by the upstream provider.
 Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
 

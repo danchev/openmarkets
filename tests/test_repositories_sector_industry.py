@@ -53,7 +53,7 @@ def test_get_sector_overview(monkeypatch):
 
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Sector",
-        lambda sector, session=None: SimpleNamespace(overview=fake_overview),
+        lambda sector, session=None, region=None: SimpleNamespace(overview=fake_overview),
     )
 
     res = repo.get_sector_overview("technology")
@@ -66,7 +66,7 @@ def test_get_sector_top_companies_none(monkeypatch):
 
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Sector",
-        lambda sector, session=None: SimpleNamespace(top_companies=None),
+        lambda sector, session=None, region=None: SimpleNamespace(top_companies=None),
     )
 
     res = repo.get_sector_top_companies("technology")
@@ -81,7 +81,7 @@ def test_get_sector_top_companies_from_df(monkeypatch):
 
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Sector",
-        lambda sector, session=None: SimpleNamespace(top_companies=df),
+        lambda sector, session=None, region=None: SimpleNamespace(top_companies=df),
     )
 
     res = repo.get_sector_top_companies("technology")
@@ -106,7 +106,9 @@ def test_get_sector_top_etfs_and_mutuals(monkeypatch):
 
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Sector",
-        lambda sector, session=None: SimpleNamespace(top_etfs={"ETF1": "E1"}, top_mutual_funds={"MF1": "M1"}),
+        lambda sector, session=None, region=None: SimpleNamespace(
+            top_etfs={"ETF1": "E1"}, top_mutual_funds={"MF1": "M1"}
+        ),
     )
 
     etfs = repo.get_sector_top_etfs("tech")
@@ -137,7 +139,7 @@ def test_get_sector_research_reports(monkeypatch):
 
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Sector",
-        lambda sector, session=None: SimpleNamespace(research_reports=[]),
+        lambda sector, session=None, region=None: SimpleNamespace(research_reports=[]),
     )
 
     assert repo.get_sector_research_reports("tech") == []
@@ -145,7 +147,7 @@ def test_get_sector_research_reports(monkeypatch):
     # With reports
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Sector",
-        lambda sector, session=None: SimpleNamespace(
+        lambda sector, session=None, region=None: SimpleNamespace(
             research_reports=[{"id": "r1", "headHtml": "h", "provider": "p", "reportTitle": "t", "reportType": "t"}]
         ),
     )
@@ -160,7 +162,7 @@ def test_get_industry_top_companies_and_variants(monkeypatch):
     # None data returns empty
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Industry",
-        lambda industry, session=None: SimpleNamespace(
+        lambda industry, session=None, region=None: SimpleNamespace(
             top_companies=None, top_growth_companies=None, top_performing_companies=None
         ),
     )
@@ -185,7 +187,7 @@ def test_get_industry_top_companies_and_variants(monkeypatch):
 
     monkeypatch.setattr(
         "openmarkets.repositories.sector_industry.yf.Industry",
-        lambda industry, session=None: SimpleNamespace(
+        lambda industry, session=None, region=None: SimpleNamespace(
             top_companies=df,
             top_growth_companies=df,
             top_performing_companies=df,

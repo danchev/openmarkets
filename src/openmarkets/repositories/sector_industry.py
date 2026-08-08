@@ -2,6 +2,12 @@
 
 Provides abstractions and implementations for fetching sector overviews,
 industry information, top companies, and related sector/industry analytics.
+
+Every method accepts a ``region`` (ISO 3166-1 alpha-2 country code, e.g.
+"US", "GB", "DE", "JP") that scopes which regional exchange's companies,
+ETFs and mutual funds are returned - yfinance defaults ``Sector``/
+``Industry`` to "US" and accepts any code without validating it against a
+fixed list, so this stays a plain string rather than an enum.
 """
 
 import yfinance as yf
@@ -21,15 +27,20 @@ from openmarkets.schemas.sector_industry import (
     SectorTopMutualFundsEntry,
 )
 
+DEFAULT_REGION = "US"
+
 
 class YFinanceSectorIndustryRepository:
     """Repository for accessing sector and industry data from yfinance."""
 
-    def get_sector_overview(self, sector: str, session: Session | None = None) -> SectorOverview:
+    def get_sector_overview(
+        self, sector: str, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> SectorOverview:
         """Retrieve sector overview.
 
         Args:
             sector: Sector identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -40,17 +51,20 @@ class YFinanceSectorIndustryRepository:
                 the underlying exception by default and returns None instead,
                 which would otherwise surface as an opaque TypeError here.
         """
-        sector_obj = yf.Sector(sector, session=session)
+        sector_obj = yf.Sector(sector, session=session, region=region)
         data = sector_obj.overview
         if data is None:
             raise DataUnavailableError(f"No sector overview available for '{sector}'.")
         return SectorOverview(**data)
 
-    def get_sector_overview_for_ticker(self, ticker: str, session: Session | None = None) -> SectorOverview:
+    def get_sector_overview_for_ticker(
+        self, ticker: str, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> SectorOverview:
         """Retrieve sector overview for a given ticker.
 
         Args:
             ticker: Stock ticker symbol.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -63,19 +77,22 @@ class YFinanceSectorIndustryRepository:
         sector = stock.info.get("sectorKey")
         if sector is None:
             raise ValueError(f"Sector not found for ticker: {ticker}")
-        return self.get_sector_overview(sector, session=session)
+        return self.get_sector_overview(sector, region=region, session=session)
 
-    def get_sector_top_companies(self, sector: str, session: Session | None = None) -> list[SectorTopCompaniesEntry]:
+    def get_sector_top_companies(
+        self, sector: str, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> list[SectorTopCompaniesEntry]:
         """Retrieve top companies for a sector.
 
         Args:
             sector: Sector identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of sector top companies.
         """
-        sector_obj = yf.Sector(sector, session=session)
+        sector_obj = yf.Sector(sector, session=session, region=region)
         data = sector_obj.top_companies
         if data is None:
             return []
@@ -83,12 +100,13 @@ class YFinanceSectorIndustryRepository:
         return [SectorTopCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
 
     def get_sector_top_companies_for_ticker(
-        self, ticker: str, session: Session | None = None
+        self, ticker: str, region: str = DEFAULT_REGION, session: Session | None = None
     ) -> list[SectorTopCompaniesEntry]:
         """Retrieve sector top companies for a given ticker.
 
         Args:
             ticker: Stock ticker symbol.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -101,43 +119,52 @@ class YFinanceSectorIndustryRepository:
         sector = stock.info.get("sectorKey")
         if sector is None:
             raise ValueError(f"Sector not found for ticker: {ticker}")
-        return self.get_sector_top_companies(sector, session=session)
+        return self.get_sector_top_companies(sector, region=region, session=session)
 
-    def get_sector_top_etfs(self, sector: str, session: Session | None = None) -> list[SectorTopETFsEntry]:
+    def get_sector_top_etfs(
+        self, sector: str, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> list[SectorTopETFsEntry]:
         """Retrieve top ETFs for a sector.
 
         Args:
             sector: Sector identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of sector top ETFs.
         """
-        sector_obj = yf.Sector(sector, session=session)
+        sector_obj = yf.Sector(sector, session=session, region=region)
         data = sector_obj.top_etfs
         return [SectorTopETFsEntry(symbol=k, name=v) for k, v in data.items()]
 
     def get_sector_top_mutual_funds(
-        self, sector: str, session: Session | None = None
+        self, sector: str, region: str = DEFAULT_REGION, session: Session | None = None
     ) -> list[SectorTopMutualFundsEntry]:
         """Retrieve top mutual funds for a sector.
 
         Args:
             sector: Sector identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of sector top mutual funds.
         """
-        sector_obj = yf.Sector(sector, session=session)
+        sector_obj = yf.Sector(sector, session=session, region=region)
         data = sector_obj.top_mutual_funds
         return [SectorTopMutualFundsEntry(symbol=k, name=v) for k, v in data.items()]
 
-    def get_sector_industries(self, sector: str, session: Session | None = None) -> list[str]:
+    def get_sector_industries(
+        self, sector: str, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> list[str]:
         """Retrieve industries within a sector.
 
         Args:
             sector: Sector identifier.
+            region: Unused; the sector/industry mapping is not region-scoped
+                upstream. Accepted for a consistent signature across this
+                repository.
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -146,28 +173,34 @@ class YFinanceSectorIndustryRepository:
         return SECTOR_INDUSTRY_MAPPING.get(sector, [])
 
     def get_sector_research_reports(
-        self, sector: str, session: Session | None = None
+        self, sector: str, region: str = DEFAULT_REGION, session: Session | None = None
     ) -> list[IndustryResearchReportEntry]:
         """Retrieve research reports for a sector.
 
         Args:
             sector: Sector identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the sector data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of research report entries.
         """
-        sector_obj = yf.Sector(sector, session=session)
+        sector_obj = yf.Sector(sector, session=session, region=region)
         data = sector_obj.research_reports
         if not data:
             return []
         return [IndustryResearchReportEntry(**entry) for entry in data]
 
-    def get_all_industries(self, sector: str | None = None, session: Session | None = None) -> list[str]:
+    def get_all_industries(
+        self, sector: str | None = None, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> list[str]:
         """Retrieve all industries, optionally filtered by sector.
 
         Args:
             sector: Optional sector filter.
+            region: Unused; the sector/industry mapping is not region-scoped
+                upstream. Accepted for a consistent signature across this
+                repository.
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -177,11 +210,14 @@ class YFinanceSectorIndustryRepository:
             return sorted(SECTOR_INDUSTRY_MAPPING.get(sector, []))
         return sorted({industry for industries in SECTOR_INDUSTRY_MAPPING.values() for industry in industries})
 
-    def get_industry_overview(self, industry: str, session: Session | None = None) -> IndustryOverview:
+    def get_industry_overview(
+        self, industry: str, region: str = DEFAULT_REGION, session: Session | None = None
+    ) -> IndustryOverview:
         """Retrieve industry overview.
 
         Args:
             industry: Industry identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the industry data.
             session: Optional HTTP session for request handling.
 
         Returns:
@@ -192,25 +228,26 @@ class YFinanceSectorIndustryRepository:
                 the underlying exception by default and returns None instead,
                 which would otherwise surface as an opaque TypeError here.
         """
-        industry_obj = yf.Industry(industry, session=session)
+        industry_obj = yf.Industry(industry, session=session, region=region)
         data = industry_obj.overview
         if data is None:
             raise DataUnavailableError(f"No industry overview available for '{industry}'.")
         return IndustryOverview(**data)
 
     def get_industry_top_companies(
-        self, industry: str, session: Session | None = None
+        self, industry: str, region: str = DEFAULT_REGION, session: Session | None = None
     ) -> list[IndustryTopCompaniesEntry]:
         """Retrieve top companies for an industry.
 
         Args:
             industry: Industry identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the industry data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of industry top companies.
         """
-        industry_obj = yf.Industry(industry, session=session)
+        industry_obj = yf.Industry(industry, session=session, region=region)
         data = industry_obj.top_companies
         if data is None:
             return []
@@ -218,18 +255,19 @@ class YFinanceSectorIndustryRepository:
         return [IndustryTopCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
 
     def get_industry_top_growth_companies(
-        self, industry: str, session: Session | None = None
+        self, industry: str, region: str = DEFAULT_REGION, session: Session | None = None
     ) -> list[IndustryTopGrowthCompaniesEntry]:
         """Retrieve top growth companies for an industry.
 
         Args:
             industry: Industry identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the industry data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of industry top growth companies.
         """
-        industry_obj = yf.Industry(industry, session=session)
+        industry_obj = yf.Industry(industry, session=session, region=region)
         data = industry_obj.top_growth_companies
         if data is None:
             return []
@@ -237,18 +275,19 @@ class YFinanceSectorIndustryRepository:
         return [IndustryTopGrowthCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
 
     def get_industry_top_performing_companies(
-        self, industry: str, session: Session | None = None
+        self, industry: str, region: str = DEFAULT_REGION, session: Session | None = None
     ) -> list[IndustryTopPerformingCompaniesEntry]:
         """Retrieve top performing companies for an industry.
 
         Args:
             industry: Industry identifier.
+            region: ISO 3166-1 alpha-2 country code scoping the industry data.
             session: Optional HTTP session for request handling.
 
         Returns:
             List of industry top performing companies.
         """
-        industry_obj = yf.Industry(industry, session=session)
+        industry_obj = yf.Industry(industry, session=session, region=region)
         data = industry_obj.top_performing_companies
         if data is None:
             return []

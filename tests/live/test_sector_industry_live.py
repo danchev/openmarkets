@@ -118,3 +118,19 @@ def test_get_industry_top_performing_companies_against_real_api():
 
     assert isinstance(result, list)
     assert all(isinstance(entry, IndustryTopPerformingCompaniesEntry) for entry in result)
+
+
+def test_region_scoping_returns_different_companies_against_real_api():
+    """Verifies the region parameter added alongside this test file:
+    yf.Sector defaults to US-scoped data, and every one of these tools
+    previously had no way to request a different regional exchange."""
+    service = SectorIndustryService()
+
+    us_companies = service.get_sector_top_companies(STABLE_SECTOR, region="US")
+    gb_companies = service.get_sector_top_companies(STABLE_SECTOR, region="GB")
+
+    assert us_companies
+    assert gb_companies
+    us_symbols = {entry.symbol for entry in us_companies}
+    gb_symbols = {entry.symbol for entry in gb_companies}
+    assert us_symbols != gb_symbols

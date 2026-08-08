@@ -8,7 +8,7 @@ def test_get_sector_overview(monkeypatch):
     from pydantic import ValidationError
 
     class S:
-        def __init__(self, sector, session=None):
+        def __init__(self, sector, session=None, region=None):
             self.overview = {
                 "companies_count": 1,
                 "market_cap": 123456,
@@ -40,7 +40,7 @@ def test_get_sector_overview_raises_when_upstream_fetch_fails(monkeypatch):
     from openmarkets.core.exceptions import DataUnavailableError
 
     class S:
-        def __init__(self, sector, session=None):
+        def __init__(self, sector, session=None, region=None):
             self.overview = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
@@ -55,7 +55,7 @@ def test_get_industry_overview_raises_when_upstream_fetch_fails(monkeypatch):
     from openmarkets.core.exceptions import DataUnavailableError
 
     class IndustryStub:
-        def __init__(self, industry, session=None):
+        def __init__(self, industry, session=None, region=None):
             self.overview = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": IndustryStub}))
@@ -80,7 +80,7 @@ def test_get_sector_top_companies_and_industries(monkeypatch):
     df = pd.DataFrame([{"symbol": "A", "name": "Alpha", "rating": "A", "market weight": 0.05}]).set_index("symbol")
 
     class S:
-        def __init__(self, sector, session=None):
+        def __init__(self, sector, session=None, region=None):
             self.top_companies = df
             self.top_etfs = {"ETF1": "Name"}
             self.top_mutual_funds = {"MF1": "Name"}
@@ -114,7 +114,7 @@ def test_get_all_industries_and_industry_overview(monkeypatch):
     assert "semiconductors" in all_inds
 
     class DummyIndustry:
-        def __init__(self, industry, session=None):
+        def __init__(self, industry, session=None, region=None):
             self.overview = {
                 "companies_count": 4,
                 "market_cap": 17122720768,
@@ -134,7 +134,7 @@ def test_get_sector_top_companies_none(monkeypatch):
     """Test get_sector_top_companies when data is None"""
 
     class S:
-        def __init__(self, sector, session=None):
+        def __init__(self, sector, session=None, region=None):
             self.top_companies = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
@@ -147,7 +147,7 @@ def test_get_sector_research_reports_empty(monkeypatch):
     """Test get_sector_research_reports when data is empty"""
 
     class S:
-        def __init__(self, sector, session=None):
+        def __init__(self, sector, session=None, region=None):
             self.research_reports = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
@@ -165,7 +165,7 @@ def test_get_sector_top_companies_for_ticker_success(monkeypatch):
             self.info = {"sectorKey": "technology"}
 
     class S:
-        def __init__(self, sector, session=None):
+        def __init__(self, sector, session=None, region=None):
             self.top_companies = df
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Ticker": T, "Sector": S}))
@@ -200,7 +200,7 @@ def test_get_industry_top_companies_none(monkeypatch):
     """Test get_industry_top_companies when data is None"""
 
     class DummyIndustry:
-        def __init__(self, industry, session=None):
+        def __init__(self, industry, session=None, region=None):
             self.top_companies = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": DummyIndustry}))
@@ -213,7 +213,7 @@ def test_get_industry_top_growth_companies_none(monkeypatch):
     """Test get_industry_top_growth_companies when data is None"""
 
     class DummyIndustry:
-        def __init__(self, industry, session=None):
+        def __init__(self, industry, session=None, region=None):
             self.top_growth_companies = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": DummyIndustry}))
@@ -226,10 +226,87 @@ def test_get_industry_top_performing_companies_none(monkeypatch):
     """Test get_industry_top_performing_companies when data is None"""
 
     class DummyIndustry:
-        def __init__(self, industry, session=None):
+        def __init__(self, industry, session=None, region=None):
             self.top_performing_companies = None
 
     monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": DummyIndustry}))
     repo = YFinanceSectorIndustryRepository()
     comps = repo.get_industry_top_performing_companies("semiconductors")
     assert comps == []
+
+
+def test_get_sector_overview_forwards_region(monkeypatch):
+    """The region parameter must actually reach yf.Sector, not be silently
+    dropped - this is what distinguishes 'accepts a region argument' from
+    'the argument actually changes which data is fetched'."""
+    captured = {}
+
+    class S:
+        def __init__(self, sector, session=None, region=None):
+            captured["region"] = region
+            self.overview = {
+                "companies_count": 1,
+                "market_cap": 1,
+                "message_board_id": "mbid",
+                "description": "desc",
+                "industries_count": 1,
+                "market_weight": 0.1,
+                "employee_count": 1,
+            }
+
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
+    repo = YFinanceSectorIndustryRepository()
+
+    repo.get_sector_overview("technology", region="GB")
+
+    assert captured["region"] == "GB"
+
+
+def test_get_sector_overview_defaults_region_to_us(monkeypatch):
+    """Omitting region must preserve the pre-region-scoping behaviour."""
+    captured = {}
+
+    class S:
+        def __init__(self, sector, session=None, region=None):
+            captured["region"] = region
+            self.overview = {
+                "companies_count": 1,
+                "market_cap": 1,
+                "message_board_id": "mbid",
+                "description": "desc",
+                "industries_count": 1,
+                "market_weight": 0.1,
+                "employee_count": 1,
+            }
+
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Sector": S}))
+    repo = YFinanceSectorIndustryRepository()
+
+    repo.get_sector_overview("technology")
+
+    assert captured["region"] == "US"
+
+
+def test_get_industry_overview_forwards_region(monkeypatch):
+    """Mirrors test_get_sector_overview_forwards_region for industries."""
+    captured = {}
+
+    class DummyIndustry:
+        def __init__(self, industry, session=None, region=None):
+            captured["region"] = region
+            self.overview = {
+                "companies_count": 1,
+                "market_cap": 1,
+                "message_board_id": "IDX",
+                "description": "desc",
+                "industries_count": None,
+                "market_weight": 0.1,
+                "employee_count": 1,
+            }
+
+    monkeypatch.setattr("openmarkets.repositories.sector_industry.yf", type("Y", (), {"Industry": DummyIndustry}))
+    repo = YFinanceSectorIndustryRepository()
+
+    repo.get_industry_overview("semiconductors", region="DE")
+
+    assert captured["region"] == "DE"
