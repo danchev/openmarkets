@@ -57,9 +57,9 @@ async def test_server_starts_and_lists_resources(mcp_server_params: StdioServerP
 
             # List available resource templates
             templates = await session.list_resource_templates()
-            assert hasattr(templates, "resourceTemplates")
+            assert hasattr(templates, "resource_templates")
             # Accept empty, but should not error
-            assert isinstance(templates.resourceTemplates, list)
+            assert isinstance(templates.resource_templates, list)
 
             # List available prompts
             prompts = await session.list_prompts()
@@ -67,10 +67,10 @@ async def test_server_starts_and_lists_resources(mcp_server_params: StdioServerP
             assert isinstance(prompts.prompts, list)
 
             # Complete resource template arguments if available
-            if templates.resourceTemplates:
-                template = templates.resourceTemplates[0]
+            if templates.resource_templates:
+                template = templates.resource_templates[0]
                 result = await session.complete(
-                    ref=ResourceTemplateReference(type="ref/resource", uri=template.uriTemplate),
+                    ref=ResourceTemplateReference(type="ref/resource", uri=template.uri_template),
                     argument={"name": "owner", "value": "model"},
                 )
                 assert hasattr(result, "completion")
@@ -79,7 +79,7 @@ async def test_server_starts_and_lists_resources(mcp_server_params: StdioServerP
 
                 # Complete with context - repo suggestions based on owner
                 result = await session.complete(
-                    ref=ResourceTemplateReference(type="ref/resource", uri=template.uriTemplate),
+                    ref=ResourceTemplateReference(type="ref/resource", uri=template.uri_template),
                     argument={"name": "repo", "value": ""},
                     context_arguments={"owner": "modelcontextprotocol"},
                 )
