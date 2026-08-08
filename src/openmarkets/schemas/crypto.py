@@ -41,3 +41,26 @@ class CryptoHistory(BaseModel):
     low: float = Field(..., alias="Low", description="Lowest price")
     close: float = Field(..., alias="Close", description="Closing price")
     volume: int = Field(..., alias="Volume", description="Volume traded")
+
+
+class CryptoSentimentEntry(BaseModel):
+    """Per-asset price movement used to derive the sentiment proxy."""
+
+    symbol: str = Field(..., description="Cryptocurrency symbol.")
+    daily_change_percent: float | None = Field(..., description="Daily percentage change, None if not computable.")
+    weekly_change_percent: float | None = Field(..., description="Weekly percentage change, None if not computable.")
+
+
+class CryptoSentiment(BaseModel):
+    """Sentiment proxy derived from recent crypto price movements."""
+
+    sentiment_proxy: str = Field(
+        ...,
+        description="Sentiment label: Extreme Greed, Greed, Neutral-Positive, "
+        "Neutral-Negative, Fear, Extreme Fear, or Unknown when no data is usable.",
+    )
+    average_weekly_change: float | None = Field(
+        ..., description="Mean weekly percentage change, None when no asset had a usable value."
+    )
+    crypto_data: list[CryptoSentimentEntry] = Field(..., description="Per-asset supporting data.")
+    note: str = Field(..., description="Caveat describing how the proxy is derived.")

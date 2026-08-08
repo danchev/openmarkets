@@ -11,7 +11,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.repositories.crypto import ICryptoRepository, YFinanceCryptoRepository
-from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
+from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
@@ -84,7 +84,7 @@ class CryptoService(ToolRegistrationMixin):
         return self.repository.get_top_cryptocurrencies(count)
 
     @tool
-    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None):
+    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None) -> CryptoSentiment:
         """
         Retrieve a proxy value for the crypto fear and greed index.
 
@@ -92,7 +92,7 @@ class CryptoService(ToolRegistrationMixin):
             tickers (list[str] | None, optional): List of crypto tickers to include. If None, uses a default set.
 
         Returns:
-            str: Proxy value or description for the fear/greed index.
+            CryptoSentiment: Sentiment proxy and supporting per-asset data.
         """
         return self.repository.get_crypto_fear_greed_proxy(tickers, session=self.session)
 

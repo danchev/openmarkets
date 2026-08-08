@@ -11,6 +11,16 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.repositories.analysis import IAnalysisRepository, YFinanceAnalysisRepository
+from openmarkets.schemas.analysis import (
+    AnalystPriceTargets,
+    AnalystRecommendation,
+    AnalystRecommendationChange,
+    EarningsEstimate,
+    EPSTrend,
+    FullAnalysis,
+    GrowthEstimates,
+    RevenueEstimate,
+)
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
@@ -40,7 +50,9 @@ class AnalysisService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_analyst_recommendations(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_analyst_recommendations(
+        self, ticker: Annotated[str, "The symbol of the security."]
+    ) -> list[AnalystRecommendation]:
         """
         Retrieve analyst recommendations for a given ticker.
 
@@ -53,7 +65,9 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_analyst_recommendations(ticker, session=self.session)
 
     @tool
-    def get_recommendation_changes(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_recommendation_changes(
+        self, ticker: Annotated[str, "The symbol of the security."]
+    ) -> list[AnalystRecommendationChange]:
         """
         Retrieve changes in analyst recommendations for a given ticker.
 
@@ -66,7 +80,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_recommendation_changes(ticker, session=self.session)
 
     @tool
-    def get_revenue_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_revenue_estimates(self, ticker: Annotated[str, "The symbol of the security."]) -> list[RevenueEstimate]:
         """
         Retrieve revenue estimates for a given ticker.
 
@@ -79,7 +93,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_revenue_estimates(ticker, session=self.session)
 
     @tool
-    def get_earnings_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_earnings_estimates(self, ticker: Annotated[str, "The symbol of the security."]) -> list[EarningsEstimate]:
         """
         Retrieve earnings estimates for a given ticker.
 
@@ -92,7 +106,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_earnings_estimates(ticker, session=self.session)
 
     @tool
-    def get_growth_estimates(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_growth_estimates(self, ticker: Annotated[str, "The symbol of the security."]) -> list[GrowthEstimates]:
         """
         Retrieve growth estimates for a given ticker.
 
@@ -105,7 +119,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_growth_estimates(ticker, session=self.session)
 
     @tool
-    def get_eps_trends(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_eps_trends(self, ticker: Annotated[str, "The symbol of the security."]) -> list[EPSTrend]:
         """
         Retrieve EPS (Earnings Per Share) trends for a given ticker.
 
@@ -118,7 +132,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_eps_trends(ticker, session=self.session)
 
     @tool
-    def get_price_targets(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_price_targets(self, ticker: Annotated[str, "The symbol of the security."]) -> AnalystPriceTargets:
         """
         Retrieve price targets for a given ticker.
 
@@ -131,7 +145,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self.repository.get_price_targets(ticker, session=self.session)
 
     @tool
-    def get_full_analysis(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_full_analysis(self, ticker: Annotated[str, "The symbol of the security."]) -> FullAnalysis:
         """
         Retrieve a full analysis report for a given ticker, aggregating all available analysis data.
 
@@ -139,17 +153,17 @@ class AnalysisService(ToolRegistrationMixin):
             ticker (str): The symbol of the security.
 
         Returns:
-            dict: Dictionary containing all analysis data for the ticker.
+            FullAnalysis: All analysis data for the ticker.
         """
-        return {
-            "recommendations": self.repository.get_analyst_recommendations(ticker, session=self.session),
-            "recommendation_changes": self.repository.get_recommendation_changes(ticker, session=self.session),
-            "revenue_estimates": self.repository.get_revenue_estimates(ticker, session=self.session),
-            "earnings_estimates": self.repository.get_earnings_estimates(ticker, session=self.session),
-            "growth_estimates": self.repository.get_growth_estimates(ticker, session=self.session),
-            "eps_trends": self.repository.get_eps_trends(ticker, session=self.session),
-            "price_targets": self.repository.get_price_targets(ticker, session=self.session),
-        }
+        return FullAnalysis(
+            recommendations=self.repository.get_analyst_recommendations(ticker, session=self.session),
+            recommendation_changes=self.repository.get_recommendation_changes(ticker, session=self.session),
+            revenue_estimates=self.repository.get_revenue_estimates(ticker, session=self.session),
+            earnings_estimates=self.repository.get_earnings_estimates(ticker, session=self.session),
+            growth_estimates=self.repository.get_growth_estimates(ticker, session=self.session),
+            eps_trends=self.repository.get_eps_trends(ticker, session=self.session),
+            price_targets=self.repository.get_price_targets(ticker, session=self.session),
+        )
 
 
 analysis_service = AnalysisService()

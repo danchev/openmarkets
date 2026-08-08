@@ -93,3 +93,17 @@ class AnalystPriceTargets(BaseModel):
     low: float | None = Field(None, description="Low target price.", alias="low")
     mean: float | None = Field(None, description="Mean target price.", alias="mean")
     median: float | None = Field(None, description="Median target price.", alias="median")
+
+
+class FullAnalysis(BaseModel):
+    """Aggregated analyst data for a security."""
+
+    recommendations: list[AnalystRecommendation] = Field(..., description="Analyst recommendation summaries.")
+    recommendation_changes: list[AnalystRecommendationChange] = Field(
+        ..., description="Upgrades and downgrades over time."
+    )
+    revenue_estimates: list[RevenueEstimate] = Field(..., description="Analyst revenue estimates.")
+    earnings_estimates: list[EarningsEstimate] = Field(..., description="Analyst earnings estimates.")
+    growth_estimates: list[GrowthEstimates] = Field(..., description="Analyst growth estimates.")
+    eps_trends: list[EPSTrend] = Field(..., description="Earnings-per-share estimate trends.")
+    price_targets: AnalystPriceTargets = Field(..., description="Analyst price targets.")

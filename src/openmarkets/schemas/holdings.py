@@ -118,3 +118,12 @@ class StockMajorHolders(BaseModel):
     institutions_count: int | None = Field(
         None, description="Number of institutional holders", alias="institutionsCount"
     )
+
+
+class FullHoldings(BaseModel):
+    """Aggregated ownership data for a security."""
+
+    major_holders: list[StockMajorHolders] = Field(..., description="Ownership breakdown by holder category.")
+    institutional_holdings: list[StockInstitutionalHoldings] = Field(..., description="Institutional holders.")
+    mutual_fund_holdings: list[StockMutualFundHoldings] = Field(..., description="Mutual fund holders.")
+    insider_purchases: list[InsiderPurchase] = Field(..., description="Insider purchase activity.")

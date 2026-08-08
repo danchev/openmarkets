@@ -12,7 +12,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.constants import DEFAULT_SENTIMENT_TICKERS, TOP_CRYPTO_TICKERS
 from openmarkets.core.exceptions import APIError
-from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
+from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment, CryptoSentimentEntry
 
 
 class ICryptoRepository(ABC):
@@ -62,7 +62,9 @@ class ICryptoRepository(ABC):
         pass
 
     @abstractmethod
-    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None, session: Session | None = None) -> dict:
+    def get_crypto_fear_greed_proxy(
+        self, tickers: list[str] | None = None, session: Session | None = None
+    ) -> CryptoSentiment:
         """Calculate a sentiment proxy based on cryptocurrency price movements.
 
         Args:
@@ -70,7 +72,7 @@ class ICryptoRepository(ABC):
             session: Optional HTTP session for request handling.
 
         Returns:
-            Dictionary containing sentiment analysis and supporting data.
+            Sentiment analysis and supporting per-asset data.
         """
         pass
 
@@ -131,7 +133,9 @@ class YFinanceCryptoRepository(ICryptoRepository):
         selected_cryptos = TOP_CRYPTO_TICKERS[: min(count, 20)]
         return [self.get_crypto_info(crypto, session=session) for crypto in selected_cryptos]
 
-    def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None, session: Session | None = None) -> dict:
+    def get_crypto_fear_greed_proxy(
+        self, tickers: list[str] | None = None, session: Session | None = None
+    ) -> CryptoSentiment:
         """Calculate a sentiment proxy based on cryptocurrency price movements.
 
         Args:
@@ -139,7 +143,7 @@ class YFinanceCryptoRepository(ICryptoRepository):
             session: Optional HTTP session for request handling.
 
         Returns:
-            Dictionary containing sentiment analysis and supporting data.
+            Sentiment analysis and supporting per-asset data.
 
         Raises:
             APIError: If sentiment data could not be retrieved from upstream.
@@ -329,7 +333,7 @@ class YFinanceCryptoRepository(ICryptoRepository):
 
     def _build_sentiment_response(
         self, sentiment_label: str, average_change: float | None, sentiment_data: list[dict]
-    ) -> dict:
+    ) -> CryptoSentiment:
         """Build the final sentiment response dictionary.
 
         Args:
@@ -339,11 +343,11 @@ class YFinanceCryptoRepository(ICryptoRepository):
             sentiment_data: List of sentiment data dictionaries.
 
         Returns:
-            Complete sentiment response dictionary.
+            Complete sentiment response.
         """
-        return {
-            "sentiment_proxy": sentiment_label,
-            "average_weekly_change": average_change,
-            "crypto_data": sentiment_data,
-            "note": "This is a simplified sentiment proxy based on price movements, not the official Fear & Greed Index",
-        }
+        return CryptoSentiment(
+            sentiment_proxy=sentiment_label,
+            average_weekly_change=average_change,
+            crypto_data=[CryptoSentimentEntry(**entry) for entry in sentiment_data],
+            note=("This is a simplified sentiment proxy based on price movements, not the official Fear & Greed Index"),
+        )

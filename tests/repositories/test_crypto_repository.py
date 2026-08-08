@@ -95,7 +95,7 @@ class TestYFinanceCryptoRepository:
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert "sentiment_proxy" in out
+        assert out.sentiment_proxy
 
     def test_get_crypto_fear_greed_proxy_error_handling(self, monkeypatch):
         """Test error handling in fear and greed proxy."""
@@ -188,8 +188,8 @@ class TestYFinanceCryptoRepository:
         # No usable data must be reported as unknown rather than as 0.0,
         # which would be indistinguishable from a genuinely flat market.
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out["average_weekly_change"] is None
-        assert out["sentiment_proxy"] == "Unknown"
+        assert out.average_weekly_change is None
+        assert out.sentiment_proxy == "Unknown"
 
     def test_zero_baseline_price_yields_none_not_nan(self):
         """A zero close price must not produce NaN.
@@ -238,7 +238,7 @@ class TestYFinanceCryptoRepository:
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out["sentiment_proxy"] == "Greed"
+        assert out.sentiment_proxy == "Greed"
 
     def test_determine_sentiment_label_neutral_positive(self, monkeypatch):
         """Test sentiment label for Neutral-Positive (0 < change <= 5)."""
@@ -258,7 +258,7 @@ class TestYFinanceCryptoRepository:
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out["sentiment_proxy"] == "Neutral-Positive"
+        assert out.sentiment_proxy == "Neutral-Positive"
 
     def test_determine_sentiment_label_fear(self, monkeypatch):
         """Test sentiment label for Fear (-10 < change <= -5)."""
@@ -278,7 +278,7 @@ class TestYFinanceCryptoRepository:
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out["sentiment_proxy"] == "Fear"
+        assert out.sentiment_proxy == "Fear"
 
     def test_determine_sentiment_label_extreme_fear(self, monkeypatch):
         """Test sentiment label for Extreme Fear (change <= -10)."""
@@ -298,4 +298,4 @@ class TestYFinanceCryptoRepository:
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out["sentiment_proxy"] == "Extreme Fear"
+        assert out.sentiment_proxy == "Extreme Fear"

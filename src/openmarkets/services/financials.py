@@ -15,6 +15,7 @@ from openmarkets.schemas.financials import (
     BalanceSheetEntry,
     EPSHistoryEntry,
     FinancialCalendar,
+    FullFinancials,
     IncomeStatementEntry,
     SecFilingRecord,
     TTMCashFlowStatementEntry,
@@ -144,7 +145,7 @@ class FinancialsService(ToolRegistrationMixin):
         return self.repository.get_eps_history(ticker, session=self.session)
 
     @tool
-    def get_full_financials(self, ticker: Annotated[str, "The symbol of the security."]):
+    def get_full_financials(self, ticker: Annotated[str, "The symbol of the security."]) -> FullFinancials:
         """
         Retrieve a full set of financial data for a given ticker, aggregating all available financial statements and records.
 
@@ -152,17 +153,17 @@ class FinancialsService(ToolRegistrationMixin):
             ticker (str): The symbol of the security.
 
         Returns:
-            dict: Dictionary containing all financial data for the ticker.
+            FullFinancials: All financial data for the ticker.
         """
-        return {
-            "balance_sheet": self.repository.get_balance_sheet(ticker, session=self.session),
-            "income_statement": self.repository.get_income_statement(ticker, session=self.session),
-            "ttm_income_statement": self.repository.get_ttm_income_statement(ticker, session=self.session),
-            "ttm_cash_flow_statement": self.repository.get_ttm_cash_flow_statement(ticker, session=self.session),
-            "financial_calendar": self.repository.get_financial_calendar(ticker, session=self.session),
-            "sec_filings": self.repository.get_sec_filings(ticker, session=self.session),
-            "eps_history": self.repository.get_eps_history(ticker, session=self.session),
-        }
+        return FullFinancials(
+            balance_sheet=self.repository.get_balance_sheet(ticker, session=self.session),
+            income_statement=self.repository.get_income_statement(ticker, session=self.session),
+            ttm_income_statement=self.repository.get_ttm_income_statement(ticker, session=self.session),
+            ttm_cash_flow_statement=self.repository.get_ttm_cash_flow_statement(ticker, session=self.session),
+            financial_calendar=self.repository.get_financial_calendar(ticker, session=self.session),
+            sec_filings=self.repository.get_sec_filings(ticker, session=self.session),
+            eps_history=self.repository.get_eps_history(ticker, session=self.session),
+        )
 
 
 financials_service = FinancialsService()

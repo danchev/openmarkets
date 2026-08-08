@@ -524,3 +524,19 @@ class EPSHistoryEntry(BaseModel):
             except Exception:
                 return None
         return v
+
+
+class FullFinancials(BaseModel):
+    """Aggregated financial statements and records for a security."""
+
+    balance_sheet: list[BalanceSheetEntry] = Field(..., description="Balance sheet entries.")
+    income_statement: list[IncomeStatementEntry] = Field(..., description="Income statement entries.")
+    ttm_income_statement: list[TTMIncomeStatementEntry] = Field(
+        ..., description="Trailing-twelve-month income statement entries."
+    )
+    ttm_cash_flow_statement: list[TTMCashFlowStatementEntry] = Field(
+        ..., description="Trailing-twelve-month cash flow statement entries."
+    )
+    financial_calendar: FinancialCalendar = Field(..., description="Upcoming financial events.")
+    sec_filings: list[SecFilingRecord] = Field(..., description="SEC filing records.")
+    eps_history: list[EPSHistoryEntry] = Field(..., description="Historical earnings-per-share records.")
