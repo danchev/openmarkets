@@ -87,6 +87,32 @@ def test_sector_top_mutual_funds_entry_tolerates_none_name():
     assert entry.name is None
 
 
+def test_sector_top_mutual_funds_entry_tolerates_nan_name():
+    """A pandas NaN name must be accepted, not just an explicit None.
+
+    The original version of this test only passed name=None, which the
+    widened `str | None` annotation accepts on its own - so it passed while
+    the NaN case, the one that actually occurs in real data, still raised
+    ValidationError because the validator had not been wired up here.
+    """
+    from openmarkets.schemas.sector_industry import SectorTopMutualFundsEntry
+
+    entry = SectorTopMutualFundsEntry(symbol="FFOQX", name=float("nan"))
+
+    assert entry.name is None
+
+
+def test_sector_top_etfs_entry_tolerates_nan_name():
+    """SectorTopETFsEntry is populated by the same data.items() pattern from
+    the same upstream source as the mutual-funds model, so it carries the
+    same exposure even though no NaN name is present in today's data."""
+    from openmarkets.schemas.sector_industry import SectorTopETFsEntry
+
+    entry = SectorTopETFsEntry(symbol="XLK", name=float("nan"))
+
+    assert entry.name is None
+
+
 def test_industry_top_companies_entry_tolerates_nan_rating_and_name():
     """Mirrors test_sector_top_companies_entry_tolerates_nan_rating_and_name
     for the industry-scoped equivalent."""

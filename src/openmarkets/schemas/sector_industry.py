@@ -205,15 +205,29 @@ class SectorOverview(BaseModel):
 def _nan_to_none(value: object) -> object:
     """Map a float NaN to None, passing through everything else unchanged.
 
-    yfinance's per-company rating and per-fund name are read from pandas
-    columns that use float NaN, not None, to mark a missing string value.
-    That NaN survives DataFrame.to_dict()/dict.items() and reaches these
-    models as a raw float, which pydantic's str validation rejects outright
-    rather than treating as absent.
+    yfinance reads these values from pandas objects that use float NaN, not
+    None, to mark a missing string. That NaN survives
+    ``DataFrame.to_dict()`` and ``dict.items()`` and reaches the model as a
+    raw float, which pydantic's ``str`` validation rejects outright rather
+    than treating as absent.
+
+    Applied via the explicit ``_NAN_TOLERANT_TEXT_FIELDS`` list on each
+    model rather than a wildcard validator: a wildcard would also catch
+    required float fields such as ``market_weight``, turning a NaN weight
+    into None and failing its non-optional validation instead of letting
+    float validation handle it.
     """
     if isinstance(value, float) and value != value:  # NaN is the only float that is != itself
         return None
     return value
+
+
+#: Text fields on the sector/industry listing models that yfinance may
+#: return as a pandas NaN. Keep every optional text field on those models
+#: listed here - an earlier fix widened three such fields to `str | None`
+#: but wired the validator to only two, leaving
+#: SectorTopMutualFundsEntry.name still raising on real data.
+_NAN_TOLERANT_TEXT_FIELDS = ("name", "rating")
 
 
 class SectorTopCompaniesEntry(BaseModel):
@@ -226,7 +240,7 @@ class SectorTopCompaniesEntry(BaseModel):
     rating: str | None = Field(None, description="Company rating, absent for some companies")
     market_weight: float = Field(..., description="Market weight", alias="market weight")
 
-    @field_validator("name", "rating", mode="before")
+    @field_validator(*_NAN_TOLERANT_TEXT_FIELDS, mode="before")
     @classmethod
     def _normalize_optional_text(cls, value: object) -> object:
         return _nan_to_none(value)
@@ -238,7 +252,12 @@ class SectorTopETFsEntry(BaseModel):
     """
 
     symbol: str = Field(..., description="ETF ticker symbol")
-    name: str = Field(..., description="ETF name")
+    name: str | None = Field(None, description="ETF name, absent for some ETFs")
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_optional_text(cls, value: object) -> object:
+        return _nan_to_none(value)
 
 
 class SectorTopMutualFundsEntry(BaseModel):
@@ -248,6 +267,11 @@ class SectorTopMutualFundsEntry(BaseModel):
 
     symbol: str = Field(..., description="Mutual Fund ticker symbol")
     name: str | None = Field(None, description="Mutual Fund name, absent for some funds")
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_optional_text(cls, value: object) -> object:
+        return _nan_to_none(value)
 
 
 class IndustryOverview(BaseModel):
