@@ -70,6 +70,15 @@ def test_run_http_server_delegates_to_sdk():
 
 
 def test_run_http_server_keyboard(monkeypatch):
+    """Verifies the except KeyboardInterrupt branch as written.
+
+    This is not the real SIGINT/SIGTERM path: verified against a running
+    server that uvicorn.Server installs its own signal handlers and exits
+    via sys.exit() directly, never letting KeyboardInterrupt propagate to
+    this function. This test only proves the branch behaves correctly if
+    something upstream of uvicorn (our own code, or a future SDK change)
+    ever raises KeyboardInterrupt directly.
+    """
     mcp = mock.Mock()
     mcp.run.side_effect = KeyboardInterrupt()
     logger_mock = mock.Mock()

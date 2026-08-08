@@ -40,12 +40,23 @@ def run_http_server(mcp: MCPServer, settings: Settings) -> None:
     DNS-rebinding protection is disabled because the server is expected to
     run behind a reverse proxy, where the inbound Host header varies.
 
+    Under real operation, ``uvicorn.Server`` installs its own SIGINT/SIGTERM
+    handlers and calls ``sys.exit()`` directly for both graceful shutdown
+    and startup failures (e.g. a bind conflict) - confirmed by observing
+    process exit codes against a running server, not just a mock. Neither
+    case reaches this function as a catchable ``KeyboardInterrupt`` or
+    ``Exception``. The handlers below remain to catch errors raised by our
+    own code around the ``mcp.run()`` call (for example, before uvicorn
+    starts), not as the primary path for graceful shutdown or startup
+    failure reporting - uvicorn already reports both with the correct
+    outcome and its own exit code.
+
     Args:
         mcp: MCP server instance.
         settings: Server settings/configuration.
 
     Raises:
-        SystemExit: On shutdown request or unrecoverable server error.
+        SystemExit: If our own code raises before uvicorn takes over.
     """
     try:
         mcp.run(
