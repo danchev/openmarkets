@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 
+from openmarkets.core.exceptions import DataUnavailableError
 from openmarkets.repositories.options import YFinanceOptionsRepository
 from openmarkets.schemas.options import OptionExpirationDate
 
@@ -106,7 +107,8 @@ def test_get_options_volume_analysis_no_expirations(options_repository, monkeypa
         "openmarkets.repositories.options.yf",
         type("Y", (), {"Ticker": lambda t, session=None: dummy_ticker(options=[])}),
     )
-    assert options_repository.get_options_volume_analysis("AAPL") == {"error": "No options data available"}
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_volume_analysis("AAPL")
 
 
 def test_get_options_volume_analysis_with_data(
@@ -133,8 +135,8 @@ def test_get_options_by_moneyness_errors(options_repository, monkeypatch, dummy_
         "openmarkets.repositories.options.yf",
         type("Y", (), {"Ticker": lambda t, session=None: dummy_ticker(info={})}),
     )
-    res = options_repository.get_options_by_moneyness("AAPL")
-    assert res == {"error": "Could not get current stock price"}
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_by_moneyness("AAPL")
 
 
 def test_get_options_by_moneyness_success(options_repository, monkeypatch, dummy_ticker, dummy_option_chain):
@@ -166,8 +168,8 @@ def test_get_options_skew_no_expirations(options_repository, monkeypatch, dummy_
             self.options = []
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T1}))
-    out = options_repository.get_options_skew("AAPL")
-    assert "error" in out
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_skew("AAPL")
 
 
 def test_get_options_skew_empty_chain(options_repository, monkeypatch, dummy_ticker, dummy_option_chain):
@@ -181,8 +183,8 @@ def test_get_options_skew_empty_chain(options_repository, monkeypatch, dummy_tic
             return dummy_option_chain()
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T2}))
-    out = options_repository.get_options_skew("AAPL")
-    assert "error" in out
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_skew("AAPL")
 
 
 def test_get_options_skew_missing_columns(options_repository, monkeypatch, dummy_ticker, dummy_option_chain):
@@ -200,8 +202,8 @@ def test_get_options_skew_missing_columns(options_repository, monkeypatch, dummy
             return self._option_chain
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": T3}))
-    out = options_repository.get_options_skew("AAPL")
-    assert "error" in out
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_skew("AAPL")
 
 
 def test_get_options_skew_keeps_usable_side(options_repository, monkeypatch, dummy_option_chain):
@@ -285,8 +287,8 @@ def test_get_options_by_moneyness_no_chain(options_repository, monkeypatch, dumm
             return None
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": Maker}))
-    res = options_repository.get_options_by_moneyness("AAPL")
-    assert res == {"error": "No options data available"}
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_by_moneyness("AAPL")
 
 
 def test_safe_ratio_zero_denominator(options_repository):
@@ -313,5 +315,5 @@ def test_option_chain_exception_handling(options_repository, monkeypatch):
             raise Exception("Simulated failure")
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": FailingTicker}))
-    res = options_repository.get_options_volume_analysis("AAPL")
-    assert res == {"error": "No options data available"}
+    with pytest.raises(DataUnavailableError):
+        options_repository.get_options_volume_analysis("AAPL")

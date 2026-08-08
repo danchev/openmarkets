@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+from openmarkets.core.exceptions import DataUnavailableError
 from openmarkets.repositories.options import YFinanceOptionsRepository
 from openmarkets.schemas.options import OptionExpirationDate
 
@@ -115,7 +116,8 @@ def test_get_options_by_moneyness_errors_and_success(monkeypatch):
 
     # missing price
     monkeypatch.setattr("openmarkets.repositories.options.yf.Ticker", lambda t, session=None: SimpleNamespace(info={}))
-    assert repo.get_options_by_moneyness("A")["error"]
+    with pytest.raises(DataUnavailableError):
+        repo.get_options_by_moneyness("A")
 
     # with price and chain
     class FakeStock:
@@ -139,8 +141,8 @@ def test_get_options_skew_various_cases(monkeypatch):
 
     # chain None
     monkeypatch.setattr("openmarkets.repositories.options.yf.Ticker", lambda t, session=None: SimpleNamespace())
-    out = repo.get_options_skew("A", "2020-01-01")
-    assert "error" in out
+    with pytest.raises(DataUnavailableError):
+        repo.get_options_skew("A", "2020-01-01")
 
     # both empty
     class FakeStockEmpty:
@@ -151,8 +153,8 @@ def test_get_options_skew_various_cases(monkeypatch):
             return SimpleNamespace(calls=pd.DataFrame(), puts=pd.DataFrame())
 
     monkeypatch.setattr("openmarkets.repositories.options.yf.Ticker", lambda t, session=None: FakeStockEmpty())
-    out = repo.get_options_skew("A")
-    assert "error" in out
+    with pytest.raises(DataUnavailableError):
+        repo.get_options_skew("A")
 
     # missing columns
     calls = pd.DataFrame([{"volume": 1}])
@@ -162,8 +164,9 @@ def test_get_options_skew_various_cases(monkeypatch):
             option_chain=lambda exp: SimpleNamespace(calls=calls, puts=pd.DataFrame())
         ),
     )
-    res = repo.get_options_skew("A")
-    assert "error" in res or isinstance(res.get("call_skew"), list)
+    # Calls are malformed and puts are empty, so nothing usable remains.
+    with pytest.raises(DataUnavailableError):
+        repo.get_options_skew("A")
 
     # valid skew
     calls = pd.DataFrame([{"strike": 10, "impliedVolatility": 0.1}])

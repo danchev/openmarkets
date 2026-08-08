@@ -9,6 +9,7 @@ from datetime import date
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import DataUnavailableError
 from openmarkets.schemas.options import (
     CallOption,
     OptionContractChain,
@@ -233,7 +234,7 @@ class YFinanceOptionsRepository(IOptionsRepository):
         stock = yf.Ticker(ticker, session=session)
         option_chain = self._get_option_chain_for_expiration(stock, expiration_date)
         if option_chain is None:
-            return {"error": "No options data available"}
+            raise DataUnavailableError(f"No options data available for {ticker}.")
         calls = option_chain.calls
         puts = option_chain.puts
         analysis = {
@@ -263,10 +264,10 @@ class YFinanceOptionsRepository(IOptionsRepository):
         stock = yf.Ticker(ticker, session=session)
         current_price = stock.info.get("currentPrice")
         if not current_price:
-            return {"error": "Could not get current stock price"}
+            raise DataUnavailableError(f"Could not get current stock price for {ticker}.")
         option_chain = self._get_option_chain_for_expiration(stock, expiration_date)
         if option_chain is None:
-            return {"error": "No options data available"}
+            raise DataUnavailableError(f"No options data available for {ticker}.")
         price_min = current_price * (1 - moneyness_range)
         price_max = current_price * (1 + moneyness_range)
         calls = option_chain.calls
@@ -286,17 +287,14 @@ class YFinanceOptionsRepository(IOptionsRepository):
         stock = yf.Ticker(ticker, session=session)
         option_chain = self._get_option_chain_for_expiration(stock, expiration_date)
 
-        if option_chain is None:
-            return {"error": f"No options data available for {ticker} on {expiration_date}."}
-
-        if option_chain.calls.empty and option_chain.puts.empty:
-            return {"error": f"No options data available for {ticker} on {expiration_date}."}
+        if option_chain is None or (option_chain.calls.empty and option_chain.puts.empty):
+            raise DataUnavailableError(f"No options data available for {ticker} on {expiration_date}.")
 
         call_skew = self._extract_skew(option_chain.calls)
         put_skew = self._extract_skew(option_chain.puts)
 
         if call_skew is None and put_skew is None:
-            return {"error": f"Missing 'strike' or 'impliedVolatility' in options data for {ticker}."}
+            raise DataUnavailableError(f"Missing 'strike' or 'impliedVolatility' in options data for {ticker}.")
 
         result: dict = {
             "call_skew": call_skew if call_skew is not None else [],

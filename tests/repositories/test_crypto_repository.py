@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 
+from openmarkets.core.exceptions import APIError
 from openmarkets.repositories.crypto import YFinanceCryptoRepository
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
 
@@ -107,8 +108,8 @@ class TestYFinanceCryptoRepository:
                 raise RuntimeError("oops")
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": TErr}))
-        out2 = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert "error" in out2
+        with pytest.raises(APIError):
+            self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
 
     def test_get_crypto_info_already_has_suffix(self, monkeypatch):
         """Test that ticker already ending with -USD is not modified."""

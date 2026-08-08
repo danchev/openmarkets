@@ -11,6 +11,7 @@ import yfinance as yf
 from curl_cffi.requests import Session
 
 from openmarkets.core.constants import DEFAULT_SENTIMENT_TICKERS, TOP_CRYPTO_TICKERS
+from openmarkets.core.exceptions import APIError
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
 
 
@@ -139,15 +140,19 @@ class YFinanceCryptoRepository(ICryptoRepository):
 
         Returns:
             Dictionary containing sentiment analysis and supporting data.
+
+        Raises:
+            APIError: If sentiment data could not be retrieved from upstream.
         """
         tickers = tickers or DEFAULT_SENTIMENT_TICKERS
         try:
             sentiment_data = self._collect_crypto_sentiment_data(tickers, session)
-            average_change = self._calculate_average_weekly_change(sentiment_data)
-            sentiment_label = self._determine_sentiment_label(average_change)
-            return self._build_sentiment_response(sentiment_label, average_change, sentiment_data)
         except Exception as error:
-            return {"error": f"Failed to calculate sentiment proxy: {str(error)}"}
+            raise APIError(f"Failed to retrieve crypto sentiment data: {error}") from error
+
+        average_change = self._calculate_average_weekly_change(sentiment_data)
+        sentiment_label = self._determine_sentiment_label(average_change)
+        return self._build_sentiment_response(sentiment_label, average_change, sentiment_data)
 
     def _normalize_ticker(self, ticker: str) -> str:
         """Normalize cryptocurrency ticker to include -USD suffix.
