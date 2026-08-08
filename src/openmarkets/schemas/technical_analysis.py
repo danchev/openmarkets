@@ -1,7 +1,7 @@
 from typing import Annotated, TypedDict
 
 
-class SupportResistanceLevelsDict(TypedDict, total=False):
+class SupportResistanceLevelsDict(TypedDict):
     current_price: Annotated[float, "Current market price of the security"]
     resistance_levels: Annotated[list[float], "List of identified resistance price levels"]
     support_levels: Annotated[list[float], "List of identified support price levels"]
@@ -9,7 +9,7 @@ class SupportResistanceLevelsDict(TypedDict, total=False):
     nearest_support: Annotated[float | None, "Closest support level below current price"]
 
 
-class VolatilityMetricsDict(TypedDict, total=False):
+class VolatilityMetricsDict(TypedDict):
     daily_volatility: Annotated[float, "Daily volatility as standard deviation of returns"]
     annualized_volatility: Annotated[float, "Annualized volatility (daily volatility * sqrt(252))"]
     max_daily_gain_percent: Annotated[float, "Maximum single-day percentage gain"]
@@ -20,7 +20,7 @@ class VolatilityMetricsDict(TypedDict, total=False):
     positive_days_percentage: Annotated[float, "Percentage of days with positive returns"]
 
 
-class TechnicalIndicatorsDict(TypedDict, total=False):
+class TechnicalIndicatorsDict(TypedDict):
     current_price: Annotated[float, "Current market price of the security"]
     fifty_two_week_high: Annotated[float, "Highest price in the last 52 weeks"]
     fifty_two_week_low: Annotated[float, "Lowest price in the last 52 weeks"]

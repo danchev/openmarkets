@@ -1,10 +1,12 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CryptoFastInfo(BaseModel):
     """Fast info snapshot for a crypto ticker, typically from yfinance or similar APIs."""
+
+    model_config = ConfigDict(validate_by_name=True)
 
     currency: str = Field(..., description="Currency of the ticker.")
     day_high: float = Field(..., alias="dayHigh", description="Day's high price.")
@@ -27,12 +29,11 @@ class CryptoFastInfo(BaseModel):
     year_high: float = Field(..., alias="yearHigh", description="52-week high price.")
     year_low: float = Field(..., alias="yearLow", description="52-week low price.")
 
-    class Config:
-        validate_by_name = True
-
 
 class CryptoHistory(BaseModel):
     """Schema for historical crypto data (OHLCV)."""
+
+    model_config = ConfigDict(validate_by_name=True)
 
     date: datetime = Field(..., alias="Date", description="Date of record")
     open: float = Field(..., alias="Open", description="Opening price")
@@ -40,6 +41,3 @@ class CryptoHistory(BaseModel):
     low: float = Field(..., alias="Low", description="Lowest price")
     close: float = Field(..., alias="Close", description="Closing price")
     volume: int = Field(..., alias="Volume", description="Volume traded")
-
-    class Config:
-        validate_by_name = True
