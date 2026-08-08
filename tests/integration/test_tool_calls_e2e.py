@@ -144,3 +144,24 @@ async def test_call_get_valuation_history_with_real_wire_serialized_metrics(mcp_
             companies = region_result.structured_content["result"]
             assert companies
             assert companies[0]["symbol"].endswith(".L")
+
+
+async def test_call_screen_with_real_wire_serialized_quotes(mcp_server_params: StdioServerParameters):
+    """The screener API (yfinance 1.3.0) discovers instruments rather than
+    looking up a known ticker - the odd one out among this project's tools -
+    so it gets its own protocol-level test covering both a valid predefined
+    screen and the enum rejection of an unknown one."""
+    async with stdio_client(mcp_server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            result = await session.call_tool("search_screener_matches", {"query": "day_gainers", "count": 3})
+            assert result.is_error is False
+            body = result.structured_content
+            assert body["total"] > 0
+            assert body["quotes"]
+            assert body["quotes"][0]["symbol"]
+
+            invalid_result = await session.call_tool("search_screener_matches", {"query": "not_a_real_screen"})
+            assert invalid_result.is_error is True
+            assert "query" in invalid_result.content[0].text.lower()
