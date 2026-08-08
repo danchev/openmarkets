@@ -464,3 +464,107 @@ class NewsItem(BaseModel):
 
     id: str = Field(..., description="Unique identifier for the news item.", alias="id")
     content: dict = Field(..., description="Content of the news item.", alias="content")
+
+
+class FinancialSummary(BaseModel):
+    """Selected profitability, liquidity and cash-flow metrics."""
+
+    total_revenue: int | None = Field(None, alias="totalRevenue", description="Total revenue.")
+    revenue_growth: float | None = Field(None, alias="revenueGrowth", description="Revenue growth.")
+    gross_profits: int | None = Field(None, alias="grossProfits", description="Gross profits.")
+    gross_margins: float | None = Field(None, alias="grossMargins", description="Gross margins.")
+    operating_margins: float | None = Field(None, alias="operatingMargins", description="Operating margins.")
+    profit_margins: float | None = Field(None, alias="profitMargins", description="Profit margins.")
+    operating_cashflow: int | None = Field(None, alias="operatingCashflow", description="Operating cash flow.")
+    free_cashflow: int | None = Field(None, alias="freeCashflow", description="Free cash flow.")
+    total_cash: int | None = Field(None, alias="totalCash", description="Total cash.")
+    total_debt: int | None = Field(None, alias="totalDebt", description="Total debt.")
+    total_cash_per_share: float | None = Field(None, alias="totalCashPerShare", description="Total cash per share.")
+    earnings_growth: float | None = Field(None, alias="earningsGrowth", description="Earnings growth.")
+    current_ratio: float | None = Field(None, alias="currentRatio", description="Current ratio.")
+    quick_ratio: float | None = Field(None, alias="quickRatio", description="Quick ratio.")
+    return_on_assets: float | None = Field(None, alias="returnOnAssets", description="Return on assets.")
+    return_on_equity: float | None = Field(None, alias="returnOnEquity", description="Return on equity.")
+    debt_to_equity: float | None = Field(None, alias="debtToEquity", description="Debt to equity ratio.")
+
+
+class RiskMetrics(BaseModel):
+    """Governance and audit risk scores (1 = lowest risk, 10 = highest)."""
+
+    audit_risk: int | None = Field(None, alias="auditRisk", description="Audit risk score.")
+    board_risk: int | None = Field(None, alias="boardRisk", description="Board risk score.")
+    compensation_risk: int | None = Field(None, alias="compensationRisk", description="Compensation risk score.")
+    overall_risk: int | None = Field(None, alias="overallRisk", description="Overall risk score.")
+    share_holder_rights_risk: int | None = Field(
+        None, alias="shareHolderRightsRisk", description="Shareholder rights risk score."
+    )
+
+
+class DividendSummary(BaseModel):
+    """Dividend rates, yields and key dates."""
+
+    dividend_rate: float | None = Field(None, alias="dividendRate", description="Dividend rate.")
+    dividend_yield: float | None = Field(None, alias="dividendYield", description="Dividend yield.")
+    payout_ratio: float | None = Field(None, alias="payoutRatio", description="Payout ratio.")
+    five_year_avg_dividend_yield: float | None = Field(
+        None, alias="fiveYearAvgDividendYield", description="Five-year average dividend yield."
+    )
+    trailing_annual_dividend_rate: float | None = Field(
+        None, alias="trailingAnnualDividendRate", description="Trailing annual dividend rate."
+    )
+    trailing_annual_dividend_yield: float | None = Field(
+        None, alias="trailingAnnualDividendYield", description="Trailing annual dividend yield."
+    )
+    ex_dividend_date: datetime | None = Field(None, alias="exDividendDate", description="Ex-dividend date.")
+    last_dividend_date: datetime | None = Field(None, alias="lastDividendDate", description="Last dividend date.")
+    last_dividend_value: float | None = Field(None, alias="lastDividendValue", description="Last dividend value.")
+
+
+class PriceTarget(BaseModel):
+    """Analyst price targets and consensus recommendation."""
+
+    target_high_price: float | None = Field(None, alias="targetHighPrice", description="Target high price.")
+    target_low_price: float | None = Field(None, alias="targetLowPrice", description="Target low price.")
+    target_mean_price: float | None = Field(None, alias="targetMeanPrice", description="Target mean price.")
+    target_median_price: float | None = Field(None, alias="targetMedianPrice", description="Target median price.")
+    recommendation_mean: float | None = Field(None, alias="recommendationMean", description="Recommendation mean.")
+    recommendation_key: str | None = Field(None, alias="recommendationKey", description="Recommendation key.")
+    number_of_analyst_opinions: int | None = Field(
+        None, alias="numberOfAnalystOpinions", description="Number of analyst opinions."
+    )
+
+
+class QuickTechnicalIndicators(BaseModel):
+    """Moving averages and 52-week range."""
+
+    current_price: float | None = Field(None, alias="currentPrice", description="Current price.")
+    fifty_day_average: float | None = Field(None, alias="fiftyDayAverage", description="50-day average price.")
+    two_hundred_day_average: float | None = Field(
+        None, alias="twoHundredDayAverage", description="200-day average price."
+    )
+    fifty_day_average_change: float | None = Field(
+        None, alias="fiftyDayAverageChange", description="50-day average change."
+    )
+    fifty_day_average_change_percent: float | None = Field(
+        None, alias="fiftyDayAverageChangePercent", description="50-day average change percent."
+    )
+    two_hundred_day_average_change: float | None = Field(
+        None, alias="twoHundredDayAverageChange", description="200-day average change."
+    )
+    two_hundred_day_average_change_percent: float | None = Field(
+        None, alias="twoHundredDayAverageChangePercent", description="200-day average change percent."
+    )
+    fifty_two_week_low: float | None = Field(None, alias="fiftyTwoWeekLow", description="52-week low price.")
+    fifty_two_week_high: float | None = Field(None, alias="fiftyTwoWeekHigh", description="52-week high price.")
+
+
+class ExtendedFinancialSummary(FinancialSummary):
+    """Financial summary extended with valuation and share-count metrics."""
+
+    market_cap: int | None = Field(None, alias="marketCap", description="Market capitalization.")
+    enterprise_value: int | None = Field(None, alias="enterpriseValue", description="Enterprise value.")
+    float_shares: int | None = Field(None, alias="floatShares", description="Float shares.")
+    shares_outstanding: int | None = Field(None, alias="sharesOutstanding", description="Shares outstanding.")
+    shares_short: int | None = Field(None, alias="sharesShort", description="Shares short.")
+    book_value: float | None = Field(None, alias="bookValue", description="Book value.")
+    price_to_book: float | None = Field(None, alias="priceToBook", description="Price to book ratio.")

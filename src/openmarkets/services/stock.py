@@ -14,7 +14,13 @@ from openmarkets.core.http import get_session
 from openmarkets.repositories.stock import IStockRepository, YFinanceStockRepository
 from openmarkets.schemas.stock import (
     CorporateActions,
+    DividendSummary,
+    ExtendedFinancialSummary,
+    FinancialSummary,
     NewsItem,
+    PriceTarget,
+    QuickTechnicalIndicators,
+    RiskMetrics,
     StockDividends,
     StockFastInfo,
     StockHistory,
@@ -104,7 +110,7 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_dividends(ticker, session=self.session)
 
     @tool
-    def get_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> FinancialSummary:
         """
         Retrieve a financial summary for a stock.
 
@@ -117,7 +123,7 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_financial_summary(ticker, session=self.session)
 
     @tool
-    def get_risk_metrics(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_risk_metrics(self, ticker: Annotated[str, "The symbol of the security."]) -> RiskMetrics:
         """
         Retrieve risk metrics for a stock.
 
@@ -130,7 +136,7 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_risk_metrics(ticker, session=self.session)
 
     @tool
-    def get_dividend_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_dividend_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> DividendSummary:
         """
         Retrieve a summary of dividend data for a stock.
 
@@ -143,7 +149,7 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_dividend_summary(ticker, session=self.session)
 
     @tool
-    def get_price_target(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_price_target(self, ticker: Annotated[str, "The symbol of the security."]) -> PriceTarget:
         """
         Retrieve price target data for a stock.
 
@@ -156,7 +162,9 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_price_target(ticker, session=self.session)
 
     @tool
-    def get_financial_summary_v2(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_financial_summary_v2(
+        self, ticker: Annotated[str, "The symbol of the security."]
+    ) -> ExtendedFinancialSummary:
         """
         Retrieve an alternative version of the financial summary for a stock.
 
@@ -169,7 +177,9 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_financial_summary_v2(ticker, session=self.session)
 
     @tool
-    def get_quick_technical_indicators(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
+    def get_quick_technical_indicators(
+        self, ticker: Annotated[str, "The symbol of the security."]
+    ) -> QuickTechnicalIndicators:
         """
         Retrieve quick technical indicators for a stock.
 

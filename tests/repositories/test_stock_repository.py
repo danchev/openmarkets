@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 import pytest
+from pydantic import BaseModel
 
 from openmarkets.schemas.stock import (
     CorporateActions,
@@ -171,18 +172,23 @@ def test_get_corporate_actions_returns_models(stock_repository, stock_ticker, pa
 
 
 @pytest.mark.parametrize(
-    ("method_name", "info_payload", "expected_key"),
+    ("method_name", "info_payload", "expected_field", "expected_value"),
     [
-        ("get_financial_summary", {"totalRevenue": 100, "revenueGrowth": 0.1}, "totalRevenue"),
-        ("get_risk_metrics", {"auditRisk": 1, "boardRisk": 2}, "auditRisk"),
-        ("get_dividend_summary", {"dividendRate": 1.5, "dividendYield": 0.02}, "dividendRate"),
-        ("get_price_target", {"targetHighPrice": 200.0, "targetLowPrice": 150.0}, "targetHighPrice"),
-        ("get_financial_summary_v2", {"marketCap": 1_000_000_000, "enterpriseValue": 900_000_000}, "marketCap"),
-        ("get_quick_technical_indicators", {"currentPrice": 150.0, "fiftyDayAverage": 148.0}, "currentPrice"),
+        ("get_financial_summary", {"totalRevenue": 100, "revenueGrowth": 0.1}, "total_revenue", 100),
+        ("get_risk_metrics", {"auditRisk": 1, "boardRisk": 2}, "audit_risk", 1),
+        ("get_dividend_summary", {"dividendRate": 1.5, "dividendYield": 0.02}, "dividend_rate", 1.5),
+        ("get_price_target", {"targetHighPrice": 200.0, "targetLowPrice": 150.0}, "target_high_price", 200.0),
+        (
+            "get_financial_summary_v2",
+            {"marketCap": 1_000_000_000, "enterpriseValue": 900_000_000},
+            "market_cap",
+            1_000_000_000,
+        ),
+        ("get_quick_technical_indicators", {"currentPrice": 150.0, "fiftyDayAverage": 148.0}, "current_price", 150.0),
     ],
 )
-def test_info_based_methods_return_dicts(
-    stock_repository, stock_ticker, patch_yf, method_name, info_payload, expected_key
+def test_info_based_methods_return_typed_models(
+    stock_repository, stock_ticker, patch_yf, method_name, info_payload, expected_field, expected_value
 ):
     class FakeTicker:
         def __init__(self, ticker: str, session=None):
@@ -192,8 +198,10 @@ def test_info_based_methods_return_dicts(
 
     method = getattr(stock_repository, method_name)
     result = method(stock_ticker)
-    assert isinstance(result, dict)
-    assert expected_key in result
+
+    # A typed model, not a bare dict, so the tool exposes an output schema.
+    assert isinstance(result, BaseModel)
+    assert getattr(result, expected_field) == expected_value
 
 
 def test_get_history_invalid_period_raises(stock_repository, stock_ticker):

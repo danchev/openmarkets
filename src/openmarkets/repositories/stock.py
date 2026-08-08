@@ -12,7 +12,13 @@ from curl_cffi.requests import Session
 
 from openmarkets.schemas.stock import (
     CorporateActions,
+    DividendSummary,
+    ExtendedFinancialSummary,
+    FinancialSummary,
     NewsItem,
+    PriceTarget,
+    QuickTechnicalIndicators,
+    RiskMetrics,
     StockDividends,
     StockFastInfo,
     StockHistory,
@@ -43,27 +49,27 @@ class IStockRepository(ABC):
         pass
 
     @abstractmethod
-    def get_financial_summary(self, ticker: str, session: Session | None = None) -> dict:
+    def get_financial_summary(self, ticker: str, session: Session | None = None) -> FinancialSummary:
         pass
 
     @abstractmethod
-    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> dict:
+    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> RiskMetrics:
         pass
 
     @abstractmethod
-    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> dict:
+    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> DividendSummary:
         pass
 
     @abstractmethod
-    def get_price_target(self, ticker: str, session: Session | None = None) -> dict:
+    def get_price_target(self, ticker: str, session: Session | None = None) -> PriceTarget:
         pass
 
     @abstractmethod
-    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
+    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
         pass
 
     @abstractmethod
-    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:
+    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> QuickTechnicalIndicators:
         pass
 
     @abstractmethod
@@ -156,7 +162,7 @@ class YFinanceStockRepository(IStockRepository):
         dividend_dict = dividends.to_dict()
         return [StockDividends(Date=row[0], Dividends=row[1]) for row in dividend_dict.items()]
 
-    def get_financial_summary(self, ticker: str, session: Session | None = None) -> dict:
+    def get_financial_summary(self, ticker: str, session: Session | None = None) -> FinancialSummary:
         """Retrieve financial summary metrics for a stock ticker.
 
         Args:
@@ -188,9 +194,9 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields, by_alias=True)
+        return FinancialSummary.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
-    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> dict:
+    def get_risk_metrics(self, ticker: str, session: Session | None = None) -> RiskMetrics:
         """Retrieve risk metrics for a stock ticker.
 
         Args:
@@ -212,9 +218,9 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields, by_alias=True)
+        return RiskMetrics.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
-    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> dict:
+    def get_dividend_summary(self, ticker: str, session: Session | None = None) -> DividendSummary:
         """Retrieve dividend summary for a stock ticker.
 
         Args:
@@ -238,9 +244,9 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields, by_alias=True)
+        return DividendSummary.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
-    def get_price_target(self, ticker: str, session: Session | None = None) -> dict:
+    def get_price_target(self, ticker: str, session: Session | None = None) -> PriceTarget:
         """Retrieve analyst price targets for a stock ticker.
 
         Args:
@@ -262,9 +268,9 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields, by_alias=True)
+        return PriceTarget.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
-    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
+    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
         """Retrieve extended financial summary metrics for a stock ticker.
 
         Args:
@@ -303,9 +309,9 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields, by_alias=True)
+        return ExtendedFinancialSummary.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
-    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:
+    def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> QuickTechnicalIndicators:
         """Retrieve quick technical indicators for a stock ticker.
 
         Args:
@@ -329,7 +335,7 @@ class YFinanceStockRepository(IStockRepository):
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.info
         stock_info = StockInfo(**data)
-        return stock_info.model_dump(include=include_fields, by_alias=True)
+        return QuickTechnicalIndicators.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
     def get_splits(self, ticker: str, session: Session | None = None) -> list[StockSplit]:
         """Retrieve stock split history for a ticker.
