@@ -93,3 +93,28 @@ async def test_call_tool_for_a_previously_broken_case_end_to_end(mcp_server_para
 
             assert result.is_error is False
             assert isinstance(result.structured_content, dict)
+
+
+async def test_call_options_tools_with_a_real_wire_serialized_date(mcp_server_params: StdioServerParameters):
+    """Options was the one service never exercised through the real MCP
+    protocol - every other service had a protocol-level test, options only
+    had in-process live tests. This also exercises something those
+    in-process calls cannot: the expiration date crossing the wire as the
+    ISO string get_option_chain's input schema declares, not a Python
+    date object passed directly to the service method."""
+    async with stdio_client(mcp_server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            expirations = await session.call_tool("get_option_expiration_dates", {"ticker": "AAPL"})
+            assert expirations.is_error is False
+            first_expiration = expirations.structured_content["result"][0]["date"][:10]
+
+            chain_result = await session.call_tool(
+                "get_option_chain", {"ticker": "AAPL", "expiration": first_expiration}
+            )
+            skew_result = await session.call_tool("get_options_skew", {"ticker": "AAPL"})
+
+            assert chain_result.is_error is False
+            assert skew_result.is_error is False
+            assert isinstance(skew_result.structured_content, dict)
