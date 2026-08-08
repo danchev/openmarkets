@@ -10,6 +10,7 @@ from typing import Annotated
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Period
 from openmarkets.repositories.technical_analysis import (
     ITechnicalAnalysisRepository,
     YFinanceTechnicalAnalysisRepository,
@@ -49,7 +50,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
 
     @tool
     def get_technical_indicators(
-        self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
+        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "6mo"
     ) -> TechnicalIndicatorsDict:
         """
         Retrieve technical indicators for a given ticker and period.
@@ -65,7 +66,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
 
     @tool
     def get_volatility_metrics(
-        self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y"
+        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "1y"
     ) -> VolatilityMetricsDict:
         """
         Retrieve volatility metrics for a given ticker and period.
@@ -81,7 +82,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
 
     @tool
     def get_support_resistance_levels(
-        self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
+        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "6mo"
     ) -> SupportResistanceLevelsDict:
         """
         Retrieve support and resistance levels for a given ticker and period.

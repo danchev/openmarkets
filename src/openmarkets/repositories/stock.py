@@ -10,6 +10,7 @@ import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.types import Interval, Period
 from openmarkets.schemas.stock import (
     CorporateActions,
     DividendSummary,
@@ -40,7 +41,7 @@ class IStockRepository(ABC):
 
     @abstractmethod
     def get_history(
-        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
     ) -> list[StockHistory]:
         pass
 
@@ -117,7 +118,7 @@ class YFinanceStockRepository(IStockRepository):
         return StockInfo(**info)
 
     def get_history(
-        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
     ) -> list[StockHistory]:
         """Retrieve historical price data for a stock ticker.
 

@@ -12,6 +12,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.constants import DEFAULT_SENTIMENT_TICKERS, TOP_CRYPTO_TICKERS
 from openmarkets.core.exceptions import APIError
+from openmarkets.core.types import INTERVALS, PERIODS, Interval, Period
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment, CryptoSentimentEntry
 
 
@@ -33,7 +34,7 @@ class ICryptoRepository(ABC):
 
     @abstractmethod
     def get_crypto_history(
-        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
     ) -> list[CryptoHistory]:
         """Retrieve historical price data for a cryptocurrency.
 
@@ -96,7 +97,7 @@ class YFinanceCryptoRepository(ICryptoRepository):
         return CryptoFastInfo(**fast_info)
 
     def get_crypto_history(
-        self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None
+        self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
     ) -> list[CryptoHistory]:
         """Retrieve historical price data for a cryptocurrency.
 
@@ -180,9 +181,8 @@ class YFinanceCryptoRepository(ICryptoRepository):
         Raises:
             ValueError: If period is invalid.
         """
-        valid_periods = ("1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max")
-        if period not in valid_periods:
-            raise ValueError(f"Invalid period. Must be one of: {', '.join(valid_periods)}.")
+        if period not in PERIODS:
+            raise ValueError(f"Invalid period. Must be one of: {', '.join(PERIODS)}.")
 
     def _validate_interval(self, interval: str) -> None:
         """Validate the interval parameter.
@@ -193,9 +193,8 @@ class YFinanceCryptoRepository(ICryptoRepository):
         Raises:
             ValueError: If interval is invalid.
         """
-        valid_intervals = ("1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo")
-        if interval not in valid_intervals:
-            raise ValueError(f"Invalid interval. Must be one of: {', '.join(valid_intervals)}.")
+        if interval not in INTERVALS:
+            raise ValueError(f"Invalid interval. Must be one of: {', '.join(INTERVALS)}.")
 
     def _convert_dataframe_to_history(self, dataframe) -> list[CryptoHistory]:
         """Convert pandas DataFrame to list of CryptoHistory objects.

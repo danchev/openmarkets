@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.types import Period
 from openmarkets.schemas.technical_analysis import (
     SupportResistanceLevelsDict,
     TechnicalIndicatorsDict,
@@ -21,7 +22,7 @@ class ITechnicalAnalysisRepository(ABC):
 
     @abstractmethod
     def get_technical_indicators(
-        self, ticker: str, period: str = "6mo", session: Session | None = None
+        self, ticker: str, period: Period = "6mo", session: Session | None = None
     ) -> TechnicalIndicatorsDict:
         """Retrieve technical indicators for a given ticker.
 
@@ -37,7 +38,7 @@ class ITechnicalAnalysisRepository(ABC):
 
     @abstractmethod
     def get_volatility_metrics(
-        self, ticker: str, period: str = "1y", session: Session | None = None
+        self, ticker: str, period: Period = "1y", session: Session | None = None
     ) -> VolatilityMetricsDict:
         """Retrieve volatility metrics for a given ticker.
 
@@ -53,7 +54,7 @@ class ITechnicalAnalysisRepository(ABC):
 
     @abstractmethod
     def get_support_resistance_levels(
-        self, ticker: str, period: str = "6mo", session: Session | None = None
+        self, ticker: str, period: Period = "6mo", session: Session | None = None
     ) -> SupportResistanceLevelsDict:
         """Retrieve support and resistance levels for a given ticker.
 
@@ -72,7 +73,7 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
     """YFinance-based implementation of technical analysis repository."""
 
     def get_technical_indicators(
-        self, ticker: str, period: str = "6mo", session: Session | None = None
+        self, ticker: str, period: Period = "6mo", session: Session | None = None
     ) -> TechnicalIndicatorsDict:
         """Retrieve technical indicators for a given ticker.
 
@@ -203,7 +204,7 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
         }
 
     def get_volatility_metrics(
-        self, ticker: str, period: str = "1y", session: Session | None = None
+        self, ticker: str, period: Period = "1y", session: Session | None = None
     ) -> VolatilityMetricsDict:
         """Retrieve volatility metrics for a given ticker.
 
@@ -307,7 +308,7 @@ class YFinanceTechnicalAnalysisRepository(ITechnicalAnalysisRepository):
         }
 
     def get_support_resistance_levels(
-        self, ticker: str, period: str = "6mo", session: Session | None = None
+        self, ticker: str, period: Period = "6mo", session: Session | None = None
     ) -> SupportResistanceLevelsDict:
         """Retrieve support and resistance levels for a given ticker.
 

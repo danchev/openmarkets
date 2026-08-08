@@ -11,6 +11,7 @@ from typing import Annotated
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Interval, Period
 from openmarkets.repositories.stock import IStockRepository, YFinanceStockRepository
 from openmarkets.schemas.stock import (
     CorporateActions,
@@ -82,7 +83,7 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_info(ticker, session=self.session)
 
     @tool
-    def get_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
+    def get_history(self, ticker: str, period: Period = "1y", interval: Interval = "1d") -> list[StockHistory]:
         """
         Retrieve historical price data for a stock.
 

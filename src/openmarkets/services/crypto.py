@@ -10,6 +10,7 @@ from typing import Annotated
 from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
+from openmarkets.core.types import Interval, Period
 from openmarkets.repositories.crypto import ICryptoRepository, YFinanceCryptoRepository
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment
 from openmarkets.services.utils import ToolRegistrationMixin, tool
@@ -55,7 +56,7 @@ class CryptoService(ToolRegistrationMixin):
 
     @tool
     def get_crypto_history(
-        self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y", interval: str = "1d"
+        self, ticker: Annotated[str, "The symbol of the security."], period: Period = "1y", interval: Interval = "1d"
     ) -> list[CryptoHistory]:
         """
         Retrieve historical price data for a cryptocurrency.
