@@ -11,7 +11,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.http import get_session
 from openmarkets.repositories.holdings import IHoldingsRepository, YFinanceHoldingsRepository
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class HoldingsService(ToolRegistrationMixin):
@@ -39,6 +39,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self._session if self._session is not None else get_session()
 
+    @tool
     def get_major_holders(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve major holders for a given ticker.
@@ -51,6 +52,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.get_major_holders(ticker, session=self.session)
 
+    @tool
     def get_institutional_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve institutional holdings for a given ticker.
@@ -63,6 +65,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.get_institutional_holdings(ticker, session=self.session)
 
+    @tool
     def get_mutual_fund_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve mutual fund holdings for a given ticker.
@@ -75,6 +78,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.get_mutual_fund_holdings(ticker, session=self.session)
 
+    @tool
     def get_insider_purchases(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve insider purchases for a given ticker.
@@ -87,6 +91,7 @@ class HoldingsService(ToolRegistrationMixin):
         """
         return self.repository.get_insider_purchases(ticker, session=self.session)
 
+    @tool
     def get_full_holdings(self, ticker: Annotated[str, "The symbol of the security."]):
         """
         Retrieve a full set of holdings data for a given ticker, aggregating all available holdings information.

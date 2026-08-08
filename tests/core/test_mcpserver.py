@@ -150,3 +150,19 @@ def test_create_mcp_register_exception(monkeypatch):
 
     with pytest.raises(RuntimeError):
         mcpserver.create_mcp(config)
+
+
+def test_published_tool_surface_is_explicit():
+    """Every service tool is opt-in and the surface is stable.
+
+    Guards against both a regression to reflection-based publication and an
+    accidental change in the number of exposed tools.
+    """
+    import openmarkets.services as services
+
+    published = {name: getattr(services, name).tool_names() for name in services.__all__}
+
+    assert sum(len(names) for names in published.values()) == 71
+    for names in published.values():
+        assert names, "every service must publish at least one tool"
+        assert all(name.startswith(("get_", "list_", "search_", "compare_")) for name in names)

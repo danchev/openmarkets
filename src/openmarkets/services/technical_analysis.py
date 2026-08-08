@@ -19,7 +19,7 @@ from openmarkets.schemas.technical_analysis import (
     TechnicalIndicatorsDict,
     VolatilityMetricsDict,
 )
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class TechnicalAnalysisService(ToolRegistrationMixin):
@@ -47,6 +47,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         """
         return self._session if self._session is not None else get_session()
 
+    @tool
     def get_technical_indicators(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
     ) -> TechnicalIndicatorsDict:
@@ -62,6 +63,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         """
         return self.repository.get_technical_indicators(ticker, period, session=self.session)
 
+    @tool
     def get_volatility_metrics(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y"
     ) -> VolatilityMetricsDict:
@@ -77,6 +79,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         """
         return self.repository.get_volatility_metrics(ticker, period, session=self.session)
 
+    @tool
     def get_support_resistance_levels(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "6mo"
     ) -> SupportResistanceLevelsDict:

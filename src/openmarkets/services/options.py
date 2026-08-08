@@ -18,7 +18,7 @@ from openmarkets.schemas.options import (
     OptionExpirationDate,
     PutOption,
 )
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class OptionsService(ToolRegistrationMixin):
@@ -46,6 +46,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self._session if self._session is not None else get_session()
 
+    @tool
     def get_option_expiration_dates(
         self, ticker: Annotated[str, "The symbol of the security."]
     ) -> list[OptionExpirationDate]:
@@ -60,6 +61,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_option_expiration_dates(ticker, session=self.session)
 
+    @tool
     def get_option_chain(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
     ) -> OptionContractChain:
@@ -75,6 +77,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_option_chain(ticker, expiration, session=self.session)
 
+    @tool
     def get_call_options(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
     ) -> list[CallOption] | None:
@@ -90,6 +93,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_call_options(ticker, expiration, session=self.session)
 
+    @tool
     def get_put_options(
         self, ticker: Annotated[str, "The symbol of the security."], expiration: date | None = None
     ) -> list[PutOption] | None:
@@ -105,6 +109,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_put_options(ticker, expiration, session=self.session)
 
+    @tool
     def get_options_volume_analysis(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
     ) -> dict:
@@ -120,6 +125,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_options_volume_analysis(ticker, expiration_date, session=self.session)
 
+    @tool
     def get_options_by_moneyness(
         self,
         ticker: Annotated[str, "The symbol of the security."],
@@ -139,6 +145,7 @@ class OptionsService(ToolRegistrationMixin):
         """
         return self.repository.get_options_by_moneyness(ticker, expiration_date, moneyness_range, session=self.session)
 
+    @tool
     def get_options_skew(
         self, ticker: Annotated[str, "The symbol of the security."], expiration_date: str | None = None
     ) -> dict:

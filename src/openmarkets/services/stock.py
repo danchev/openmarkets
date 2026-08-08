@@ -21,7 +21,7 @@ from openmarkets.schemas.stock import (
     StockInfo,
     StockSplit,
 )
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class StockService(ToolRegistrationMixin):
@@ -49,6 +49,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self._session if self._session is not None else get_session()
 
+    @tool
     def get_fast_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockFastInfo:
         """
         Retrieve fast info for a specific stock ticker.
@@ -61,6 +62,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_fast_info(ticker, session=self.session)
 
+    @tool
     def get_info(self, ticker: Annotated[str, "The symbol of the security."]) -> StockInfo:
         """
         Retrieve detailed info for a specific stock ticker.
@@ -73,6 +75,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_info(ticker, session=self.session)
 
+    @tool
     def get_history(self, ticker: str, period: str = "1y", interval: str = "1d") -> list[StockHistory]:
         """
         Retrieve historical price data for a stock.
@@ -87,6 +90,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_history(ticker, period, interval, session=self.session)
 
+    @tool
     def get_dividends(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockDividends]:
         """
         Retrieve dividend history for a stock.
@@ -99,6 +103,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_dividends(ticker, session=self.session)
 
+    @tool
     def get_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve a financial summary for a stock.
@@ -111,6 +116,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_financial_summary(ticker, session=self.session)
 
+    @tool
     def get_risk_metrics(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve risk metrics for a stock.
@@ -123,6 +129,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_risk_metrics(ticker, session=self.session)
 
+    @tool
     def get_dividend_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve a summary of dividend data for a stock.
@@ -135,6 +142,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_dividend_summary(ticker, session=self.session)
 
+    @tool
     def get_price_target(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve price target data for a stock.
@@ -147,6 +155,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_price_target(ticker, session=self.session)
 
+    @tool
     def get_financial_summary_v2(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve an alternative version of the financial summary for a stock.
@@ -159,6 +168,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_financial_summary_v2(ticker, session=self.session)
 
+    @tool
     def get_quick_technical_indicators(self, ticker: Annotated[str, "The symbol of the security."]) -> dict:
         """
         Retrieve quick technical indicators for a stock.
@@ -171,6 +181,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_quick_technical_indicators(ticker, session=self.session)
 
+    @tool
     def get_splits(self, ticker: Annotated[str, "The symbol of the security."]) -> list[StockSplit]:
         """
         Retrieve stock split history for a stock.
@@ -183,6 +194,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_splits(ticker, session=self.session)
 
+    @tool
     def get_corporate_actions(self, ticker: Annotated[str, "The symbol of the security."]) -> list[CorporateActions]:
         """
         Retrieve corporate actions for a stock.
@@ -195,6 +207,7 @@ class StockService(ToolRegistrationMixin):
         """
         return self.repository.get_corporate_actions(ticker, session=self.session)
 
+    @tool
     def get_news(self, ticker: Annotated[str, "The symbol of the security."]) -> list[NewsItem]:
         """
         Retrieve news items for a stock.

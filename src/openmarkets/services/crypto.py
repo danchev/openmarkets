@@ -12,7 +12,7 @@ from curl_cffi.requests import Session
 from openmarkets.core.http import get_session
 from openmarkets.repositories.crypto import ICryptoRepository, YFinanceCryptoRepository
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class CryptoService(ToolRegistrationMixin):
@@ -40,6 +40,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self._session if self._session is not None else get_session()
 
+    @tool
     def get_crypto_info(self, ticker: Annotated[str, "The symbol of the security."]) -> CryptoFastInfo:
         """
         Retrieve fast information for a specific cryptocurrency.
@@ -52,6 +53,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self.repository.get_crypto_info(ticker, session=self.session)
 
+    @tool
     def get_crypto_history(
         self, ticker: Annotated[str, "The symbol of the security."], period: str = "1y", interval: str = "1d"
     ) -> list[CryptoHistory]:
@@ -68,6 +70,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self.repository.get_crypto_history(ticker, period, interval, session=self.session)
 
+    @tool
     def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
         """
         Retrieve a list of the top cryptocurrencies by market cap or volume.
@@ -80,6 +83,7 @@ class CryptoService(ToolRegistrationMixin):
         """
         return self.repository.get_top_cryptocurrencies(count)
 
+    @tool
     def get_crypto_fear_greed_proxy(self, tickers: list[str] | None = None):
         """
         Retrieve a proxy value for the crypto fear and greed index.

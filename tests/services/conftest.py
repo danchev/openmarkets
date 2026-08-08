@@ -9,7 +9,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.repositories.stock import IStockRepository
 from openmarkets.services.stock import StockService
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class StockRepositorySpy(IStockRepository):
@@ -86,8 +86,13 @@ class McpToolRegistrySpy:
 
 
 class ToolRegistrationService(ToolRegistrationMixin):
+    @tool
     def public(self) -> str:
         return "ok"
+
+    def undecorated(self) -> str:
+        """Public but not marked, so it must not be published."""
+        return "not a tool"
 
     @staticmethod
     def static_method() -> str:

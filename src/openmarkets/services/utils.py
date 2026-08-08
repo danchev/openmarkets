@@ -1,14 +1,46 @@
 """Utility classes and mixins for service layer.
 
-Provides reusable components for automatic MCP tool registration,
-enabling services to expose their methods as MCP tools through
-a declarative mixin pattern.
+Provides the ``@tool`` decorator used to mark service methods for
+publication as MCP tools, and the mixin that registers them.
+
+Publication is opt-in. Registration previously walked ``dir(self)`` and
+exposed every public instance method, so any helper that was not
+underscore-prefixed silently became a callable tool on a network-exposed
+server. Marking methods explicitly makes the public surface reviewable.
 """
 
 import inspect
 from typing import Any, Callable, Protocol, TypeVar
 
 ToolDecorator = TypeVar("ToolDecorator", bound=Callable[..., Any])
+
+#: Attribute set on a function by :func:`tool` to mark it for publication.
+_TOOL_MARKER = "__openmarkets_tool__"
+
+
+def tool(method: ToolDecorator) -> ToolDecorator:
+    """Mark a service method for publication as an MCP tool.
+
+    Args:
+        method: The service method to expose.
+
+    Returns:
+        The same method, marked for registration.
+    """
+    setattr(method, _TOOL_MARKER, True)
+    return method
+
+
+def is_tool(candidate: object) -> bool:
+    """Report whether an object was marked by :func:`tool`.
+
+    Args:
+        candidate: Object to inspect.
+
+    Returns:
+        True if the object is marked for publication.
+    """
+    return getattr(candidate, _TOOL_MARKER, False) is True
 
 
 class ToolRegistrar(Protocol):
@@ -22,66 +54,29 @@ class ToolRegistrar(Protocol):
 
 
 class ToolRegistrationMixin:
-    """Mixin for automatic MCP tool registration.
-
-    Registers all public instance methods as MCP tool handlers,
-    excluding static methods, class methods, properties, dunder methods,
-    and private/protected methods.
-    """
+    """Mixin that registers explicitly marked methods as MCP tools."""
 
     def register_tool_methods(self, tool_registrar: ToolRegistrar) -> None:
-        """Register all public instance methods as MCP tool handlers.
+        """Register every method marked with :func:`tool`.
 
         Args:
             tool_registrar: MCP server instance with a tool() decorator method.
         """
-        for attribute_name in dir(self):
-            if self._should_skip_attribute(attribute_name):
-                continue
-
-            if not self._is_registrable_method(attribute_name):
+        for attribute_name in dir(type(self)):
+            class_attribute = getattr(type(self), attribute_name, None)
+            if not is_tool(class_attribute):
                 continue
 
             method = getattr(self, attribute_name)
+            if not inspect.ismethod(method) or method.__self__ is not self:
+                continue
+
             tool_registrar.tool()(method)
 
-    def _should_skip_attribute(self, attribute_name: str) -> bool:
-        """Check if an attribute should be skipped during registration.
-
-        Args:
-            attribute_name: Name of the attribute to check.
+    def tool_names(self) -> list[str]:
+        """Return the names of the methods this service publishes.
 
         Returns:
-            True if the attribute should be skipped, False otherwise.
+            Sorted list of published tool names.
         """
-        if attribute_name.startswith("_"):
-            return True
-
-        if attribute_name == "register_tool_methods":
-            return True
-
-        return False
-
-    def _is_registrable_method(self, attribute_name: str) -> bool:
-        """Check if an attribute is a registrable instance method.
-
-        Args:
-            attribute_name: Name of the attribute to check.
-
-        Returns:
-            True if the attribute is a public instance method, False otherwise.
-        """
-        class_attribute = getattr(type(self), attribute_name, None)
-
-        if isinstance(class_attribute, (property, staticmethod, classmethod)):
-            return False
-
-        method = getattr(self, attribute_name)
-
-        if not inspect.ismethod(method):
-            return False
-
-        if method.__self__ is not self:
-            return False
-
-        return True
+        return sorted(name for name in dir(type(self)) if is_tool(getattr(type(self), name, None)))

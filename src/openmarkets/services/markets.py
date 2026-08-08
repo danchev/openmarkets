@@ -12,7 +12,7 @@ from curl_cffi.requests import Session
 from openmarkets.core.http import get_session
 from openmarkets.repositories.markets import IMarketsRepository, YFinanceMarketsRepository
 from openmarkets.schemas.markets import MarketStatus, MarketSummary, MarketType
-from openmarkets.services.utils import ToolRegistrationMixin
+from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
 class MarketsService(ToolRegistrationMixin):
@@ -40,6 +40,7 @@ class MarketsService(ToolRegistrationMixin):
         """
         return self._session if self._session is not None else get_session()
 
+    @tool
     def get_market_summary(self, market: Annotated[str, MarketType.__members__]) -> MarketSummary:
         """
         Retrieve a summary of the overall market performance.
@@ -49,6 +50,7 @@ class MarketsService(ToolRegistrationMixin):
         """
         return self.repository.get_market_summary(market=market, session=self.session)
 
+    @tool
     def get_market_status(self, market: Annotated[str, MarketType.__members__]) -> MarketStatus:
         """
         Retrieve the current status of major market indices.
