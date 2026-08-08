@@ -66,7 +66,7 @@ class IStockRepository(ABC):
         pass
 
     @abstractmethod
-    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
+    def get_extended_financial_summary(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
         pass
 
     @abstractmethod
@@ -271,8 +271,8 @@ class YFinanceStockRepository(IStockRepository):
         stock_info = StockInfo(**data)
         return PriceTarget.model_validate(stock_info.model_dump(include=include_fields, by_alias=True))
 
-    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
-        """Retrieve extended financial summary metrics for a stock ticker.
+    def get_extended_financial_summary(self, ticker: str, session: Session | None = None) -> ExtendedFinancialSummary:
+        """Retrieve financial summary metrics plus valuation and share counts.
 
         Args:
             ticker: Stock ticker symbol.

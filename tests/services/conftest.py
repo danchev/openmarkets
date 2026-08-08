@@ -50,8 +50,8 @@ class StockRepositorySpy(IStockRepository):
         self.calls.append(("get_price_target", ticker, session))
         return {}
 
-    def get_financial_summary_v2(self, ticker: str, session: Session | None = None) -> dict:
-        self.calls.append(("get_financial_summary_v2", ticker, session))
+    def get_extended_financial_summary(self, ticker: str, session: Session | None = None) -> dict:
+        self.calls.append(("get_extended_financial_summary", ticker, session))
         return {}
 
     def get_quick_technical_indicators(self, ticker: str, session: Session | None = None) -> dict:

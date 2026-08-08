@@ -179,7 +179,7 @@ def test_get_corporate_actions_returns_models(stock_repository, stock_ticker, pa
         ("get_dividend_summary", {"dividendRate": 1.5, "dividendYield": 0.02}, "dividend_rate", 1.5),
         ("get_price_target", {"targetHighPrice": 200.0, "targetLowPrice": 150.0}, "target_high_price", 200.0),
         (
-            "get_financial_summary_v2",
+            "get_extended_financial_summary",
             {"marketCap": 1_000_000_000, "enterpriseValue": 900_000_000},
             "market_cap",
             1_000_000_000,

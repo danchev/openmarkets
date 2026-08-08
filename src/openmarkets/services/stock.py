@@ -113,13 +113,17 @@ class StockService(ToolRegistrationMixin):
     @tool
     def get_financial_summary(self, ticker: Annotated[str, "The symbol of the security."]) -> FinancialSummary:
         """
-        Retrieve a financial summary for a stock.
+        Retrieve profitability, liquidity and cash-flow metrics for a stock.
+
+        Covers revenue, margins, cash flow, debt and return ratios. Use
+        get_extended_financial_summary instead when valuation or share-count
+        metrics are also needed.
 
         Args:
             ticker (str): The symbol of the stock.
 
         Returns:
-            dict: Financial summary data.
+            FinancialSummary: Profitability, liquidity and cash-flow metrics.
         """
         return self.repository.get_financial_summary(ticker, session=self.session)
 
@@ -163,19 +167,22 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_price_target(ticker, session=self.session)
 
     @tool
-    def get_financial_summary_v2(
+    def get_extended_financial_summary(
         self, ticker: Annotated[str, "The symbol of the security."]
     ) -> ExtendedFinancialSummary:
         """
-        Retrieve an alternative version of the financial summary for a stock.
+        Retrieve the financial summary plus valuation and share-count metrics.
+
+        A superset of get_financial_summary, adding market cap, enterprise
+        value, share counts, book value and price-to-book.
 
         Args:
             ticker (str): The symbol of the stock.
 
         Returns:
-            dict: Financial summary data (version 2).
+            ExtendedFinancialSummary: Financial summary with valuation metrics.
         """
-        return self.repository.get_financial_summary_v2(ticker, session=self.session)
+        return self.repository.get_extended_financial_summary(ticker, session=self.session)
 
     @tool
     def get_quick_technical_indicators(
