@@ -4,6 +4,7 @@ Provides abstractions and implementations for fetching cryptocurrency
 information, historical data, and sentiment indicators.
 """
 
+import math
 from abc import ABC, abstractmethod
 
 import yfinance as yf
@@ -237,55 +238,78 @@ class YFinanceCryptoRepository(ICryptoRepository):
             "weekly_change_percent": weekly_change,
         }
 
-    def _calculate_weekly_change(self, history) -> float:
+    def _percentage_change(self, current: float, baseline: float) -> float | None:
+        """Calculate percentage change against a baseline price.
+
+        Args:
+            current: Current price.
+            baseline: Earlier price to compare against.
+
+        Returns:
+            Percentage change, or None when the baseline is zero or either
+            value is not finite. A zero or NaN baseline is a data-quality
+            problem (delisted or erroneous feed), not a 100% move.
+        """
+        if not math.isfinite(current) or not math.isfinite(baseline) or baseline == 0:
+            return None
+        return ((current - baseline) / baseline) * 100
+
+    def _calculate_weekly_change(self, history) -> float | None:
         """Calculate weekly percentage change from history data.
 
         Args:
             history: Historical price data DataFrame.
 
         Returns:
-            Weekly percentage change.
+            Weekly percentage change, or None if it cannot be computed.
         """
-        first_close = history.iloc[0]["Close"]
-        last_close = history.iloc[-1]["Close"]
-        return ((last_close - first_close) / first_close) * 100
+        return self._percentage_change(float(history.iloc[-1]["Close"]), float(history.iloc[0]["Close"]))
 
-    def _calculate_daily_change(self, history) -> float:
+    def _calculate_daily_change(self, history) -> float | None:
         """Calculate daily percentage change from history data.
 
         Args:
             history: Historical price data DataFrame.
 
         Returns:
-            Daily percentage change.
+            Daily percentage change, or None if it cannot be computed.
         """
-        previous_close = history.iloc[-2]["Close"]
-        last_close = history.iloc[-1]["Close"]
-        return ((last_close - previous_close) / previous_close) * 100
+        return self._percentage_change(float(history.iloc[-1]["Close"]), float(history.iloc[-2]["Close"]))
 
-    def _calculate_average_weekly_change(self, sentiment_data: list[dict]) -> float:
+    def _calculate_average_weekly_change(self, sentiment_data: list[dict]) -> float | None:
         """Calculate average weekly change from sentiment data.
+
+        Entries whose weekly change could not be computed are excluded
+        rather than poisoning the average with NaN.
 
         Args:
             sentiment_data: List of sentiment data dictionaries.
 
         Returns:
-            Average weekly percentage change.
+            Average weekly percentage change, or None if no entry has a
+            usable value.
         """
-        if not sentiment_data:
-            return 0.0
-        total_change = sum(data["weekly_change_percent"] for data in sentiment_data)
-        return total_change / len(sentiment_data)
+        changes = [
+            data["weekly_change_percent"]
+            for data in sentiment_data
+            if data.get("weekly_change_percent") is not None and math.isfinite(data["weekly_change_percent"])
+        ]
+        if not changes:
+            return None
+        return sum(changes) / len(changes)
 
-    def _determine_sentiment_label(self, average_change: float) -> str:
+    def _determine_sentiment_label(self, average_change: float | None) -> str:
         """Determine sentiment label based on average weekly change.
 
         Args:
-            average_change: Average weekly percentage change.
+            average_change: Average weekly percentage change, or None when
+                no usable data was available.
 
         Returns:
             Sentiment label string.
         """
+        if average_change is None or not math.isfinite(average_change):
+            return "Unknown"
         if average_change > 10:
             return "Extreme Greed"
         if average_change > 5:
@@ -299,13 +323,14 @@ class YFinanceCryptoRepository(ICryptoRepository):
         return "Extreme Fear"
 
     def _build_sentiment_response(
-        self, sentiment_label: str, average_change: float, sentiment_data: list[dict]
+        self, sentiment_label: str, average_change: float | None, sentiment_data: list[dict]
     ) -> dict:
         """Build the final sentiment response dictionary.
 
         Args:
             sentiment_label: Determined sentiment label.
-            average_change: Average weekly percentage change.
+            average_change: Average weekly percentage change, or None when
+                no usable data was available.
             sentiment_data: List of sentiment data dictionaries.
 
         Returns:

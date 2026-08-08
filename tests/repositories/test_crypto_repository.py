@@ -184,9 +184,40 @@ class TestYFinanceCryptoRepository:
                 return self._hist
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
-        # This should result in empty sentiment data and return 0.0 average
+        # No usable data must be reported as unknown rather than as 0.0,
+        # which would be indistinguishable from a genuinely flat market.
         out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out["average_weekly_change"] == 0.0
+        assert out["average_weekly_change"] is None
+        assert out["sentiment_proxy"] == "Unknown"
+
+    def test_zero_baseline_price_yields_none_not_nan(self):
+        """A zero close price must not produce NaN.
+
+        A delisted or erroneous feed reporting 0.00 previously produced NaN,
+        which failed every comparison in _determine_sentiment_label and so
+        fell through to "Extreme Fear" - a maximally alarming, wrong signal.
+        """
+        history = pd.DataFrame({"Close": [0.0, 0.0]})
+
+        assert self.repo._calculate_weekly_change(history) is None
+        assert self.repo._calculate_daily_change(history) is None
+
+    def test_unusable_change_does_not_poison_average(self):
+        """Entries without a usable change are excluded from the average."""
+        average = self.repo._calculate_average_weekly_change(
+            [
+                {"symbol": "BAD", "weekly_change_percent": None},
+                {"symbol": "GOOD", "weekly_change_percent": 8.0},
+            ]
+        )
+
+        assert average == 8.0
+        assert self.repo._determine_sentiment_label(average) == "Greed"
+
+    def test_determine_sentiment_label_unknown_for_missing_data(self):
+        """None and NaN must map to Unknown, never to Extreme Fear."""
+        assert self.repo._determine_sentiment_label(None) == "Unknown"
+        assert self.repo._determine_sentiment_label(float("nan")) == "Unknown"
 
     def test_determine_sentiment_label_greed(self, monkeypatch):
         """Test sentiment label for Greed (5 < change <= 10)."""
