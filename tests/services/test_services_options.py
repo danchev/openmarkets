@@ -3,7 +3,16 @@ from datetime import date, datetime
 import pandas as pd
 import pytest
 
-from openmarkets.schemas.options import CallOption, OptionContractChain, OptionExpirationDate, PutOption
+from openmarkets.schemas.options import (
+    CallOption,
+    OptionContractChain,
+    OptionExpirationDate,
+    OptionsByMoneyness,
+    OptionsSkew,
+    OptionsVolumeAnalysis,
+    PriceRange,
+    PutOption,
+)
 from openmarkets.services.options import OptionsService
 
 
@@ -42,13 +51,13 @@ def test_option_last_trade_date_accepts_pandas_timestamp(model, contract_symbol,
 
 
 class OptionsRepositoryStub:
-    def get_option_expiration_dates(self, ticker, session=None):
+    def get_option_expiration_dates(self, ticker: str, session=None):
         return [OptionExpirationDate(date=datetime(2025, 12, 19))]
 
-    def get_option_chain(self, ticker, expiration, session=None):
+    def get_option_chain(self, ticker: str, expiration=None, session=None):
         return OptionContractChain(calls=[], puts=[], underlying=None)
 
-    def get_call_options(self, ticker, expiration, session=None):
+    def get_call_options(self, ticker: str, expiration=None, session=None):
         return [
             CallOption(
                 contractSymbol="AAPL231215C00100000",
@@ -68,7 +77,7 @@ class OptionsRepositoryStub:
             )
         ]
 
-    def get_put_options(self, ticker, expiration, session=None):
+    def get_put_options(self, ticker: str, expiration=None, session=None):
         return [
             PutOption(
                 contractSymbol="AAPL231215P00100000",
@@ -88,14 +97,21 @@ class OptionsRepositoryStub:
             )
         ]
 
-    def get_options_volume_analysis(self, ticker, expiration_date, session=None):
-        return {"total_call_volume": 100, "total_put_volume": 50}
+    def get_options_volume_analysis(self, ticker: str, expiration_date=None, session=None):
+        return OptionsVolumeAnalysis(
+            total_call_volume=100,
+            total_put_volume=50,
+            total_call_open_interest=0,
+            total_put_open_interest=0,
+            put_call_ratio_volume=None,
+            put_call_ratio_oi=None,
+        )
 
-    def get_options_by_moneyness(self, ticker, expiration_date, moneyness_range, session=None):
-        return {"calls": [], "puts": []}
+    def get_options_by_moneyness(self, ticker: str, expiration_date=None, moneyness_range=0.1, session=None):
+        return OptionsByMoneyness(current_price=100.0, price_range=PriceRange(min=90.0, max=110.0), calls=[], puts=[])
 
-    def get_options_skew(self, ticker, expiration_date, session=None):
-        return {"call_skew": [], "put_skew": []}
+    def get_options_skew(self, ticker: str, expiration_date=None, session=None):
+        return OptionsSkew(call_skew=[], put_skew=[])
 
 
 @pytest.fixture
@@ -128,18 +144,31 @@ def test_get_put_options(options_service):
 
 
 def test_get_options_volume_analysis(options_service):
+    """See test_get_options_by_moneyness: the previous dict-shaped stub let
+    this pass without ever checking the real OptionsVolumeAnalysis contract."""
     result = options_service.get_options_volume_analysis("AAPL", "2025-12-19")
-    assert "total_call_volume" in result
-    assert "total_put_volume" in result
+    assert isinstance(result, OptionsVolumeAnalysis)
+    assert result.total_call_volume == 100
+    assert result.total_put_volume == 50
 
 
 def test_get_options_by_moneyness(options_service):
+    """The stub previously returned a bare dict, so `"calls" in result`
+    passed for the wrong reason: it never actually checked the real
+    OptionsByMoneyness model's fields, since `in` on a Pydantic model
+    checks nothing meaningful and would be False even for a matching model.
+    """
     result = options_service.get_options_by_moneyness("AAPL", "2025-12-19", 0.1)
-    assert "calls" in result
-    assert "puts" in result
+    assert isinstance(result, OptionsByMoneyness)
+    assert result.calls == []
+    assert result.puts == []
 
 
 def test_get_options_skew(options_service):
+    """See test_get_options_by_moneyness: `in` on a Pydantic model checks
+    nothing meaningful, so this only ever verified the stub's stale dict
+    shape, not the real OptionsSkew contract."""
     result = options_service.get_options_skew("AAPL", "2025-12-19")
-    assert "call_skew" in result
-    assert "put_skew" in result
+    assert isinstance(result, OptionsSkew)
+    assert result.call_skew == []
+    assert result.put_skew == []
