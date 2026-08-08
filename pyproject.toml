@@ -43,7 +43,6 @@ dependencies = [
     "lxml>=6.0.2",
     
 ]
-optional-dependencies = {"fastmcp" = ["fastmcp>=2.14.1"]}
 
 [project.urls]
 Homepage = "https://openmarkets.dev"

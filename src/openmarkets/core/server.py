@@ -5,27 +5,28 @@ Initializes and runs the Open Markets MCP server, handling tool registration
 and server lifecycle management.
 """
 
+import inspect
 import logging
 import sys
 
 import uvicorn
-from starlette.middleware.cors import CORSMiddleware
+from mcp.server.transport_security import TransportSecuritySettings
 
 from openmarkets.core.config import Settings, get_settings
-from openmarkets.core.fastmcp import FastMCP, create_mcp
+from openmarkets.core.mcpserver import MCPServer, create_mcp
 
 logger = logging.getLogger(__name__)
 
 settings: Settings = get_settings()
-mcp: FastMCP = create_mcp(settings)
+mcp: MCPServer = create_mcp(settings)
 
 
-def run_stdio_server(mcp: FastMCP) -> None:
+def run_stdio_server(mcp: MCPServer) -> None:
     """
     Runs the MCP server using stdio transport.
 
     Args:
-        mcp: FastMCP server instance.
+        mcp: MCP server instance.
 
     Raises:
         Exception: If the server encounters an error during runtime.
@@ -37,26 +38,38 @@ def run_stdio_server(mcp: FastMCP) -> None:
         raise exc
 
 
-def run_http_server(mcp: FastMCP, settings: Settings) -> None:
+def _build_http_app(mcp: MCPServer):
+    """Build the streamable HTTP application for the server.
+
+    Disables DNS-rebinding protection when the underlying implementation
+    supports transport security settings (the server is expected to run
+    behind a reverse proxy where the Host header varies).
+
+    Args:
+        mcp: MCP server instance.
+
+    Returns:
+        The ASGI application serving the MCP streamable HTTP transport.
+    """
+    kwargs = {}
+    if "transport_security" in inspect.signature(mcp.streamable_http_app).parameters:
+        kwargs["transport_security"] = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+    return mcp.streamable_http_app(**kwargs)
+
+
+def run_http_server(mcp: MCPServer, settings: Settings) -> None:
     """
     Runs the MCP server using HTTP transport.
 
     Args:
-        mcp: FastMCP server instance.
+        mcp: MCP server instance.
         settings: Server settings/configuration.
 
     Raises:
-        Exception: If the server encounters an error during runtime.
+        SystemExit: On shutdown request or unrecoverable server error.
     """
     try:
-        app = mcp.streamable_http_app()
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.cors_allow_origins.split(","),
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+        app = _build_http_app(mcp)
         uvicorn.run(app, host=settings.host, port=settings.port)
     except KeyboardInterrupt:
         logger.info(msg="Server shutdown requested by user.")
@@ -70,9 +83,17 @@ def main() -> None:
     """
     Orchestrates the startup of the Open Markets MCP server based on transport type.
 
+    Logging is directed to stderr: with stdio transport, stdout carries the
+    JSON-RPC protocol stream and must not receive log output.
+
     Returns:
         None
     """
+    logging.basicConfig(
+        level=logging.DEBUG if settings.debug else logging.INFO,
+        stream=sys.stderr,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     if settings.transport == "stdio":
         run_stdio_server(mcp)
     elif settings.transport == "http":

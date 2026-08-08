@@ -3,7 +3,7 @@ import types
 from importlib import metadata
 
 import openmarkets
-import openmarkets.core.fastmcp as fastmcp
+import openmarkets.core.mcpserver as mcpserver
 import openmarkets.core.server as server
 
 
@@ -24,34 +24,30 @@ def test_core_version_fallback_on_packagenotfound(monkeypatch):
     assert module.__version__ == "unknown"
 
 
-def test_fastmcp_streamable_http_app_adds_cors(monkeypatch):
-    class DummyApp:
-        def __init__(self):
-            self.middleware_calls = []
+class DummyApp:
+    """Minimal Starlette stand-in that records add_middleware calls."""
 
-        def add_middleware(self, *args, **kwargs):
-            self.middleware_calls.append((args, kwargs))
+    def __init__(self):
+        self.middleware_calls = []
 
-    monkeypatch.setattr(fastmcp.FastMCP, "streamable_http_app", lambda self: DummyApp())
+    def add_middleware(self, *args, **kwargs):
+        self.middleware_calls.append((args, kwargs))
 
-    obj = fastmcp.FastMCPWithCORS()
-    app: DummyApp = obj.streamable_http_app()  # type: ignore[arg-type]
+
+def test_mcpserver_streamable_http_app_adds_cors(monkeypatch):
+    monkeypatch.setattr(mcpserver.MCPServer, "streamable_http_app", lambda self, **kwargs: DummyApp())
+
+    obj = mcpserver.CORSMCPServer()
+    app: DummyApp = obj.streamable_http_app()  # type: ignore[assignment]
     assert isinstance(app, DummyApp)
     assert app.middleware_calls
 
 
-def test_fastmcp_sse_app_adds_cors(monkeypatch):
-    class DummyApp:
-        def __init__(self):
-            self.middleware_calls = []
+def test_mcpserver_sse_app_adds_cors(monkeypatch):
+    monkeypatch.setattr(mcpserver.MCPServer, "sse_app", lambda self, **kwargs: DummyApp())
 
-        def add_middleware(self, *args, **kwargs):
-            self.middleware_calls.append((args, kwargs))
-
-    monkeypatch.setattr(fastmcp.FastMCP, "sse_app", lambda self, mount_path=None: DummyApp())
-
-    obj = fastmcp.FastMCPWithCORS()
-    app: DummyApp = obj.sse_app()  # type: ignore[arg-type]
+    obj = mcpserver.CORSMCPServer()
+    app: DummyApp = obj.sse_app()  # type: ignore[assignment]
     assert isinstance(app, DummyApp)
     assert app.middleware_calls
 
