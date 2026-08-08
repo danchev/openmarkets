@@ -33,10 +33,12 @@ def send_newsletter():
             # Do something
             mailer.send(user.email)
 
+
 # Good Example - Extracted method to reduce indentation
 def send_newsletter():
     for user in users:
         send_email(user)
+
 
 def send_email(user):
     if user.is_active:
@@ -84,11 +86,13 @@ class User:
         self.name = name
         self.age = age
 
+
 # Good Example - Wrapping primitives
 class User:
     def __init__(self, name, age):
         self.name = name
         self.age = Age(age)
+
 
 class Age:
     def __init__(self, value):
@@ -112,6 +116,7 @@ class Group:
     def count_active_users(self):
         return sum(1 for user in self.users if user.is_active)
 
+
 # Good Example - Encapsulating collection behavior
 class Group:
     def __init__(self, id, name, user_collection):
@@ -121,6 +126,7 @@ class Group:
 
     def count_active_users(self):
         return self.user_collection.count_active()
+
 
 class UserCollection:
     def __init__(self, users):
@@ -139,6 +145,7 @@ class UserCollection:
 def process_order(order):
     user_email = order.user.get_email().upper().strip()
 
+
 # Good Example - One dot per line
 def process_order(order):
     user = order.user
@@ -155,6 +162,7 @@ def process_order(order):
 class U:
     def __init__(self, n):
         self.n = n
+
 
 # Good Example - Meaningful names
 class User:
@@ -173,19 +181,30 @@ class User:
 ```python
 # Bad Example - Large class with multiple responsibilities
 class UserManager:
-    def create_user(self, name): pass
-    def delete_user(self, id): pass
-    def send_email(self, email): pass
+    def create_user(self, name):
+        pass
+
+    def delete_user(self, id):
+        pass
+
+    def send_email(self, email):
+        pass
+
 
 # Good Example - Small classes with single responsibility
 class UserCreator:
-    def create_user(self, name): pass
+    def create_user(self, name):
+        pass
+
 
 class UserDeleter:
-    def delete_user(self, id): pass
+    def delete_user(self, id):
+        pass
+
 
 class EmailSender:
-    def send_email(self, email): pass
+    def send_email(self, email):
+        pass
 ```
 
 ### 8. No Classes with More Than Two Instance Variables:
@@ -200,6 +219,7 @@ class UserCreateHandler:
         self.email_service = email_service
         self.logger = logger
         self.sms_service = sms_service
+
 
 # Good Example - Class with two instance variables
 class UserCreateHandler:
@@ -217,6 +237,7 @@ class UserCreateHandler:
 class User:
     def __init__(self, name):
         self.name = name
+
 
 # Good Example - Domain class with encapsulation
 class User:
