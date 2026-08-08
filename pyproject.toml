@@ -111,11 +111,14 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.pytest.ini_options]
-addopts = "-n auto --cov=src/openmarkets --cov-report=html --cov-report=term-missing --cov-fail-under=70"
+addopts = "-n auto --cov=src/openmarkets --cov-report=html --cov-report=term-missing --cov-fail-under=70 -m \"not live\""
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
 filterwarnings = ["once::Warning"]
+markers = [
+    "live: real network calls against the Yahoo Finance API (excluded by default; run with `-m live`)",
+]
 
 [tool.mypy]
 custom_typeshed_dir = "typings"
