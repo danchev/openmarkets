@@ -63,3 +63,58 @@ def close_session() -> None:
 
 
 atexit.register(close_session)
+
+
+def retry_with_backoff(
+    retries: int = 3,
+    initial_delay: float = 0.5,
+    backoff_factor: float = 2.0,
+    jitter: bool = True,
+    retry_exceptions: tuple[type[Exception], ...] = (Exception,),
+):
+    """Decorator to retry a function call with exponential backoff and jitter.
+
+    Args:
+        retries: Maximum number of attempts. Defaults to 3.
+        initial_delay: Initial sleep duration in seconds. Defaults to 0.5.
+        backoff_factor: Multiplier applied to delay after each retry. Defaults to 2.0.
+        jitter: Whether to add random noise to delay. Defaults to True.
+        retry_exceptions: Tuple of exceptions that trigger a retry. Defaults to (Exception,).
+
+    Returns:
+        Decorated function with automatic retry behavior.
+    """
+    import random
+    import time
+    from functools import wraps
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            delay = initial_delay
+            last_exc = None
+            for attempt in range(retries):
+                try:
+                    return func(*args, **kwargs)
+                except retry_exceptions as exc:
+                    last_exc = exc
+                    if attempt == retries - 1:
+                        break
+                    sleep_time = delay * (random.uniform(0.8, 1.2) if jitter else 1.0)
+                    logger.warning(
+                        "Call %s failed on attempt %d/%d with %s. Retrying in %.2fs...",
+                        func.__name__,
+                        attempt + 1,
+                        retries,
+                        exc,
+                        sleep_time,
+                    )
+                    time.sleep(sleep_time)
+                    delay *= backoff_factor
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError(f"Unexpected retry failure in {func.__name__}")
+
+        return wrapper
+
+    return decorator
