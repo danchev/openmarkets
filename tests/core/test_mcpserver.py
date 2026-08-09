@@ -12,6 +12,7 @@ _SERVICE_NAMES = [
     "holdings_service",
     "markets_service",
     "options_service",
+    "screener_service",
     "sector_industry_service",
     "stock_service",
     "technical_analysis_service",
@@ -177,7 +178,84 @@ def test_published_tool_surface_is_explicit():
 
     published = {name: getattr(services, name).tool_names() for name in services.__all__}
 
-    assert sum(len(names) for names in published.values()) == 74
+    assert sum(len(names) for names in published.values()) == 76
     for names in published.values():
         assert names, "every service must publish at least one tool"
         assert all(name.startswith(("get_", "list_", "search_", "compare_")) for name in names)
+
+
+def test_export_schema():
+    tool_mock = mock.Mock()
+    tool_mock.model_dump.return_value = {"name": "sample_tool", "description": "sample"}
+
+    server_mock = mock.AsyncMock()
+    server_mock.list_tools.return_value = [tool_mock]
+
+    result = mcpserver.export_schema(server_mock)
+    assert result == [{"name": "sample_tool", "description": "sample"}]
+
+
+@pytest.mark.parametrize("profile", ["full", "minimal", "equities", "quant"])
+def test_create_mcp_profiles(profile):
+    config = mcpserver.Settings(profile=profile)
+    server = mcpserver.create_mcp(config)
+    assert server is not None
+
+
+def test_bearer_auth_middleware():
+    from starlette.applications import Starlette
+    from starlette.responses import PlainTextResponse
+    from starlette.routing import Route
+    from starlette.testclient import TestClient
+
+    async def homepage(request):
+        return PlainTextResponse("ok")
+
+    async def health(request):
+        return PlainTextResponse("healthy")
+
+    app = Starlette(routes=[Route("/", homepage, methods=["GET", "OPTIONS"]), Route("/health", health)])
+    app.add_middleware(mcpserver.BearerAuthMiddleware, secret="my-secret-token")
+
+    client = TestClient(app)
+
+    # Health check is excluded
+    resp_health = client.get("/health")
+    assert resp_health.status_code == 200
+
+    # OPTIONS preflight is excluded
+    resp_options = client.options("/")
+    assert resp_options.status_code == 200
+
+    # Missing auth returns 401
+    resp_unauth = client.get("/")
+    assert resp_unauth.status_code == 401
+    assert "Unauthorized" in resp_unauth.text
+
+    # Invalid token returns 401
+    resp_bad = client.get("/", headers={"Authorization": "Bearer wrong-token"})
+    assert resp_bad.status_code == 401
+
+    # Valid token returns 200
+    resp_good = client.get("/", headers={"Authorization": "Bearer my-secret-token"})
+    assert resp_good.status_code == 200
+    assert resp_good.text == "ok"
+
+
+def test_cors_mcpserver_streamable_http_routes():
+    from starlette.testclient import TestClient
+
+    mcp = mcpserver.CORSMCPServer()
+    app = mcp.streamable_http_app()
+    client = TestClient(app)
+
+    # /health probe returns healthy
+    resp_health = client.get("/health")
+    assert resp_health.status_code == 200
+    assert resp_health.text == "healthy"
+
+    # /metrics endpoint returns Prometheus text format
+    resp_metrics = client.get("/metrics")
+    assert resp_metrics.status_code == 200
+    assert "openmarkets_uptime_seconds" in resp_metrics.text
+    assert "openmarkets_cache_entries" in resp_metrics.text

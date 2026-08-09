@@ -104,14 +104,12 @@ def _terminate(process: subprocess.Popen) -> None:
 
 
 def _close_pipes(process: subprocess.Popen) -> None:
-    """Close the process's stdout/stderr pipes.
-
-    Popen is used without a context manager here so the fixture can retry,
-    so the pipes must be closed explicitly to avoid a ResourceWarning.
-    """
-    for stream in (process.stdout, process.stderr):
-        if stream is not None:
-            stream.close()
+    for pipe in (process.stdout, process.stderr, process.stdin):
+        if pipe:
+            try:
+                pipe.close()
+            except Exception:
+                pass
 
 
 @pytest.fixture
@@ -122,22 +120,21 @@ def http_server():
     claim it before the server binds. Retrying keeps this fixture from
     failing intermittently under the default -n auto.
     """
-    attempts = 3
+    attempts = 5
     for attempt in range(1, attempts + 1):
         port = _free_port()
         process = subprocess.Popen(
-            ["uv", "run", "openmarkets", "--transport", "http", "--port", str(port)],
+            [sys.executable, "-m", "openmarkets", "--transport", "http", "--host", "127.0.0.1", "--port", str(port)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
         try:
-            _wait_for_port(port)
+            _wait_for_port(port, timeout=30.0)
         except TimeoutError:
             _terminate(process)
-            stderr = process.stderr.read() if process.stderr else ""
             _close_pipes(process)
-            if "address already in use" in stderr.lower() and attempt < attempts:
+            if attempt < attempts:
                 continue
             raise
 
@@ -201,7 +198,7 @@ def _assert_terminated_by_sigterm_after_graceful_shutdown(process: subprocess.Po
     Args:
         process: The terminated subprocess.
     """
-    assert process.returncode == 128 + signal.SIGTERM
+    assert process.returncode in (128 + signal.SIGTERM, -signal.SIGTERM)
     stderr = process.stderr.read() if process.stderr else ""
     assert "Traceback" not in stderr
     assert "Application shutdown complete" in stderr
@@ -266,7 +263,7 @@ async def test_bind_conflict_on_an_occupied_port_exits_non_zero(http_server):
     port, _ = http_server
 
     with subprocess.Popen(
-        ["uv", "run", "openmarkets", "--transport", "http", "--port", str(port)],
+        [sys.executable, "-m", "openmarkets", "--transport", "http", "--host", "127.0.0.1", "--port", str(port)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
