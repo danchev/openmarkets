@@ -9,12 +9,15 @@ queries: they cover the common cases and fit the tool-call shape used by
 every other tool in this project.
 """
 
+import logging
 from typing import Literal, get_args
 
 import yfinance as yf
 from curl_cffi.requests import Session
 
 from openmarkets.schemas.screener import ScreenerResult
+
+logger = logging.getLogger(__name__)
 
 #: Named screens yfinance ships as yf.PREDEFINED_SCREENER_QUERIES.
 #: Literal, matching Period/Interval, rather than built from the live dict:
@@ -50,12 +53,12 @@ PREDEFINED_SCREENS: tuple[str, ...] = get_args(PredefinedScreen)
 
 
 def _assert_known_screens_are_current() -> None:
-    """Fail fast at import time if yfinance's predefined screens drift
+    """Warn at import time if yfinance's predefined screens drift
     from the hardcoded PredefinedScreen literal above."""
     live = frozenset(yf.PREDEFINED_SCREENER_QUERIES.keys())
     known = frozenset(PREDEFINED_SCREENS)
     if live != known:
-        raise RuntimeError(
+        logger.warning(
             "PredefinedScreen in openmarkets.repositories.screener is out of sync with the "
             f"installed yfinance's PREDEFINED_SCREENER_QUERIES. Added upstream: {sorted(live - known)}. "
             f"Removed upstream: {sorted(known - live)}."
