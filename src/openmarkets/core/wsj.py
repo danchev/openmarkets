@@ -48,6 +48,21 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
     "KC": {"key": "FUTURE/US//KC00", "name": "Coffee", "exchange": "ICE", "unit": "USD/lb"},
     "SUGAR": {"key": "FUTURE/US//SB00", "name": "Sugar", "exchange": "ICE", "unit": "USD/lb"},
     "SB": {"key": "FUTURE/US//SB00", "name": "Sugar", "exchange": "ICE", "unit": "USD/lb"},
+    # Softs & Additional Agriculture
+    "COCOA": {"key": "FUTURE/US//CC00", "name": "Cocoa", "exchange": "ICE", "unit": "USD/metric ton"},
+    "CC": {"key": "FUTURE/US//CC00", "name": "Cocoa", "exchange": "ICE", "unit": "USD/metric ton"},
+    "COTTON": {"key": "FUTURE/US//CT00", "name": "Cotton", "exchange": "ICE", "unit": "USD/lb"},
+    "CT": {"key": "FUTURE/US//CT00", "name": "Cotton", "exchange": "ICE", "unit": "USD/lb"},
+    # Livestock
+    "LIVE_CATTLE": {"key": "FUTURE/US/XCME/LC00", "name": "Live Cattle", "exchange": "CME", "unit": "USD/cwt"},
+    "LC": {"key": "FUTURE/US/XCME/LC00", "name": "Live Cattle", "exchange": "CME", "unit": "USD/cwt"},
+    "FEEDER_CATTLE": {"key": "FUTURE/US/XCME/FC00", "name": "Feeder Cattle", "exchange": "CME", "unit": "USD/cwt"},
+    "FC": {"key": "FUTURE/US/XCME/FC00", "name": "Feeder Cattle", "exchange": "CME", "unit": "USD/cwt"},
+    "LEAN_HOGS": {"key": "FUTURE/US/XCME/LH00", "name": "Lean Hogs", "exchange": "CME", "unit": "USD/cwt"},
+    "LH": {"key": "FUTURE/US/XCME/LH00", "name": "Lean Hogs", "exchange": "CME", "unit": "USD/cwt"},
+    # Additional Metals
+    "PALLADIUM": {"key": "FUTURE/US/XNYM/PA00", "name": "Palladium", "exchange": "NYMEX", "unit": "USD/troy oz"},
+    "PA": {"key": "FUTURE/US/XNYM/PA00", "name": "Palladium", "exchange": "NYMEX", "unit": "USD/troy oz"},
     # Fixed Income / US Treasuries
     "US01M": {
         "key": "BOND/BX/XTUP/TMUBMUSD01M",
@@ -97,6 +112,45 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
         "exchange": "US Treasury",
         "unit": "%",
     },
+    # Global Benchmark Sovereign Yields
+    "DE10Y": {
+        "key": "BOND/BX/XTUP/TMBMKDE-10Y",
+        "name": "Germany 10-Year Bund Yield",
+        "exchange": "Deutsche Bundesbank",
+        "unit": "%",
+    },
+    "UK10Y": {
+        "key": "BOND/BX/XTUP/TMBMKGB-10Y",
+        "name": "UK 10-Year Gilt Yield",
+        "exchange": "UK DMO",
+        "unit": "%",
+    },
+    "JP10Y": {
+        "key": "BOND/BX/XTUP/TMBMKJP-10Y",
+        "name": "Japan 10-Year JGB Yield",
+        "exchange": "Ministry of Finance Japan",
+        "unit": "%",
+    },
+    # Foreign Exchange / Currencies (Forex)
+    "EURUSD": {"key": "CURRENCY/US//EURUSD", "name": "EUR/USD", "exchange": "Forex", "unit": "USD"},
+    "USDJPY": {"key": "CURRENCY/US//USDJPY", "name": "USD/JPY", "exchange": "Forex", "unit": "JPY"},
+    "GBPUSD": {"key": "CURRENCY/US//GBPUSD", "name": "GBP/USD", "exchange": "Forex", "unit": "USD"},
+    "AUDUSD": {"key": "CURRENCY/US//AUDUSD", "name": "AUD/USD", "exchange": "Forex", "unit": "USD"},
+    "USDCAD": {"key": "CURRENCY/US//USDCAD", "name": "USD/CAD", "exchange": "Forex", "unit": "CAD"},
+    "USDCHF": {"key": "CURRENCY/US//USDCHF", "name": "USD/CHF", "exchange": "Forex", "unit": "CHF"},
+    "USDCNY": {"key": "CURRENCY/US//USDCNY", "name": "USD/CNY", "exchange": "Forex", "unit": "CNY"},
+    "USDMXN": {"key": "CURRENCY/US//USDMXN", "name": "USD/MXN", "exchange": "Forex", "unit": "MXN"},
+    "USDINR": {"key": "CURRENCY/US//USDINR", "name": "USD/INR", "exchange": "Forex", "unit": "INR"},
+    "DXY": {"key": "INDEX/US//DXY", "name": "US Dollar Index (DXY)", "exchange": "ICE", "unit": "Index"},
+    # Major Market Benchmark Indexes & Volatility
+    "VIX": {"key": "INDEX/US//VIX", "name": "CBOE Volatility Index (VIX)", "exchange": "CBOE", "unit": "Index"},
+    "DJIA": {
+        "key": "INDEX/US//DJIA",
+        "name": "Dow Jones Industrial Average",
+        "exchange": "S&P Dow Jones",
+        "unit": "Index",
+    },
+    "COMP": {"key": "INDEX/US//COMP", "name": "Nasdaq Composite Index", "exchange": "NASDAQ", "unit": "Index"},
 }
 
 
