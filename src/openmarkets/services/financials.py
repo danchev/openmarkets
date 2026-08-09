@@ -7,12 +7,14 @@ Acts as an intermediary between the MCP tools layer and repository layer.
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.cache import cached
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
 from openmarkets.repositories.financials import YFinanceFinancialsRepository
 from openmarkets.schemas.financials import (
     BalanceSheetEntry,
+    CuratedFinancialSummary,
     EPSHistoryEntry,
     FinancialCalendar,
     FullFinancials,
@@ -48,6 +50,22 @@ class FinancialsService(ToolRegistrationMixin):
         created at import time.
         """
         return self._session if self._session is not None else get_session()
+
+    @tool
+    @cached(ttl=300.0)
+    def get_curated_financials(self, ticker: Ticker) -> CuratedFinancialSummary:
+        """
+        Retrieve curated essential financial performance and solvency snapshot (15 metrics).
+
+        Optimized for LLM reasoning to avoid context window bloat.
+
+        Args:
+            ticker (str): The symbol of the security.
+
+        Returns:
+            CuratedFinancialSummary: Core financial metrics for fundamental analysis.
+        """
+        return self.repository.get_curated_financials(ticker, session=self.session)
 
     @tool
     def get_balance_sheet(self, ticker: Ticker) -> list[BalanceSheetEntry]:

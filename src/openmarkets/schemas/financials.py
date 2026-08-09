@@ -540,3 +540,28 @@ class FullFinancials(BaseModel):
     financial_calendar: FinancialCalendar = Field(..., description="Upcoming financial events.")
     sec_filings: list[SecFilingRecord] = Field(..., description="SEC filing records.")
     eps_history: list[EPSHistoryEntry] = Field(..., description="Historical earnings-per-share records.")
+
+
+class CuratedFinancialSummary(BaseModel):
+    """Essential financial performance and solvency snapshot.
+
+    Optimized for LLM reasoning with high signal-to-noise ratio.
+    """
+
+    symbol: str = Field(..., description="Stock symbol.")
+    total_revenue: float | None = Field(None, description="Total revenue (trailing 12M or recent fiscal year).")
+    gross_profit: float | None = Field(None, description="Gross profit.")
+    operating_income: float | None = Field(None, description="Operating income / EBIT.")
+    net_income: float | None = Field(None, description="Net income to common shareholders.")
+    ebitda: float | None = Field(None, description="Earnings before interest, taxes, depreciation, and amortization.")
+    operating_cashflow: float | None = Field(None, description="Operating cash flow.")
+    free_cashflow: float | None = Field(None, description="Free cash flow.")
+    total_cash: float | None = Field(None, description="Total cash and short term investments.")
+    total_debt: float | None = Field(None, description="Total debt outstanding.")
+    current_ratio: float | None = Field(None, description="Current ratio (liquidity).")
+    debt_to_equity: float | None = Field(None, description="Debt to equity ratio.")
+    gross_margin: float | None = Field(None, description="Gross profit margin percentage.")
+    operating_margin: float | None = Field(None, description="Operating profit margin percentage.")
+    profit_margin: float | None = Field(None, description="Net profit margin percentage.")
+    return_on_equity: float | None = Field(None, description="Return on equity percentage.")
+    return_on_assets: float | None = Field(None, description="Return on assets percentage.")

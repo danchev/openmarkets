@@ -114,3 +114,33 @@ class TestYFinanceFinancialsRepository:
         result = self.repo.get_eps_history(self.ticker)
 
         assert result == []
+
+    @patch("yfinance.Ticker")
+    def test_get_curated_financials(self, mock_ticker):
+        """Test curated financial summary retrieval."""
+        from openmarkets.schemas.financials import CuratedFinancialSummary
+
+        mock_ticker.return_value.info = {
+            "symbol": "AAPL",
+            "totalRevenue": 380000000000.0,
+            "grossProfits": 170000000000.0,
+            "ebitda": 130000000000.0,
+            "netIncomeToCommon": 100000000000.0,
+            "freeCashflow": 105000000000.0,
+            "operatingCashflow": 115000000000.0,
+            "totalCash": 60000000000.0,
+            "totalDebt": 110000000000.0,
+            "currentRatio": 0.95,
+            "debtToEquity": 145.0,
+            "grossMargins": 0.44,
+            "operatingMargins": 0.30,
+            "profitMargins": 0.26,
+            "returnOnEquity": 1.5,
+            "returnOnAssets": 0.28,
+        }
+
+        result = self.repo.get_curated_financials(self.ticker)
+        assert isinstance(result, CuratedFinancialSummary)
+        assert result.symbol == "AAPL"
+        assert result.total_revenue == 380000000000.0
+        assert result.free_cashflow == 105000000000.0
