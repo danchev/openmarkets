@@ -1,17 +1,12 @@
-"""
-Open Markets Server
-
-Initializes and runs the Open Markets MCP server, handling tool registration
-and server lifecycle management.
-"""
-
+import json
 import logging
 import sys
+from pathlib import Path
 
 from mcp.server.transport_security import TransportSecuritySettings
 
 from openmarkets.core.config import Settings, get_settings
-from openmarkets.core.mcpserver import MCPServer, create_mcp
+from openmarkets.core.mcpserver import MCPServer, create_mcp, export_schema
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +85,18 @@ def main() -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     mcp = create_mcp(settings)
+
+    if settings.export_schema:
+        schema = export_schema(mcp)
+        schema_json = json.dumps(schema, indent=2)
+        if settings.export_schema == "-":
+            print(schema_json)
+        else:
+            out_path = Path(settings.export_schema)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(schema_json, encoding="utf-8")
+            logger.info("Exported %d tool schemas to %s", len(schema), settings.export_schema)
+        sys.exit(0)
 
     if settings.transport == "stdio":
         run_stdio_server(mcp)

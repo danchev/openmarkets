@@ -14,7 +14,9 @@ def stub_startup(monkeypatch):
     """
 
     def _install(transport: str) -> dict[str, bool]:
-        monkeypatch.setattr(server, "get_settings", mock.Mock(return_value=mock.Mock(transport=transport)))
+        monkeypatch.setattr(
+            server, "get_settings", mock.Mock(return_value=mock.Mock(transport=transport, export_schema=None))
+        )
         monkeypatch.setattr(server, "create_mcp", mock.Mock(return_value=mock.Mock()))
 
         called: dict[str, bool] = {}
@@ -102,3 +104,30 @@ def test_run_http_server_exception(monkeypatch):
 
     assert excinfo.value.code == 1
     assert logger_mock.exception.called
+
+
+def test_main_exports_schema(monkeypatch, tmp_path):
+    out_file = tmp_path / "schema.json"
+    fake_settings = mock.Mock(export_schema=str(out_file), transport="stdio")
+    monkeypatch.setattr(server, "get_settings", mock.Mock(return_value=fake_settings))
+    monkeypatch.setattr(server, "create_mcp", mock.Mock(return_value=mock.Mock()))
+    monkeypatch.setattr(server, "export_schema", mock.Mock(return_value=[{"name": "test_tool"}]))
+
+    with pytest.raises(SystemExit) as excinfo:
+        server.main()
+    assert excinfo.value.code == 0
+    assert out_file.exists()
+    assert "test_tool" in out_file.read_text()
+
+
+def test_main_exports_schema_stdout(monkeypatch, capsys):
+    fake_settings = mock.Mock(export_schema="-", transport="stdio")
+    monkeypatch.setattr(server, "get_settings", mock.Mock(return_value=fake_settings))
+    monkeypatch.setattr(server, "create_mcp", mock.Mock(return_value=mock.Mock()))
+    monkeypatch.setattr(server, "export_schema", mock.Mock(return_value=[{"name": "test_tool"}]))
+
+    with pytest.raises(SystemExit) as excinfo:
+        server.main()
+    assert excinfo.value.code == 0
+    captured = capsys.readouterr()
+    assert "test_tool" in captured.out
