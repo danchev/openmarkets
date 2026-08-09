@@ -27,6 +27,7 @@ from openmarkets.services import (
     crypto_service,
     financials_service,
     fixed_income_service,
+    forex_service,
     funds_service,
     holdings_service,
     markets_service,
@@ -48,6 +49,7 @@ _SERVICES = [
     crypto_service,
     financials_service,
     fixed_income_service,
+    forex_service,
     funds_service,
     holdings_service,
     markets_service,
@@ -78,17 +80,23 @@ _SERVICE_PROFILES = {
         funds_service,
         commodities_service,
         fixed_income_service,
+        forex_service,
     ],
     "macro": [
         commodities_service,
         fixed_income_service,
+        forex_service,
         markets_service,
         sector_industry_service,
     ],
     "commodities": [
         commodities_service,
     ],
+    "forex": [
+        forex_service,
+    ],
 }
+
 
 _SERVER_START_TIME = time.time()
 
