@@ -29,6 +29,10 @@ class StockRepositorySpy:
         self.calls.append(("get_info", ticker, session))
         return {"symbol": ticker}
 
+    def get_curated_info(self, ticker: str, session: Session | None = None):
+        self.calls.append(("get_curated_info", ticker, session))
+        return {"symbol": ticker}
+
     def get_history(self, ticker: str, period: str = "1y", interval: str = "1d", session: Session | None = None):
         self.calls.append(("get_history", ticker, period, interval, session))
         return []

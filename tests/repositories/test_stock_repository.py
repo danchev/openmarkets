@@ -16,6 +16,7 @@ from openmarkets.schemas.stock import (
     StockFastInfo,
     StockHistory,
     StockInfo,
+    StockInfo_v2,
     StockSplit,
     ValuationMeasuresEntry,
 )
@@ -43,6 +44,31 @@ def test_get_info_returns_model(stock_repository, stock_ticker, patch_yf):
     result = stock_repository.get_info(stock_ticker)
     assert isinstance(result, StockInfo)
     assert result.currency == "USD"
+
+
+def test_get_curated_info_returns_model(stock_repository, stock_ticker, patch_yf):
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            self.info = {"symbol": "AAPL", "shortName": "Apple Inc.", "currentPrice": 150.0}
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    result = stock_repository.get_curated_info(stock_ticker)
+    assert isinstance(result, StockInfo_v2)
+    assert result.symbol == "AAPL"
+
+
+def test_get_fast_info_raises_invalid_symbol_error(stock_repository, patch_yf):
+    from openmarkets.core.exceptions import InvalidSymbolError
+
+    class FakeTicker:
+        def __init__(self, ticker: str, session=None):
+            self.fast_info = {}
+
+    patch_yf("openmarkets.repositories.stock", SimpleNamespace(Ticker=FakeTicker))
+
+    with pytest.raises(InvalidSymbolError):
+        stock_repository.get_fast_info("INVALID")
 
 
 def test_get_history_returns_models(stock_repository, stock_ticker, patch_yf, ohlcv_history_factory):
@@ -157,6 +183,9 @@ def test_get_corporate_actions_returns_models(stock_repository, stock_ticker, pa
     class FakeActions:
         def reset_index(self):
             return self
+
+        def to_dict(self, orient="records"):
+            return [{"Date": "2023-01-01", "Dividends": 0.5, "Stock Splits": 2.0}]
 
         def iterrows(self):
             yield 0, SimpleNamespace(to_dict=lambda: {"Date": "2023-01-01", "Dividends": 0.5, "Stock Splits": 2.0})

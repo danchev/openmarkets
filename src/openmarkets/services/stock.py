@@ -8,6 +8,7 @@ layer and repository layer.
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.cache import cached
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Interval, Period, Ticker, ValuationFrequency
 from openmarkets.repositories.stock import StockRepository, YFinanceStockRepository
@@ -24,6 +25,7 @@ from openmarkets.schemas.stock import (
     StockFastInfo,
     StockHistory,
     StockInfo,
+    StockInfo_v2,
     StockSplit,
     ValuationMeasuresEntry,
 )
@@ -56,6 +58,7 @@ class StockService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
+    @cached(ttl=300.0)
     def get_fast_info(self, ticker: Ticker) -> StockFastInfo:
         """
         Retrieve fast info for a specific stock ticker.
@@ -69,17 +72,40 @@ class StockService(ToolRegistrationMixin):
         return self.repository.get_fast_info(ticker, session=self.session)
 
     @tool
-    def get_info(self, ticker: Ticker) -> StockInfo:
+    @cached(ttl=300.0)
+    def get_info(self, ticker: Ticker, fields: list[str] | None = None) -> StockInfo | dict:
         """
         Retrieve detailed info for a specific stock ticker.
 
         Args:
             ticker (str): The symbol of the stock.
+            fields (list[str], optional): Specific field names to return (e.g. ['marketCap', 'trailingPE']).
+                If omitted, returns the complete StockInfo model.
 
         Returns:
-            StockInfo: Detailed info data for the given ticker.
+            StockInfo | dict: Detailed info data or pruned dictionary of requested fields.
         """
-        return self.repository.get_info(ticker, session=self.session)
+        info_model = self.repository.get_info(ticker, session=self.session)
+        if fields:
+            data = info_model.model_dump()
+            return {k: data[k] for k in fields if k in data}
+        return info_model
+
+    @tool
+    @cached(ttl=300.0)
+    def get_curated_info(self, ticker: Ticker) -> StockInfo_v2:
+        """
+        Retrieve curated stock fundamental overview (33 essential metrics).
+
+        Optimized for LLM reasoning to avoid context window bloat.
+
+        Args:
+            ticker (str): The symbol of the stock.
+
+        Returns:
+            StockInfo_v2: Curated stock information.
+        """
+        return self.repository.get_curated_info(ticker, session=self.session)
 
     @tool
     def get_history(self, ticker: Ticker, period: Period = "1y", interval: Interval = "1d") -> list[StockHistory]:

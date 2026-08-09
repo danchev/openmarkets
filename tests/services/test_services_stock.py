@@ -3,6 +3,7 @@ def test_stock_service_delegates_to_repository(stock_service, stock_repository_s
 
     assert stock_service.get_fast_info(ticker) == {"symbol": ticker}
     assert stock_service.get_info(ticker) == {"symbol": ticker}
+    assert stock_service.get_curated_info(ticker) == {"symbol": ticker}
     assert stock_service.get_history(ticker) == []
     assert stock_service.get_dividends(ticker) == []
     assert stock_service.get_financial_summary(ticker) == {}
@@ -19,6 +20,7 @@ def test_stock_service_delegates_to_repository(stock_service, stock_repository_s
     assert stock_repository_spy.calls == [
         ("get_fast_info", ticker, stock_service.session),
         ("get_info", ticker, stock_service.session),
+        ("get_curated_info", ticker, stock_service.session),
         ("get_history", ticker, "1y", "1d", stock_service.session),
         ("get_dividends", ticker, stock_service.session),
         ("get_financial_summary", ticker, stock_service.session),
@@ -32,3 +34,22 @@ def test_stock_service_delegates_to_repository(stock_service, stock_repository_s
         ("get_news", ticker, stock_service.session),
         ("get_valuation_history", ticker, "quarterly", 5, stock_service.session),
     ]
+
+
+def test_get_info_with_fields_filtering(monkeypatch):
+    from unittest.mock import Mock
+
+    from openmarkets.schemas.stock import StockInfo
+    from openmarkets.services.stock import StockService
+
+    repo_mock = Mock()
+    repo_mock.get_info.return_value = StockInfo(
+        symbol="AAPL",
+        shortName="Apple Inc.",
+        longName="Apple Inc.",
+        currency="USD",
+    )
+
+    service = StockService(repository=repo_mock)
+    filtered = service.get_info("AAPL", fields=["symbol", "currency"])
+    assert filtered == {"symbol": "AAPL", "currency": "USD"}

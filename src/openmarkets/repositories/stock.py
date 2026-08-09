@@ -10,6 +10,7 @@ import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import InvalidSymbolError
 from openmarkets.core.types import Interval, Period, ValuationFrequency
 from openmarkets.schemas.stock import (
     CorporateActions,
@@ -24,6 +25,7 @@ from openmarkets.schemas.stock import (
     StockFastInfo,
     StockHistory,
     StockInfo,
+    StockInfo_v2,
     StockSplit,
     ValuationMeasuresEntry,
 )
@@ -44,6 +46,8 @@ class StockRepository(Protocol):
     def get_fast_info(self, ticker: str, session: Session | None = None) -> StockFastInfo: ...
 
     def get_info(self, ticker: str, session: Session | None = None) -> StockInfo: ...
+
+    def get_curated_info(self, ticker: str, session: Session | None = None) -> StockInfo_v2: ...
 
     def get_history(
         self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
@@ -73,10 +77,10 @@ class StockRepository(Protocol):
 
     def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]: ...
 
-    def get_valuation_history(
+    def get_valuation_measures(
         self,
         ticker: str,
-        freq: ValuationFrequency = "quarterly",
+        frequency: ValuationFrequency = "annual",
         periods: int | None = 5,
         session: Session | None = None,
     ) -> list[ValuationMeasuresEntry]: ...
@@ -94,10 +98,18 @@ class YFinanceStockRepository:
 
         Returns:
             Fast info data for the stock.
+
+        Raises:
+            InvalidSymbolError: If the symbol is not found or invalid.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
         fast_info = ticker_obj.fast_info
-        return StockFastInfo(**fast_info)
+        if not fast_info:
+            raise InvalidSymbolError(f"Symbol '{ticker}' not found or invalid.")
+        try:
+            return StockFastInfo(**fast_info)
+        except Exception as exc:
+            raise InvalidSymbolError(f"Symbol '{ticker}' not found or invalid.") from exc
 
     def get_info(self, ticker: str, session: Session | None = None) -> StockInfo:
         """Retrieve detailed info for a stock ticker.
@@ -112,6 +124,25 @@ class YFinanceStockRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         info = ticker_obj.info
         return StockInfo(**info)
+
+    def get_curated_info(self, ticker: str, session: Session | None = None) -> StockInfo_v2:
+        """Retrieve curated stock overview (33 key fundamental metrics).
+
+        Args:
+            ticker: Stock ticker symbol.
+            session: Optional HTTP session for request handling.
+
+        Returns:
+            Curated stock information.
+
+        Raises:
+            InvalidSymbolError: If the symbol is not found or invalid.
+        """
+        ticker_obj = yf.Ticker(ticker, session=session)
+        info = ticker_obj.info
+        if not info:
+            raise InvalidSymbolError(f"Symbol '{ticker}' not found or invalid.")
+        return StockInfo_v2(**info)
 
     def get_history(
         self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
@@ -142,7 +173,7 @@ class YFinanceStockRepository:
         # Normalize column name: yfinance uses "Datetime" for intraday, "Date" for daily+
         if "Datetime" in df.columns:
             df.rename(columns={"Datetime": "Date"}, inplace=True)
-        return [StockHistory(**row.to_dict()) for _, row in df.iterrows()]
+        return [StockHistory(**row) for row in df.to_dict(orient="records")]
 
     def get_dividends(self, ticker: str, session: Session | None = None) -> list[StockDividends]:
         """Retrieve dividend history for a stock ticker.
@@ -364,7 +395,7 @@ class YFinanceStockRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         actions = ticker_obj.actions
         reset_actions = actions.reset_index()
-        return [CorporateActions(**row.to_dict()) for _, row in reset_actions.iterrows()]
+        return [CorporateActions(**row) for row in reset_actions.to_dict(orient="records")]
 
     def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]:
         """Retrieve news items for a stock ticker.
