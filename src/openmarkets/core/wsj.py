@@ -20,8 +20,8 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
     "CRUDE_OIL": {"key": "FUTURE/US/XNYM/CL00", "name": "Crude Oil (WTI)", "exchange": "NYMEX", "unit": "USD/bbl"},
     "WTI": {"key": "FUTURE/US/XNYM/CL00", "name": "Crude Oil (WTI)", "exchange": "NYMEX", "unit": "USD/bbl"},
     "CL": {"key": "FUTURE/US/XNYM/CL00", "name": "Crude Oil (WTI)", "exchange": "NYMEX", "unit": "USD/bbl"},
-    "BRENT_CRUDE": {"key": "FUTURE/UK/IFEU/B00", "name": "Brent Crude Oil", "exchange": "ICE", "unit": "USD/bbl"},
-    "BZ": {"key": "FUTURE/UK/IFEU/B00", "name": "Brent Crude Oil", "exchange": "ICE", "unit": "USD/bbl"},
+    "BRENT_CRUDE": {"key": "FUTURE/UK/IFEU/BRN00", "name": "Brent Crude Oil", "exchange": "ICE", "unit": "USD/bbl"},
+    "BZ": {"key": "FUTURE/UK/IFEU/BRN00", "name": "Brent Crude Oil", "exchange": "ICE", "unit": "USD/bbl"},
     "NATURAL_GAS": {"key": "FUTURE/US/XNYM/NG00", "name": "Natural Gas", "exchange": "NYMEX", "unit": "USD/MMBtu"},
     "NG": {"key": "FUTURE/US/XNYM/NG00", "name": "Natural Gas", "exchange": "NYMEX", "unit": "USD/MMBtu"},
     "GASOLINE": {"key": "FUTURE/US/XNYM/RB00", "name": "RBOB Gasoline", "exchange": "NYMEX", "unit": "USD/gal"},
@@ -29,12 +29,12 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
     "HEATING_OIL": {"key": "FUTURE/US/XNYM/HO00", "name": "Heating Oil", "exchange": "NYMEX", "unit": "USD/gal"},
     "HO": {"key": "FUTURE/US/XNYM/HO00", "name": "Heating Oil", "exchange": "NYMEX", "unit": "USD/gal"},
     # Metals
-    "GOLD": {"key": "FUTURE/US/XCEC/GC00", "name": "Gold", "exchange": "COMEX", "unit": "USD/troy oz"},
-    "GC": {"key": "FUTURE/US/XCEC/GC00", "name": "Gold", "exchange": "COMEX", "unit": "USD/troy oz"},
-    "SILVER": {"key": "FUTURE/US/XCEC/SI00", "name": "Silver", "exchange": "COMEX", "unit": "USD/troy oz"},
-    "SI": {"key": "FUTURE/US/XCEC/SI00", "name": "Silver", "exchange": "COMEX", "unit": "USD/troy oz"},
-    "COPPER": {"key": "FUTURE/US/XCEC/HG00", "name": "Copper", "exchange": "COMEX", "unit": "USD/lb"},
-    "HG": {"key": "FUTURE/US/XCEC/HG00", "name": "Copper", "exchange": "COMEX", "unit": "USD/lb"},
+    "GOLD": {"key": "FUTURE/US/XNYM/GC00", "name": "Gold", "exchange": "COMEX", "unit": "USD/troy oz"},
+    "GC": {"key": "FUTURE/US/XNYM/GC00", "name": "Gold", "exchange": "COMEX", "unit": "USD/troy oz"},
+    "SILVER": {"key": "FUTURE/US/XNYM/SI00", "name": "Silver", "exchange": "COMEX", "unit": "USD/troy oz"},
+    "SI": {"key": "FUTURE/US/XNYM/SI00", "name": "Silver", "exchange": "COMEX", "unit": "USD/troy oz"},
+    "COPPER": {"key": "FUTURE/US/XNYM/HG00", "name": "Copper", "exchange": "COMEX", "unit": "USD/lb"},
+    "HG": {"key": "FUTURE/US/XNYM/HG00", "name": "Copper", "exchange": "COMEX", "unit": "USD/lb"},
     "PLATINUM": {"key": "FUTURE/US/XNYM/PL00", "name": "Platinum", "exchange": "NYMEX", "unit": "USD/troy oz"},
     "PL": {"key": "FUTURE/US/XNYM/PL00", "name": "Platinum", "exchange": "NYMEX", "unit": "USD/troy oz"},
     # Agriculture
@@ -44,40 +44,55 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
     "C": {"key": "FUTURE/US/XCBT/C00", "name": "Corn", "exchange": "CBOT", "unit": "USD/bushel"},
     "SOYBEANS": {"key": "FUTURE/US/XCBT/S00", "name": "Soybeans", "exchange": "CBOT", "unit": "USD/bushel"},
     "S": {"key": "FUTURE/US/XCBT/S00", "name": "Soybeans", "exchange": "CBOT", "unit": "USD/bushel"},
-    "COFFEE": {"key": "FUTURE/US/XCEC/KC00", "name": "Coffee", "exchange": "ICE", "unit": "USD/lb"},
-    "KC": {"key": "FUTURE/US/XCEC/KC00", "name": "Coffee", "exchange": "ICE", "unit": "USD/lb"},
-    "SUGAR": {"key": "FUTURE/US/XCEC/SB00", "name": "Sugar", "exchange": "ICE", "unit": "USD/lb"},
-    "SB": {"key": "FUTURE/US/XCEC/SB00", "name": "Sugar", "exchange": "ICE", "unit": "USD/lb"},
+    "COFFEE": {"key": "FUTURE/US//KC00", "name": "Coffee", "exchange": "ICE", "unit": "USD/lb"},
+    "KC": {"key": "FUTURE/US//KC00", "name": "Coffee", "exchange": "ICE", "unit": "USD/lb"},
+    "SUGAR": {"key": "FUTURE/US//SB00", "name": "Sugar", "exchange": "ICE", "unit": "USD/lb"},
+    "SB": {"key": "FUTURE/US//SB00", "name": "Sugar", "exchange": "ICE", "unit": "USD/lb"},
     # Fixed Income / US Treasuries
     "US01M": {
-        "key": "BOND/US/TMUBMUSD01M",
+        "key": "BOND/BX/XTUP/TMUBMUSD01M",
         "name": "US 1-Month Treasury Yield",
         "exchange": "US Treasury",
         "unit": "%",
     },
     "US03M": {
-        "key": "BOND/US/TMUBMUSD03M",
+        "key": "BOND/BX/XTUP/TMUBMUSD03M",
         "name": "US 3-Month Treasury Yield",
         "exchange": "US Treasury",
         "unit": "%",
     },
     "US06M": {
-        "key": "BOND/US/TMUBMUSD06M",
+        "key": "BOND/BX/XTUP/TMUBMUSD06M",
         "name": "US 6-Month Treasury Yield",
         "exchange": "US Treasury",
         "unit": "%",
     },
-    "US01Y": {"key": "BOND/US/TMUBMUSD01Y", "name": "US 1-Year Treasury Yield", "exchange": "US Treasury", "unit": "%"},
-    "US02Y": {"key": "BOND/US/TMUBMUSD02Y", "name": "US 2-Year Treasury Yield", "exchange": "US Treasury", "unit": "%"},
-    "US05Y": {"key": "BOND/US/TMUBMUSD05Y", "name": "US 5-Year Treasury Yield", "exchange": "US Treasury", "unit": "%"},
+    "US01Y": {
+        "key": "BOND/BX/XTUP/TMUBMUSD01Y",
+        "name": "US 1-Year Treasury Yield",
+        "exchange": "US Treasury",
+        "unit": "%",
+    },
+    "US02Y": {
+        "key": "BOND/BX/XTUP/TMUBMUSD02Y",
+        "name": "US 2-Year Treasury Yield",
+        "exchange": "US Treasury",
+        "unit": "%",
+    },
+    "US05Y": {
+        "key": "BOND/BX/XTUP/TMUBMUSD05Y",
+        "name": "US 5-Year Treasury Yield",
+        "exchange": "US Treasury",
+        "unit": "%",
+    },
     "US10Y": {
-        "key": "BOND/US/TMUBMUSD10Y",
+        "key": "BOND/BX/XTUP/TMUBMUSD10Y",
         "name": "US 10-Year Treasury Yield",
         "exchange": "US Treasury",
         "unit": "%",
     },
     "US30Y": {
-        "key": "BOND/US/TMUBMUSD30Y",
+        "key": "BOND/BX/XTUP/TMUBMUSD30Y",
         "name": "US 30-Year Treasury Yield",
         "exchange": "US Treasury",
         "unit": "%",
@@ -114,6 +129,34 @@ def _build_wsj_headers(token: str = DEFAULT_ENTITLEMENT_TOKEN) -> dict[str, str]
     }
 
 
+TIMEFRAME_MAP: dict[str, str] = {
+    "1D": "D1",
+    "5D": "D5",
+    "7D": "D7",
+    "1MO": "P1M",
+    "1M": "P1M",
+    "M1": "P1M",
+    "3MO": "P3M",
+    "3M": "P3M",
+    "M3": "P3M",
+    "6MO": "P6M",
+    "6M": "P6M",
+    "M6": "P6M",
+    "1Y": "P1Y",
+    "Y1": "P1Y",
+    "5Y": "P5Y",
+    "Y5": "P5Y",
+    "MAX": "all",
+    "ALL": "all",
+}
+
+
+def normalize_wsj_timeframe(timeframe: str) -> str:
+    """Normalize human timeframe strings (e.g. '1y', '1mo', '5y') to WSJ ISO durations."""
+    norm = timeframe.strip().upper()
+    return TIMEFRAME_MAP.get(norm, timeframe)
+
+
 @retry_with_backoff(retries=3, initial_delay=0.5, backoff_factor=2.0)
 def fetch_wsj_timeseries(
     wsj_key: str,
@@ -137,9 +180,21 @@ def fetch_wsj_timeseries(
     if datatypes is None:
         datatypes = ["Open", "High", "Low", "Last"]
 
+    valid_timeframe = normalize_wsj_timeframe(timeframe)
+
+    series_obj: dict[str, Any] = {
+        "Key": wsj_key,
+        "Dialect": "Charting",
+        "Kind": "Ticker",
+        "SeriesId": "s1",
+        "DataTypes": datatypes,
+    }
+    if not wsj_key.startswith("BOND/"):
+        series_obj["Indicators"] = [{"Parameters": [], "Kind": "Volume", "SeriesId": "i3"}]
+
     payload = {
         "Step": step,
-        "TimeFrame": timeframe,
+        "TimeFrame": valid_timeframe,
         "EntitlementToken": DEFAULT_ENTITLEMENT_TOKEN,
         "IncludeMockTick": True,
         "FilterNullSlots": False,
@@ -153,16 +208,7 @@ def fetch_wsj_timeseries(
         "WantPriorClose": False,
         "IncludeCurrentQuotes": False,
         "ResetTodaysAfterHoursPercentChange": False,
-        "Series": [
-            {
-                "Key": wsj_key,
-                "Dialect": "Charting",
-                "Kind": "Ticker",
-                "SeriesId": "s1",
-                "DataTypes": datatypes,
-                "Indicators": [{"Parameters": [], "Kind": "Volume", "SeriesId": "i3"}],
-            }
-        ],
+        "Series": [series_obj],
     }
 
     params = {

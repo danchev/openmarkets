@@ -17,11 +17,11 @@ def test_resolve_wsj_key():
     assert unit == "USD/bbl"
 
     key_gold, name_gold, _, _ = resolve_wsj_key("gold")
-    assert key_gold == "FUTURE/US/XCEC/GC00"
+    assert key_gold == "FUTURE/US/XNYM/GC00"
     assert name_gold == "Gold"
 
     key_10y, name_10y, _, _ = resolve_wsj_key("US10Y")
-    assert key_10y == "BOND/US/TMUBMUSD10Y"
+    assert key_10y == "BOND/BX/XTUP/TMUBMUSD10Y"
     assert "10-Year" in name_10y
 
     # Raw key pass-through
@@ -54,3 +54,14 @@ def test_fetch_wsj_timeseries_success():
     assert "TimeInfo" in result
     assert result["TimeInfo"]["Ticks"] == [1616457600000]
     session_mock.get.assert_called_once()
+
+
+def test_normalize_wsj_timeframe():
+    from openmarkets.core.wsj import normalize_wsj_timeframe
+
+    assert normalize_wsj_timeframe("1y") == "P1Y"
+    assert normalize_wsj_timeframe("1mo") == "P1M"
+    assert normalize_wsj_timeframe("5y") == "P5Y"
+    assert normalize_wsj_timeframe("7d") == "D7"
+    assert normalize_wsj_timeframe("max") == "all"
+    assert normalize_wsj_timeframe("P3M") == "P3M"

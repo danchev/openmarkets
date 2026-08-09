@@ -72,8 +72,10 @@ class WSJCommoditiesRepository:
 
         rows: list[dict] = []
         for ts, vals in zip(ticks, datapoints, strict=False):
+            if not vals or all(v is None for v in vals):
+                continue
             dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
-            if len(vals) >= 4:
+            if len(vals) >= 4 and vals[3] is not None:
                 rows.append(
                     {
                         "timestamp": ts,
@@ -81,10 +83,10 @@ class WSJCommoditiesRepository:
                         "open": vals[0],
                         "high": vals[1],
                         "low": vals[2],
-                        "close": vals[3],
+                        "close": float(vals[3]),
                     }
                 )
-            elif len(vals) == 1:
+            elif len(vals) >= 1 and vals[0] is not None:
                 rows.append(
                     {
                         "timestamp": ts,
@@ -92,11 +94,12 @@ class WSJCommoditiesRepository:
                         "open": None,
                         "high": None,
                         "low": None,
-                        "close": vals[0],
+                        "close": float(vals[0]),
                     }
                 )
 
         points = [CommodityHistoryPoint.model_validate(r) for r in rows]
+
         return CommodityHistory(
             symbol=symbol.upper(),
             name=name,

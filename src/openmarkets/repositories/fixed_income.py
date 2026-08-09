@@ -68,8 +68,10 @@ class WSJFixedIncomeRepository:
 
         points: list[TreasuryYieldPoint] = []
         for ts, vals in zip(ticks, datapoints, strict=False):
+            if not vals or vals[0] is None:
+                continue
             dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
-            val = float(vals[0]) if vals else 0.0
+            val = float(vals[0])
             points.append(
                 TreasuryYieldPoint(
                     maturity=maturity,
