@@ -23,8 +23,10 @@ from openmarkets.core.cache import _GLOBAL_CACHE
 from openmarkets.core.config import Settings, get_settings
 from openmarkets.services import (
     analysis_service,
+    commodities_service,
     crypto_service,
     financials_service,
+    fixed_income_service,
     funds_service,
     holdings_service,
     markets_service,
@@ -42,8 +44,10 @@ INSTRUCTIONS = "This server allows for the integration of various market data to
 # Collection of all services to be registered
 _SERVICES = [
     analysis_service,
+    commodities_service,
     crypto_service,
     financials_service,
+    fixed_income_service,
     funds_service,
     holdings_service,
     markets_service,
@@ -72,6 +76,17 @@ _SERVICE_PROFILES = {
         markets_service,
         crypto_service,
         funds_service,
+        commodities_service,
+        fixed_income_service,
+    ],
+    "macro": [
+        commodities_service,
+        fixed_income_service,
+        markets_service,
+        sector_industry_service,
+    ],
+    "commodities": [
+        commodities_service,
     ],
 }
 

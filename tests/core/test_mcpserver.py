@@ -178,7 +178,7 @@ def test_published_tool_surface_is_explicit():
 
     published = {name: getattr(services, name).tool_names() for name in services.__all__}
 
-    assert sum(len(names) for names in published.values()) == 76
+    assert sum(len(names) for names in published.values()) == 83
     for names in published.values():
         assert names, "every service must publish at least one tool"
         assert all(name.startswith(("get_", "list_", "search_", "compare_")) for name in names)
@@ -195,9 +195,10 @@ def test_export_schema():
     assert result == [{"name": "sample_tool", "description": "sample"}]
 
 
-@pytest.mark.parametrize("profile", ["full", "minimal", "equities", "quant"])
+@pytest.mark.parametrize("profile", ["full", "minimal", "equities", "quant", "macro", "commodities"])
 def test_create_mcp_profiles(profile):
     config = mcpserver.Settings(profile=profile)
+
     server = mcpserver.create_mcp(config)
     assert server is not None
 
