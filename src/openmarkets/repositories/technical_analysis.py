@@ -19,13 +19,13 @@ class YFinanceTechnicalAnalysisRepository:
     """YFinance-based implementation of technical analysis repository."""
 
     def get_technical_indicators(
-        self, ticker: str, period: Period = "6mo", session: Session | None = None
+        self, ticker: str, period: Period = "1y", session: Session | None = None
     ) -> TechnicalIndicatorsDict:
         """Retrieve technical indicators for a given ticker.
 
         Args:
             ticker: Stock ticker symbol.
-            period: Historical data period (default: "6mo").
+            period: Historical data period (default: "1y").
             session: Optional curl_cffi session for requests.
 
         Returns:

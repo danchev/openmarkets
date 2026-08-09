@@ -46,7 +46,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
-    def get_technical_indicators(self, ticker: Ticker, period: Period = "6mo") -> TechnicalIndicatorsDict:
+    def get_technical_indicators(self, ticker: Ticker, period: Period = "1y") -> TechnicalIndicatorsDict:
         """
         Retrieve technical indicators for a given ticker and period.
 
