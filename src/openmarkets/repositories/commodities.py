@@ -13,8 +13,10 @@ from openmarkets.schemas.commodities import (
 )
 
 ENERGY_SYMBOLS = ["CRUDE_OIL", "BRENT_CRUDE", "NATURAL_GAS", "GASOLINE", "HEATING_OIL"]
-METALS_SYMBOLS = ["GOLD", "SILVER", "COPPER", "PLATINUM"]
+METALS_SYMBOLS = ["GOLD", "SILVER", "COPPER", "PLATINUM", "PALLADIUM"]
 AGRICULTURE_SYMBOLS = ["WHEAT", "CORN", "SOYBEANS", "COFFEE", "SUGAR"]
+LIVESTOCK_SYMBOLS = ["LIVE_CATTLE", "FEEDER_CATTLE", "LEAN_HOGS"]
+SOFTS_SYMBOLS = ["COFFEE", "SUGAR", "COCOA", "COTTON"]
 
 
 class CommoditiesRepository(Protocol):
@@ -35,6 +37,10 @@ class CommoditiesRepository(Protocol):
     def get_metals_quotes(self, session: Session | None = None) -> list[CommodityQuote]: ...
 
     def get_agriculture_quotes(self, session: Session | None = None) -> list[CommodityQuote]: ...
+
+    def get_livestock_quotes(self, session: Session | None = None) -> list[CommodityQuote]: ...
+
+    def get_softs_quotes(self, session: Session | None = None) -> list[CommodityQuote]: ...
 
 
 class WSJCommoditiesRepository:
@@ -142,3 +148,11 @@ class WSJCommoditiesRepository:
     def get_agriculture_quotes(self, session: Session | None = None) -> list[CommodityQuote]:
         """Fetch quotes for major agricultural commodities."""
         return [self.get_commodity_quote(sym, session=session) for sym in AGRICULTURE_SYMBOLS]
+
+    def get_livestock_quotes(self, session: Session | None = None) -> list[CommodityQuote]:
+        """Fetch quotes for major livestock commodities (Live Cattle, Feeder Cattle, Lean Hogs)."""
+        return [self.get_commodity_quote(sym, session=session) for sym in LIVESTOCK_SYMBOLS]
+
+    def get_softs_quotes(self, session: Session | None = None) -> list[CommodityQuote]:
+        """Fetch quotes for soft commodities (Coffee, Sugar, Cocoa, Cotton)."""
+        return [self.get_commodity_quote(sym, session=session) for sym in SOFTS_SYMBOLS]

@@ -77,14 +77,26 @@ class CommoditiesService(ToolRegistrationMixin):
     @tool
     @cached(ttl=300.0)
     def get_metals_prices(self) -> list[CommodityQuote]:
-        """Retrieve current prices for precious and industrial metals (Gold, Silver, Copper, Platinum)."""
+        """Retrieve current prices for precious and industrial metals (Gold, Silver, Copper, Platinum, Palladium)."""
         return self.repository.get_metals_quotes(session=self.session)
 
     @tool
     @cached(ttl=300.0)
     def get_agriculture_prices(self) -> list[CommodityQuote]:
-        """Retrieve current prices for major agricultural grains and soft commodities (Wheat, Corn, Soybeans, Coffee, Sugar)."""
+        """Retrieve current prices for major agricultural grains (Wheat, Corn, Soybeans, Coffee, Sugar)."""
         return self.repository.get_agriculture_quotes(session=self.session)
+
+    @tool
+    @cached(ttl=300.0)
+    def get_livestock_prices(self) -> list[CommodityQuote]:
+        """Retrieve current snapshot prices for livestock commodities (Live Cattle, Feeder Cattle, Lean Hogs)."""
+        return self.repository.get_livestock_quotes(session=self.session)
+
+    @tool
+    @cached(ttl=300.0)
+    def get_softs_prices(self) -> list[CommodityQuote]:
+        """Retrieve current snapshot prices for soft commodities (Coffee, Sugar, Cocoa, Cotton)."""
+        return self.repository.get_softs_quotes(session=self.session)
 
 
 commodities_service = CommoditiesService()

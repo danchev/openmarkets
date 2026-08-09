@@ -26,6 +26,8 @@ def test_commodities_service_delegation():
     repo_mock.get_energy_quotes.return_value = []
     repo_mock.get_metals_quotes.return_value = []
     repo_mock.get_agriculture_quotes.return_value = []
+    repo_mock.get_livestock_quotes.return_value = []
+    repo_mock.get_softs_quotes.return_value = []
 
     service = CommoditiesService(repository=repo_mock)
 
@@ -38,3 +40,5 @@ def test_commodities_service_delegation():
     assert service.get_energy_prices() == []
     assert service.get_metals_prices() == []
     assert service.get_agriculture_prices() == []
+    assert service.get_livestock_prices() == []
+    assert service.get_softs_prices() == []

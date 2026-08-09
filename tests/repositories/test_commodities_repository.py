@@ -61,3 +61,28 @@ def test_get_commodity_history_empty():
     with patch("openmarkets.repositories.commodities.fetch_wsj_timeseries", return_value={}):
         history = repo.get_commodity_history("WHEAT")
         assert history.data_points == []
+
+
+def test_get_livestock_quotes():
+    repo = WSJCommoditiesRepository()
+    mock_raw = {
+        "TimeInfo": {"Ticks": [1616457600000]},
+        "Series": [{"DataPoints": [[200.0, 205.0, 198.0, 202.5]]}],
+    }
+    with patch("openmarkets.repositories.commodities.fetch_wsj_timeseries", return_value=mock_raw):
+        quotes = repo.get_livestock_quotes()
+        assert len(quotes) == 3
+        assert quotes[0].symbol == "LIVE_CATTLE"
+
+
+def test_get_softs_quotes():
+    repo = WSJCommoditiesRepository()
+    mock_raw = {
+        "TimeInfo": {"Ticks": [1616457600000]},
+        "Series": [{"DataPoints": [[100.0, 105.0, 98.0, 102.5]]}],
+    }
+    with patch("openmarkets.repositories.commodities.fetch_wsj_timeseries", return_value=mock_raw):
+        quotes = repo.get_softs_quotes()
+        assert len(quotes) == 4
+        assert any(q.symbol == "COCOA" for q in quotes)
+        assert any(q.symbol == "COTTON" for q in quotes)
