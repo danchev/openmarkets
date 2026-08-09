@@ -39,3 +39,14 @@ def test_get_settings_cached():
     s1 = config.get_settings()
     s2 = config.get_settings()
     assert s1 is s2
+
+
+def test_settings_env_prefix_and_profile(monkeypatch):
+    monkeypatch.setenv("OPENMARKETS_PORT", "9999")
+    monkeypatch.setenv("OPENMARKETS_PROFILE", "minimal")
+    monkeypatch.setenv("HOST", "ambient_host_to_ignore")
+
+    settings = config.Settings()
+    assert settings.port == 9999
+    assert settings.profile == "minimal"
+    assert settings.host == "127.0.0.1"

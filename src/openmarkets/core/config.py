@@ -43,8 +43,28 @@ class Settings(BaseSettings):
         "*",
         description="Allowed origins for CORS (Cross-Origin Resource Sharing).",
     )
+    http_auth_enabled: bool = Field(
+        False,
+        description="Enable Bearer token authentication for HTTP transport.",
+    )
+    http_auth_secret: str = Field(
+        "",
+        description="Shared secret required when HTTP authentication is enabled.",
+    )
+    export_schema: str | None = Field(
+        None,
+        description="Path to export the MCP tool JSON schema and exit.",
+    )
+    profile: str = Field(
+        "full",
+        description="Tool profile to expose: 'full' (all tools), 'minimal' (essential 12 tools), 'equities' (equities & options), 'quant' (technical & sector analytics).",
+    )
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="OPENMARKETS_",
+        extra="ignore",
+    )
 
     @classmethod
     def settings_customise_sources(
