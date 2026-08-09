@@ -7,6 +7,7 @@ between the MCP tools layer and repository layer.
 
 from typing import Annotated
 
+from openmarkets.core.cache import cached
 from openmarkets.core.types import Region, Ticker
 from openmarkets.repositories.sector_industry import DEFAULT_REGION, YFinanceSectorIndustryRepository
 from openmarkets.schemas.sector_industry import (
@@ -39,6 +40,7 @@ class SectorIndustryService(ToolRegistrationMixin):
         self.repository = repository or YFinanceSectorIndustryRepository()
 
     @tool
+    @cached(ttl=300.0)
     def get_sector_overview(
         self, sector: Annotated[str, SectorEnum.__members__], region: Region = DEFAULT_REGION
     ) -> SectorOverview:

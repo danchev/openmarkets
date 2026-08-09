@@ -7,6 +7,7 @@ Acts as an intermediary between the MCP tools layer and repository layer.
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.cache import cached
 from openmarkets.core.concurrency import gather
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
@@ -50,6 +51,7 @@ class AnalysisService(ToolRegistrationMixin):
         return self._session if self._session is not None else get_session()
 
     @tool
+    @cached(ttl=300.0)
     def get_analyst_recommendations(self, ticker: Ticker) -> list[AnalystRecommendation]:
         """
         Retrieve analyst recommendations for a given ticker.
