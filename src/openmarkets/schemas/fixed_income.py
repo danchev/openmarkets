@@ -35,3 +35,30 @@ class FixedIncomeHistory(BaseModel):
     maturity: str = Field(..., description="Maturity label")
     name: str = Field(..., description="Descriptive name")
     data_points: list[TreasuryYieldPoint] = Field(default_factory=list, description="Historical yield observations")
+
+
+class SovereignYieldQuote(BaseModel):
+    """Benchmark sovereign 10-year yield quote for a country."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    country: str = Field(..., description="Country name (e.g. 'United States', 'Germany', 'United Kingdom', 'Japan')")
+    symbol: str = Field(..., description="Symbol alias (e.g. 'US10Y', 'DE10Y', 'UK10Y', 'JP10Y')")
+    name: str = Field(..., description="Bond instrument name (e.g. 'Germany 10-Year Bund Yield')")
+    yield_percent: float = Field(..., description="10-Year benchmark yield in percent")
+    spread_vs_us10y_bps: float | None = Field(
+        None, description="Spread against US 10-Year Treasury yield in basis points"
+    )
+    date: str = Field(..., description="Observation date in YYYY-MM-DD format")
+    timestamp: int = Field(..., description="Unix timestamp in milliseconds")
+
+
+class GlobalSovereignYields(BaseModel):
+    """Comparison snapshot of major global 10-year sovereign bond benchmark yields."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    as_of_date: str = Field(..., description="Snapshot date")
+    sovereigns: list[SovereignYieldQuote] = Field(
+        default_factory=list, description="Benchmark 10-year yields across major economies"
+    )

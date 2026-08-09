@@ -37,3 +37,27 @@ def test_get_treasury_yield_curve():
         # 10Y is 4.20, 2Y is 4.50 -> spread is (4.20 - 4.50) * 100 = -30.0 bps
         assert curve.spread_2y_10y_bps == -30.0
         assert curve.is_inverted is True
+
+
+def test_get_global_sovereign_yields():
+    repo = WSJFixedIncomeRepository()
+
+    def mock_fetch(wsj_key, **kwargs):
+        if "TMUBMUSD10Y" in wsj_key:
+            val = 4.50
+        elif "TMBMKDE-10Y" in wsj_key:
+            val = 3.00
+        else:
+            val = 2.00
+        return {
+            "TimeInfo": {"Ticks": [1616457600000]},
+            "Series": [{"DataPoints": [[val]]}],
+        }
+
+    with patch("openmarkets.repositories.fixed_income.fetch_wsj_timeseries", side_effect=mock_fetch):
+        global_yields = repo.get_global_sovereign_yields()
+        assert len(global_yields.sovereigns) == 4
+        de = next(s for s in global_yields.sovereigns if s.symbol == "DE10Y")
+        assert de.yield_percent == 3.00
+        # DE vs US: (3.00 - 4.50) * 100 = -150.0 bps
+        assert de.spread_vs_us10y_bps == -150.0

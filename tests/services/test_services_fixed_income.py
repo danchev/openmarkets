@@ -28,3 +28,13 @@ def test_fixed_income_service_delegation():
 
     history = service.get_treasury_yield_history("10Y", timeframe="P1Y")
     assert history.maturity == "10Y"
+
+    from openmarkets.schemas.fixed_income import GlobalSovereignYields
+
+    repo_mock.get_global_sovereign_yields.return_value = GlobalSovereignYields(
+        as_of_date="2026-08-09",
+        sovereigns=[],
+    )
+    sov = service.get_global_sovereign_yields()
+    assert sov.as_of_date == "2026-08-09"
+    repo_mock.get_global_sovereign_yields.assert_called_once()

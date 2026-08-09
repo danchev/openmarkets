@@ -8,6 +8,8 @@ from curl_cffi.requests import Session
 from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.fixed_income import (
     FixedIncomeHistory,
+    GlobalSovereignYields,
+    SovereignYieldQuote,
     TreasuryYieldCurve,
     TreasuryYieldPoint,
 )
@@ -28,6 +30,8 @@ class FixedIncomeRepository(Protocol):
     """Structural type for fixed income data access."""
 
     def get_treasury_yield_curve(self, session: Session | None = None) -> TreasuryYieldCurve: ...
+
+    def get_global_sovereign_yields(self, session: Session | None = None) -> GlobalSovereignYields: ...
 
     def get_yield_history(
         self,
@@ -128,4 +132,48 @@ class WSJFixedIncomeRepository:
             spread_2y_10y_bps=spread_2y_10y,
             spread_3m_10y_bps=spread_3m_10y,
             is_inverted=is_inverted,
+        )
+
+    def get_global_sovereign_yields(self, session: Session | None = None) -> GlobalSovereignYields:
+        """Fetch comparison snapshot of 10-year benchmark sovereign yields across major economies."""
+        benchmarks = [
+            ("United States", "US10Y"),
+            ("Germany", "DE10Y"),
+            ("United Kingdom", "UK10Y"),
+            ("Japan", "JP10Y"),
+        ]
+
+        quotes: list[SovereignYieldQuote] = []
+        us_yield: float | None = None
+        as_of_date = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+
+        for country, sym in benchmarks:
+            history = self.get_yield_history(maturity=sym, timeframe="D7", step="P1D", session=session)
+            if history.data_points:
+                latest = history.data_points[-1]
+                if sym == "US10Y":
+                    us_yield = latest.yield_percent
+                quotes.append(
+                    SovereignYieldQuote(
+                        country=country,
+                        symbol=sym,
+                        name=history.name,
+                        yield_percent=latest.yield_percent,
+                        spread_vs_us10y_bps=None,
+                        date=latest.date,
+                        timestamp=latest.timestamp,
+                    )
+                )
+                as_of_date = latest.date
+
+        if us_yield is not None:
+            for q in quotes:
+                if q.symbol != "US10Y":
+                    q.spread_vs_us10y_bps = round((q.yield_percent - us_yield) * 100, 2)
+                else:
+                    q.spread_vs_us10y_bps = 0.0
+
+        return GlobalSovereignYields(
+            as_of_date=as_of_date,
+            sovereigns=quotes,
         )
