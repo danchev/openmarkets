@@ -3,6 +3,7 @@ from openmarkets.services.commodities import commodities_service
 from openmarkets.services.crypto import crypto_service
 from openmarkets.services.financials import financials_service
 from openmarkets.services.fixed_income import fixed_income_service
+from openmarkets.services.forex import forex_service
 from openmarkets.services.funds import funds_service
 from openmarkets.services.holdings import holdings_service
 from openmarkets.services.markets import markets_service
@@ -18,6 +19,7 @@ __all__ = [
     "crypto_service",
     "financials_service",
     "fixed_income_service",
+    "forex_service",
     "funds_service",
     "holdings_service",
     "markets_service",
