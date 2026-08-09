@@ -60,6 +60,9 @@ class FakeDataFrame:
     def transpose(self) -> "FakeDataFrame":
         return self
 
+    def to_dict(self, orient: str = "records") -> list[dict[str, Any]]:
+        return self._rows
+
     def iterrows(self):
         """Yield (index, row) tuples where row has to_dict() method."""
         for i, row_data in enumerate(self._rows):

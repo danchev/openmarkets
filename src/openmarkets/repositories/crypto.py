@@ -142,7 +142,7 @@ class YFinanceCryptoRepository:
         Returns:
             List of CryptoHistory objects.
         """
-        return [CryptoHistory(**row.to_dict()) for _, row in dataframe.iterrows()]
+        return [CryptoHistory(**row) for row in dataframe.to_dict(orient="records")]
 
     def _collect_crypto_sentiment_data(self, tickers: list[str], session: Session | None) -> list[dict]:
         """Collect sentiment data for given cryptocurrency tickers.

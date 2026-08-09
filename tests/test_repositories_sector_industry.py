@@ -13,6 +13,9 @@ class _FakeDF:
     def reset_index(self):
         return self
 
+    def to_dict(self, orient: str = "records"):
+        return [row.to_dict() if hasattr(row, "to_dict") else row for row in self._rows]
+
     def iterrows(self):
         for i, row in enumerate(self._rows):
             yield i, row

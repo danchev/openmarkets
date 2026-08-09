@@ -115,7 +115,7 @@ class YFinanceFundsRepository:
             return []
         df = fund_info.top_holdings
         reset_df = df.reset_index()
-        return [FundTopHolding(**row.to_dict()) for _, row in reset_df.iterrows()]
+        return [FundTopHolding(**row) for row in reset_df.to_dict(orient="records")]
 
     def get_fund_bond_holdings(self, ticker: str, session: Session | None = None) -> list[FundBondHolding]:
         """Retrieve fund bond holdings for a ticker.
@@ -136,7 +136,7 @@ class YFinanceFundsRepository:
         df = fund_info.bond_holdings
         transposed = df.transpose()
         reset_df = transposed.reset_index()
-        return [FundBondHolding(**row.to_dict()) for _, row in reset_df.iterrows()]
+        return [FundBondHolding(**row) for row in reset_df.to_dict(orient="records")]
 
     def get_fund_equity_holdings(self, ticker: str, session: Session | None = None) -> list[FundEquityHolding]:
         """Retrieve fund equity holdings for a ticker.
@@ -157,7 +157,7 @@ class YFinanceFundsRepository:
         df = fund_info.equity_holdings
         transposed = df.transpose()
         reset_df = transposed.reset_index()
-        return [FundEquityHolding(**row.to_dict()) for _, row in reset_df.iterrows()]
+        return [FundEquityHolding(**row) for row in reset_df.to_dict(orient="records")]
 
     def get_fund_asset_class_holdings(
         self, ticker: str, session: Session | None = None

@@ -51,7 +51,7 @@ class YFinanceHoldingsRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         df = ticker_obj.get_institutional_holders()
         df.reset_index(inplace=True)
-        return [StockInstitutionalHoldings(**row.to_dict()) for _, row in df.iterrows()]
+        return [StockInstitutionalHoldings(**row) for row in df.to_dict(orient="records")]
 
     def get_mutual_fund_holdings(self, ticker: str, session: Session | None = None) -> list[StockMutualFundHoldings]:
         """Retrieve mutual fund holdings for a ticker.
@@ -66,7 +66,7 @@ class YFinanceHoldingsRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         df = ticker_obj.get_mutualfund_holders()
         df.reset_index(inplace=True)
-        return [StockMutualFundHoldings(**row.to_dict()) for _, row in df.iterrows()]
+        return [StockMutualFundHoldings(**row) for row in df.to_dict(orient="records")]
 
     def get_insider_purchases(self, ticker: str, session: Session | None = None) -> list[InsiderPurchase]:
         """Retrieve insider purchase transactions for a ticker.
@@ -81,7 +81,7 @@ class YFinanceHoldingsRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         df = ticker_obj.get_insider_purchases()
         df.reset_index(inplace=True)
-        return [InsiderPurchase(**row.to_dict()) for _, row in df.iterrows()]
+        return [InsiderPurchase(**row) for row in df.to_dict(orient="records")]
 
     def get_insider_roster_holders(self, ticker: str, session: Session | None = None) -> list[InsiderRosterHolder]:
         """Retrieve insider roster holders for a ticker.
@@ -96,4 +96,4 @@ class YFinanceHoldingsRepository:
         ticker_obj = yf.Ticker(ticker, session=session)
         df = ticker_obj.get_insider_roster_holders()
         reset_df = df.reset_index()
-        return [InsiderRosterHolder(**row.to_dict()) for _, row in reset_df.iterrows()]
+        return [InsiderRosterHolder(**row) for row in reset_df.to_dict(orient="records")]

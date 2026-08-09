@@ -108,7 +108,7 @@ class YFinanceSectorIndustryRepository:
         if data is None:
             return []
         reset_data = data.reset_index()
-        return [SectorTopCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
+        return [SectorTopCompaniesEntry(**row) for row in reset_data.to_dict(orient="records")]
 
     def get_sector_top_companies_for_ticker(
         self, ticker: str, region: str = DEFAULT_REGION, session: Session | None = None
@@ -273,7 +273,7 @@ class YFinanceSectorIndustryRepository:
         if data is None:
             return []
         reset_data = data.reset_index()
-        return [IndustryTopCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
+        return [IndustryTopCompaniesEntry(**row) for row in reset_data.to_dict(orient="records")]
 
     def get_industry_top_growth_companies(
         self, industry: str, region: str = DEFAULT_REGION, session: Session | None = None
@@ -293,7 +293,7 @@ class YFinanceSectorIndustryRepository:
         if data is None:
             return []
         reset_data = data.reset_index()
-        return [IndustryTopGrowthCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
+        return [IndustryTopGrowthCompaniesEntry(**row) for row in reset_data.to_dict(orient="records")]
 
     def get_industry_top_performing_companies(
         self, industry: str, region: str = DEFAULT_REGION, session: Session | None = None
@@ -313,4 +313,4 @@ class YFinanceSectorIndustryRepository:
         if data is None:
             return []
         reset_data = data.reset_index()
-        return [IndustryTopPerformingCompaniesEntry(**row.to_dict()) for _, row in reset_data.iterrows()]
+        return [IndustryTopPerformingCompaniesEntry(**row) for row in reset_data.to_dict(orient="records")]

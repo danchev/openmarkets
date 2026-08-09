@@ -102,11 +102,11 @@ class YFinanceOptionsRepository:
 
         call_objs = None
         if not calls.empty:
-            call_objs = [CallOption(**row.to_dict()) for _, row in calls.iterrows()]
+            call_objs = [CallOption(**row) for row in calls.to_dict(orient="records")]
 
         put_objs = None
         if not puts.empty:
-            put_objs = [PutOption(**row.to_dict()) for _, row in puts.iterrows()]
+            put_objs = [PutOption(**row) for row in puts.to_dict(orient="records")]
 
         underlying = OptionUnderlying(**getattr(option_chain, "underlying", {}))
         return OptionContractChain(calls=call_objs, puts=put_objs, underlying=underlying)
@@ -130,7 +130,7 @@ class YFinanceOptionsRepository:
         calls = option_chain.calls
         if calls.empty:
             return None
-        return [CallOption(**row.to_dict()) for _, row in calls.iterrows()]
+        return [CallOption(**row) for row in calls.to_dict(orient="records")]
 
     def get_put_options(
         self, ticker: str, expiration: date | None = None, session: Session | None = None
@@ -151,7 +151,7 @@ class YFinanceOptionsRepository:
         puts = option_chain.puts
         if puts.empty:
             return None
-        return [PutOption(**row.to_dict()) for _, row in puts.iterrows()]
+        return [PutOption(**row) for row in puts.to_dict(orient="records")]
 
     def get_options_volume_analysis(
         self, ticker: str, expiration_date: str | None = None, session: Session | None = None
