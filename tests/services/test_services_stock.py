@@ -53,3 +53,42 @@ def test_get_info_with_fields_filtering(monkeypatch):
     service = StockService(repository=repo_mock)
     filtered = service.get_info("AAPL", fields=["symbol", "currency"])
     assert filtered == {"symbol": "AAPL", "currency": "USD"}
+
+
+def test_stock_service_wsj_delegation():
+    from unittest.mock import Mock
+
+    from openmarkets.schemas.stock import WSJBollingerBandsSeries, WSJStockHistory
+    from openmarkets.services.stock import StockService
+
+    wsj_repo_mock = Mock()
+    mock_history = WSJStockHistory(symbol="TSLA", name="Tesla Inc.", data_points=[])
+    mock_bb = WSJBollingerBandsSeries(symbol="TSLA", window=20, multiplier=2.0, data_points=[])
+
+    wsj_repo_mock.get_stock_history.return_value = mock_history
+    wsj_repo_mock.get_bollinger_bands.return_value = mock_bb
+
+    service = StockService(wsj_repository=wsj_repo_mock)
+
+    hist = service.get_wsj_stock_history("TSLA", timeframe="1mo", step="P1D")
+    assert hist == mock_history
+    wsj_repo_mock.get_stock_history.assert_called_with(
+        ticker="TSLA",
+        timeframe="1mo",
+        step="P1D",
+        session=service.session,
+    )
+
+    intra = service.get_wsj_intraday_bars("TSLA", timeframe="D1", step="PT1M")
+    assert intra == mock_history
+
+    bb = service.get_wsj_bollinger_bands("TSLA", window=20, multiplier=2.0)
+    assert bb == mock_bb
+    wsj_repo_mock.get_bollinger_bands.assert_called_with(
+        ticker="TSLA",
+        window=20,
+        multiplier=2.0,
+        timeframe="P1M",
+        step="P1D",
+        session=service.session,
+    )

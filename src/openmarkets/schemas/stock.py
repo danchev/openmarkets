@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Any
 
 import pandas as pd
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from openmarkets.schemas.company import CompanyOfficer
 
@@ -629,3 +629,56 @@ class ValuationMeasuresEntry(BaseModel):
         if isinstance(value, float) and value != value:  # NaN is the only float that is != itself
             return None
         return value
+
+
+class WSJIntradayBar(BaseModel):
+    """A single intraday price bar from WSJ Michelangelo."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    timestamp: int = Field(..., description="Epoch timestamp in milliseconds")
+    date: str = Field(..., description="Date / time string in UTC")
+    open: float | None = Field(None, description="Open price")
+    high: float | None = Field(None, description="High price")
+    low: float | None = Field(None, description="Low price")
+    close: float = Field(..., description="Close / last price")
+    volume: float | None = Field(None, description="Bar trading volume")
+
+
+class WSJStockHistory(BaseModel):
+    """Historical stock timeseries from WSJ Michelangelo."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str = Field(..., description="Stock ticker symbol (e.g. 'TSLA', 'AAPL')")
+    name: str = Field(..., description="Company name")
+    data_points: list[WSJIntradayBar] = Field(default_factory=list, description="Ordered price bars")
+
+
+class WSJBollingerBandPoint(BaseModel):
+    """Server-side computed Bollinger Band point from WSJ."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    timestamp: int = Field(..., description="Epoch timestamp in milliseconds")
+    date: str = Field(..., description="Date / time string")
+    price: float = Field(..., description="Close price")
+    lower_band: float = Field(..., description="Lower Bollinger band")
+    middle_band: float = Field(..., description="Middle Bollinger band (SMA)")
+    upper_band: float = Field(..., description="Upper Bollinger band")
+    bandwidth_pct: float | None = Field(
+        None, description="Bollinger bandwidth percentage ((upper - lower) / middle * 100)"
+    )
+
+
+class WSJBollingerBandsSeries(BaseModel):
+    """Timeseries of server-side computed Bollinger Bands from WSJ Michelangelo."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str = Field(..., description="Stock ticker symbol")
+    window: int = Field(..., description="Moving average calculation window (e.g. 20)")
+    multiplier: float = Field(..., description="Standard deviation multiplier (e.g. 2.0)")
+    data_points: list[WSJBollingerBandPoint] = Field(
+        default_factory=list, description="Calculated Bollinger Band points"
+    )

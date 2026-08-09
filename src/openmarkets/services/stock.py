@@ -11,7 +11,7 @@ from curl_cffi.requests import Session
 from openmarkets.core.cache import cached
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Interval, Period, Ticker, ValuationFrequency
-from openmarkets.repositories.stock import StockRepository, YFinanceStockRepository
+from openmarkets.repositories.stock import StockRepository, WSJStockRepository, YFinanceStockRepository
 from openmarkets.schemas.stock import (
     CorporateActions,
     DividendSummary,
@@ -28,6 +28,8 @@ from openmarkets.schemas.stock import (
     StockInfo_v2,
     StockSplit,
     ValuationMeasuresEntry,
+    WSJBollingerBandsSeries,
+    WSJStockHistory,
 )
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
@@ -38,14 +40,21 @@ class StockService(ToolRegistrationMixin):
     Provides methods to retrieve stock info, history, dividends, financial summaries, risk metrics, technical indicators, splits, corporate actions, and news for a given ticker.
     """
 
-    def __init__(self, repository: StockRepository | None = None, session: Session | None = None):
+    def __init__(
+        self,
+        repository: StockRepository | None = None,
+        wsj_repository: WSJStockRepository | None = None,
+        session: Session | None = None,
+    ):
         """Initialize the StockService.
 
         Args:
-            repository: Repository instance for data access. Defaults to YFinanceStockRepository.
+            repository: Repository instance for YFinance data access. Defaults to YFinanceStockRepository.
+            wsj_repository: Repository instance for WSJ timeseries access. Defaults to WSJStockRepository.
             session: HTTP session for requests. Defaults to chrome-impersonating Session.
         """
         self.repository = repository or YFinanceStockRepository()
+        self.wsj_repository = wsj_repository or WSJStockRepository()
         self._session = session
 
     @property
@@ -285,6 +294,89 @@ class StockService(ToolRegistrationMixin):
                 cryptocurrencies).
         """
         return self.repository.get_valuation_history(ticker, freq, periods, session=self.session)
+
+    @tool
+    @cached(ttl=300.0)
+    def get_wsj_stock_history(
+        self,
+        ticker: Ticker,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+    ) -> WSJStockHistory:
+        """Retrieve historical price bars (OHLCV) for a stock directly from WSJ Michelangelo.
+
+        Args:
+            ticker: Stock symbol (e.g. 'TSLA', 'AAPL', 'NVDA', 'MSFT').
+            timeframe: Timespan duration: 'D7' (7 days), '1mo', 'P3M', 'P1Y', '5y', 'all'.
+            step: Bar frequency: 'P1D' (daily), 'PT1M' (1-minute intraday), 'PT5M' (5-minute).
+
+        Returns:
+            WSJStockHistory with ordered historical OHLCV price bars.
+        """
+        return self.wsj_repository.get_stock_history(
+            ticker=ticker,
+            timeframe=timeframe,
+            step=step,
+            session=self.session,
+        )
+
+    @tool
+    @cached(ttl=300.0)
+    def get_wsj_intraday_bars(
+        self,
+        ticker: Ticker,
+        timeframe: str = "D1",
+        step: str = "PT1M",
+    ) -> WSJStockHistory:
+        """Retrieve high-resolution intraday continuous tick bars (including pre-market and after-hours) from WSJ.
+
+        Args:
+            ticker: Stock symbol (e.g. 'TSLA', 'AAPL').
+            timeframe: Intraday duration: 'D1' (today), 'D5' (past 5 days), 'D7' (past 7 days).
+            step: Bar frequency: 'PT1M' (1-minute bars), 'PT5M' (5-minute bars), 'PT15M' (15-minute bars).
+
+        Returns:
+            WSJStockHistory containing continuous 1-minute intraday bars with volume.
+        """
+        return self.wsj_repository.get_stock_history(
+            ticker=ticker,
+            timeframe=timeframe,
+            step=step,
+            session=self.session,
+        )
+
+    @tool
+    @cached(ttl=300.0)
+    def get_wsj_bollinger_bands(
+        self,
+        ticker: Ticker,
+        window: int = 20,
+        multiplier: float = 2.0,
+        timeframe: str = "P1M",
+        step: str = "P1D",
+    ) -> WSJBollingerBandsSeries:
+        """Retrieve server-side computed Bollinger Bands (upper, middle, lower, bandwidth) from WSJ Michelangelo.
+
+        Calculated natively on the WSJ charting servers, minimizing client compute overhead.
+
+        Args:
+            ticker: Stock symbol (e.g. 'TSLA', 'NVDA').
+            window: Moving average calculation window (default 20).
+            multiplier: Standard deviation multiplier (default 2.0).
+            timeframe: Timespan duration (e.g. 'P1M', 'P3M', 'P1Y').
+            step: Bar step frequency (e.g. 'P1D', 'PT1M').
+
+        Returns:
+            WSJBollingerBandsSeries containing timestamped price, lower band, middle band, upper band, and bandwidth %.
+        """
+        return self.wsj_repository.get_bollinger_bands(
+            ticker=ticker,
+            window=window,
+            multiplier=multiplier,
+            timeframe=timeframe,
+            step=step,
+            session=self.session,
+        )
 
 
 stock_service = StockService()

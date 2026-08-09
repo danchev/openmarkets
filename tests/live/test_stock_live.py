@@ -148,3 +148,46 @@ def test_get_valuation_history_yearly_against_real_api():
     assert isinstance(result, list)
     periods = [entry.period for entry in result]
     assert "Current" in periods
+
+
+def test_get_wsj_stock_history_live():
+    from openmarkets.schemas.stock import WSJStockHistory
+    from tests.live.conftest import tolerate_network_errors
+
+    with tolerate_network_errors("WSJ Stock History"):
+        svc = StockService()
+        history = svc.get_wsj_stock_history(STABLE_TICKER, timeframe="D7", step="P1D")
+
+        assert isinstance(history, WSJStockHistory)
+        assert history.symbol == STABLE_TICKER
+        assert len(history.data_points) > 0
+        assert all(pt.close > 0 for pt in history.data_points)
+
+
+def test_get_wsj_intraday_bars_live():
+    from openmarkets.schemas.stock import WSJStockHistory
+    from tests.live.conftest import tolerate_network_errors
+
+    with tolerate_network_errors("WSJ Intraday Bars"):
+        svc = StockService()
+        intraday = svc.get_wsj_intraday_bars(STABLE_TICKER, timeframe="D1", step="PT5M")
+
+        assert isinstance(intraday, WSJStockHistory)
+        assert intraday.symbol == STABLE_TICKER
+        assert len(intraday.data_points) > 0
+        assert all(pt.close > 0 for pt in intraday.data_points)
+
+
+def test_get_wsj_bollinger_bands_live():
+    from openmarkets.schemas.stock import WSJBollingerBandsSeries
+    from tests.live.conftest import tolerate_network_errors
+
+    with tolerate_network_errors("WSJ Bollinger Bands"):
+        svc = StockService()
+        bb = svc.get_wsj_bollinger_bands(STABLE_TICKER, window=20, multiplier=2.0)
+
+        assert isinstance(bb, WSJBollingerBandsSeries)
+        assert bb.symbol == STABLE_TICKER
+        assert bb.window == 20
+        assert len(bb.data_points) > 0
+        assert all(pt.upper_band >= pt.lower_band for pt in bb.data_points)

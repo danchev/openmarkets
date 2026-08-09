@@ -4,6 +4,7 @@ Fetches stock information, historical prices, dividends, splits, and other
 stock-level data from yfinance.
 """
 
+from datetime import datetime, timezone
 from typing import Protocol
 
 import pandas as pd
@@ -12,6 +13,7 @@ from curl_cffi.requests import Session
 
 from openmarkets.core.exceptions import InvalidSymbolError
 from openmarkets.core.types import Interval, Period, ValuationFrequency
+from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.stock import (
     CorporateActions,
     DividendSummary,
@@ -28,6 +30,10 @@ from openmarkets.schemas.stock import (
     StockInfo_v2,
     StockSplit,
     ValuationMeasuresEntry,
+    WSJBollingerBandPoint,
+    WSJBollingerBandsSeries,
+    WSJIntradayBar,
+    WSJStockHistory,
 )
 
 
@@ -440,3 +446,145 @@ class YFinanceStockRepository:
             return []
         records = measures.T.reset_index().rename(columns={"index": "period"}).to_dict("records")
         return [ValuationMeasuresEntry(**record) for record in records]
+
+
+class WSJStockRepository:
+    """Stock repository backed by WSJ Michelangelo timeseries API."""
+
+    def get_stock_history(
+        self,
+        ticker: str,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJStockHistory:
+        """Fetch historical price timeseries for a stock from WSJ.
+
+        Args:
+            ticker: Stock ticker symbol (e.g. 'TSLA', 'AAPL').
+            timeframe: Timespan duration (e.g. 'D7', '1mo', 'P1Y', '5y', 'all').
+            step: Bar frequency (e.g. 'P1D', 'PT1M', 'PT5M').
+            session: Optional HTTP session.
+
+        Returns:
+            WSJStockHistory with ordered OHLCV bars.
+        """
+        wsj_key, name, _, _ = resolve_wsj_key(ticker)
+        raw = fetch_wsj_timeseries(
+            wsj_key=wsj_key,
+            step=step,
+            timeframe=timeframe,
+            datatypes=["Open", "High", "Low", "Last"],
+            session=session,
+        )
+
+        ticks = raw.get("TimeInfo", {}).get("Ticks", [])
+        series_list = raw.get("Series", [])
+        datapoints = series_list[0].get("DataPoints", []) if series_list else []
+        volume_points = series_list[1].get("DataPoints", []) if len(series_list) > 1 else []
+
+        bars: list[WSJIntradayBar] = []
+        for i, (ts, vals) in enumerate(zip(ticks, datapoints, strict=False)):
+            if not vals or all(v is None for v in vals):
+                continue
+            dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            vol = (
+                float(volume_points[i][0])
+                if i < len(volume_points) and volume_points[i] and volume_points[i][0] is not None
+                else None
+            )
+
+            if len(vals) >= 4 and vals[3] is not None:
+                bars.append(
+                    WSJIntradayBar(
+                        timestamp=ts,
+                        date=dt_str,
+                        open=vals[0],
+                        high=vals[1],
+                        low=vals[2],
+                        close=float(vals[3]),
+                        volume=vol,
+                    )
+                )
+            elif len(vals) >= 1 and vals[0] is not None:
+                bars.append(
+                    WSJIntradayBar(
+                        timestamp=ts,
+                        date=dt_str,
+                        open=None,
+                        high=None,
+                        low=None,
+                        close=float(vals[0]),
+                        volume=vol,
+                    )
+                )
+
+        return WSJStockHistory(
+            symbol=ticker.upper(),
+            name=name,
+            data_points=bars,
+        )
+
+    def get_bollinger_bands(
+        self,
+        ticker: str,
+        window: int = 20,
+        multiplier: float = 2.0,
+        timeframe: str = "P1M",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJBollingerBandsSeries:
+        """Fetch server-side computed Bollinger Bands from WSJ Michelangelo."""
+        wsj_key, _, _, _ = resolve_wsj_key(ticker)
+        indicators = [
+            {
+                "Parameters": [
+                    {"Name": "Period", "Value": window},
+                    {"Name": "Multiplier", "Value": multiplier},
+                ],
+                "Kind": "BollingerBands",
+                "SeriesId": "i_bb",
+            }
+        ]
+
+        raw = fetch_wsj_timeseries(
+            wsj_key=wsj_key,
+            step=step,
+            timeframe=timeframe,
+            datatypes=["Last"],
+            indicators=indicators,
+            session=session,
+        )
+
+        ticks = raw.get("TimeInfo", {}).get("Ticks", [])
+        series_list = raw.get("Series", [])
+        price_points = series_list[0].get("DataPoints", []) if series_list else []
+        bb_points = series_list[1].get("DataPoints", []) if len(series_list) > 1 else []
+
+        points: list[WSJBollingerBandPoint] = []
+        for i, (ts, p_val) in enumerate(zip(ticks, price_points, strict=False)):
+            if not p_val or p_val[0] is None:
+                continue
+            dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            price = float(p_val[0])
+            if i < len(bb_points) and bb_points[i] and len(bb_points[i]) >= 3:
+                low_b, mid_b, up_b = float(bb_points[i][0]), float(bb_points[i][1]), float(bb_points[i][2])
+                bw = round(((up_b - low_b) / mid_b) * 100, 2) if mid_b else None
+                points.append(
+                    WSJBollingerBandPoint(
+                        timestamp=ts,
+                        date=dt_str,
+                        price=price,
+                        lower_band=round(low_b, 3),
+                        middle_band=round(mid_b, 3),
+                        upper_band=round(up_b, 3),
+                        bandwidth_pct=bw,
+                    )
+                )
+
+        return WSJBollingerBandsSeries(
+            symbol=ticker.upper(),
+            window=window,
+            multiplier=multiplier,
+            data_points=points,
+        )

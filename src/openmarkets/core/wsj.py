@@ -217,6 +217,7 @@ def fetch_wsj_timeseries(
     step: str = "P1D",
     timeframe: str = "P1Y",
     datatypes: list[str] | None = None,
+    indicators: list[dict[str, Any]] | None = None,
     session: Session | None = None,
 ) -> dict[str, Any]:
     """Fetch timeseries data from WSJ Michelangelo API.
@@ -226,6 +227,7 @@ def fetch_wsj_timeseries(
         step: Bar step frequency (e.g. ``P1D``, ``PT1M``).
         timeframe: Timespan duration (e.g. ``P1Y``, ``D7``, ``all``).
         datatypes: List of data types requested (defaults to ``["Open", "High", "Low", "Last"]``).
+        indicators: Optional list of server-side indicators (e.g. Bollinger Bands).
         session: Optional ``curl_cffi`` session.
 
     Returns:
@@ -243,7 +245,9 @@ def fetch_wsj_timeseries(
         "SeriesId": "s1",
         "DataTypes": datatypes,
     }
-    if not wsj_key.startswith("BOND/"):
+    if indicators:
+        series_obj["Indicators"] = indicators
+    elif not wsj_key.startswith("BOND/"):
         series_obj["Indicators"] = [{"Parameters": [], "Kind": "Volume", "SeriesId": "i3"}]
 
     payload = {
