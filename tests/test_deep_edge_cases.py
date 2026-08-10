@@ -143,13 +143,14 @@ def test_forex_edge_case_valid_and_inverted():
 # 8. Cryptocurrency Edge Cases
 # ---------------------------------------------------------------------------
 def test_crypto_edge_case_unknown_symbol():
-    from pydantic import ValidationError
+    from openmarkets.core.exceptions import InvalidSymbolError
 
     repo = YFinanceCryptoRepository()
     with patch("openmarkets.repositories.crypto.yf.Ticker") as mock_ticker:
         mock_ticker.return_value.fast_info = {}
-        with pytest.raises(ValidationError):
+        with pytest.raises(InvalidSymbolError):
             repo.get_crypto_info("NON_EXISTENT_COIN_XYZ")
+
 
 
 # ---------------------------------------------------------------------------

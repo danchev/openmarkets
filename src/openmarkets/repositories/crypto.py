@@ -31,7 +31,10 @@ class YFinanceCryptoRepository:
         normalized_ticker = self._normalize_ticker(ticker)
         ticker_obj = yf.Ticker(normalized_ticker, session=session)
         fast_info = ticker_obj.fast_info
+        if not fast_info:
+            raise InvalidSymbolError(f"Symbol '{ticker}' not found or invalid.")
         return CryptoFastInfo(**fast_info)
+
 
     def get_crypto_history(
         self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
