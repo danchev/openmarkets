@@ -87,3 +87,21 @@ class MarketSummary(BaseModel):
     """Schema for a summary of markets."""
 
     summary: dict[str, SummaryEntry] | None = Field(None, description="Dictionary of market summaries", alias="summary")
+
+
+class GlobalIndexQuote(BaseModel):
+    """Real-time quote for a global benchmark equity index or volatility metric."""
+
+    symbol: str = Field(..., description="Index symbol alias (e.g. 'SPX', 'DAX', 'VIX')")
+    name: str = Field(..., description="Full index name")
+    region: str = Field(..., description="Geographic market region (e.g. 'US', 'Europe', 'Asia')")
+    value: float = Field(..., description="Current/latest index level")
+    unit: str = Field("Index", description="Unit of measurement")
+    date: str = Field(..., description="Effective date / timestamp string")
+
+
+class GlobalMarketSnapshot(BaseModel):
+    """Snapshot of major global equity benchmark indices and volatility."""
+
+    as_of: str = Field(..., description="Snapshot UTC date / time")
+    indices: list[GlobalIndexQuote] = Field(default_factory=list, description="List of major global benchmark indices")
