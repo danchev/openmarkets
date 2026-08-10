@@ -10,7 +10,7 @@ import yfinance as yf
 from curl_cffi.requests import Session
 
 from openmarkets.core.constants import DEFAULT_SENTIMENT_TICKERS, TOP_CRYPTO_TICKERS
-from openmarkets.core.exceptions import APIError
+from openmarkets.core.exceptions import APIError, InvalidSymbolError
 from openmarkets.core.types import INTERVALS, PERIODS, Interval, Period
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment, CryptoSentimentEntry
 
@@ -34,7 +34,6 @@ class YFinanceCryptoRepository:
         if not fast_info:
             raise InvalidSymbolError(f"Symbol '{ticker}' not found or invalid.")
         return CryptoFastInfo(**fast_info)
-
 
     def get_crypto_history(
         self, ticker: str, period: Period = "1y", interval: Interval = "1d", session: Session | None = None
