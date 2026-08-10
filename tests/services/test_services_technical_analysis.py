@@ -104,3 +104,34 @@ def test_get_volatility_metrics(monkeypatch, technical_analysis_repository, hist
     assert "daily_volatility" in out
     assert "positive_days" in out
     assert "total_trading_days" in out
+
+
+def test_technical_analysis_service_wsj_delegation():
+    from unittest.mock import Mock
+
+    from openmarkets.schemas.technical_analysis import WSJIndicatorSeries, WSJMACDSeries
+    from openmarkets.services.technical_analysis import TechnicalAnalysisService
+
+    wsj_repo_mock = Mock()
+    mock_ind = WSJIndicatorSeries(symbol="AAPL", indicator="SMA", window=50, data_points=[])
+    mock_macd = WSJMACDSeries(symbol="AAPL", fast_window=12, slow_window=26, signal_window=9, data_points=[])
+    wsj_repo_mock.get_sma.return_value = mock_ind
+    wsj_repo_mock.get_ema.return_value = mock_ind
+    wsj_repo_mock.get_rsi.return_value = mock_ind
+    wsj_repo_mock.get_macd.return_value = mock_macd
+
+    svc = TechnicalAnalysisService(wsj_repository=wsj_repo_mock)
+
+    assert svc.get_wsj_sma("AAPL", window=50) == mock_ind
+    wsj_repo_mock.get_sma.assert_called_with(ticker="AAPL", window=50, timeframe="P1Y", step="P1D", session=svc.session)
+
+    assert svc.get_wsj_ema("AAPL", window=20) == mock_ind
+    wsj_repo_mock.get_ema.assert_called_with(ticker="AAPL", window=20, timeframe="P1Y", step="P1D", session=svc.session)
+
+    assert svc.get_wsj_rsi("AAPL", window=14) == mock_ind
+    wsj_repo_mock.get_rsi.assert_called_with(ticker="AAPL", window=14, timeframe="P1Y", step="P1D", session=svc.session)
+
+    assert svc.get_wsj_macd("AAPL") == mock_macd
+    wsj_repo_mock.get_macd.assert_called_with(
+        ticker="AAPL", fast_window=12, slow_window=26, signal_window=9, timeframe="P1Y", step="P1D", session=svc.session
+    )

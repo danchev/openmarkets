@@ -4,14 +4,21 @@ This module provides repositories for retrieving technical analysis data
 including indicators, volatility metrics, and support/resistance levels.
 """
 
+from datetime import datetime, timezone
+
 import yfinance as yf
 from curl_cffi.requests import Session
 
 from openmarkets.core.types import Period
+from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.technical_analysis import (
     SupportResistanceLevelsDict,
     TechnicalIndicatorsDict,
     VolatilityMetricsDict,
+    WSJIndicatorPoint,
+    WSJIndicatorSeries,
+    WSJMACDPoint,
+    WSJMACDSeries,
 )
 
 
@@ -366,3 +373,194 @@ class YFinanceTechnicalAnalysisRepository:
             "nearest_resistance": self._get_nearest_resistance(resistance_levels),
             "nearest_support": self._get_nearest_support(support_levels),
         }
+
+
+class WSJTechnicalAnalysisRepository:
+    """Repository for server-side technical indicator calculations via WSJ Michelangelo."""
+
+    def _fetch_single_line_indicator(
+        self,
+        ticker: str,
+        indicator_name: str,
+        kind: str,
+        params: list[dict[str, object]],
+        window: int,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJIndicatorSeries:
+        wsj_key, _, _, _ = resolve_wsj_key(ticker)
+        indicators = [
+            {
+                "Parameters": params,
+                "Kind": kind,
+                "SeriesId": f"i_{indicator_name.lower()}",
+            }
+        ]
+
+        raw = fetch_wsj_timeseries(
+            wsj_key=wsj_key,
+            step=step,
+            timeframe=timeframe,
+            datatypes=["Last"],
+            indicators=indicators,
+            session=session,
+        )
+
+        ticks = raw.get("TimeInfo", {}).get("Ticks", [])
+        series_list = raw.get("Series", [])
+        price_points = series_list[0].get("DataPoints", []) if series_list else []
+        ind_points = series_list[1].get("DataPoints", []) if len(series_list) > 1 else []
+
+        points: list[WSJIndicatorPoint] = []
+        for i, (ts, p_val) in enumerate(zip(ticks, price_points, strict=False)):
+            if not p_val or p_val[0] is None:
+                continue
+            dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            price = float(p_val[0])
+            if i < len(ind_points) and ind_points[i] and ind_points[i][0] is not None:
+                ind_val = float(ind_points[i][0])
+                points.append(
+                    WSJIndicatorPoint(
+                        timestamp=ts,
+                        date=dt_str,
+                        price=price,
+                        value=round(ind_val, 4),
+                    )
+                )
+
+        return WSJIndicatorSeries(
+            symbol=ticker.upper(),
+            indicator=indicator_name,
+            window=window,
+            data_points=points,
+        )
+
+    def get_sma(
+        self,
+        ticker: str,
+        window: int = 50,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJIndicatorSeries:
+        """Fetch server-side computed Simple Moving Average (SMA)."""
+        return self._fetch_single_line_indicator(
+            ticker=ticker,
+            indicator_name="SMA",
+            kind="SimpleMovingAverage",
+            params=[{"Name": "Period", "Value": str(window)}],
+            window=window,
+            timeframe=timeframe,
+            step=step,
+            session=session,
+        )
+
+    def get_ema(
+        self,
+        ticker: str,
+        window: int = 20,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJIndicatorSeries:
+        """Fetch server-side computed Exponential Moving Average (EMA)."""
+        return self._fetch_single_line_indicator(
+            ticker=ticker,
+            indicator_name="EMA",
+            kind="ExponentialMovingAverage",
+            params=[{"Name": "Period", "Value": str(window)}],
+            window=window,
+            timeframe=timeframe,
+            step=step,
+            session=session,
+        )
+
+    def get_rsi(
+        self,
+        ticker: str,
+        window: int = 14,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJIndicatorSeries:
+        """Fetch server-side computed Relative Strength Index (RSI)."""
+        return self._fetch_single_line_indicator(
+            ticker=ticker,
+            indicator_name="RSI",
+            kind="RelativeStrengthIndex",
+            params=[{"Name": "Period", "Value": str(window)}],
+            window=window,
+            timeframe=timeframe,
+            step=step,
+            session=session,
+        )
+
+    def get_macd(
+        self,
+        ticker: str,
+        fast_window: int = 12,
+        slow_window: int = 26,
+        signal_window: int = 9,
+        timeframe: str = "P1Y",
+        step: str = "P1D",
+        session: Session | None = None,
+    ) -> WSJMACDSeries:
+        """Fetch server-side computed Moving Average Convergence Divergence (MACD)."""
+        wsj_key, _, _, _ = resolve_wsj_key(ticker)
+        indicators = [
+            {
+                "Parameters": [
+                    {"Name": "FastPeriod", "Value": str(fast_window)},
+                    {"Name": "SlowPeriod", "Value": str(slow_window)},
+                    {"Name": "SignalPeriod", "Value": str(signal_window)},
+                ],
+                "Kind": "MovingAverageConvergenceDivergence",
+                "SeriesId": "i_macd",
+            }
+        ]
+
+        raw = fetch_wsj_timeseries(
+            wsj_key=wsj_key,
+            step=step,
+            timeframe=timeframe,
+            datatypes=["Last"],
+            indicators=indicators,
+            session=session,
+        )
+
+        ticks = raw.get("TimeInfo", {}).get("Ticks", [])
+        series_list = raw.get("Series", [])
+        price_points = series_list[0].get("DataPoints", []) if series_list else []
+        macd_points = series_list[1].get("DataPoints", []) if len(series_list) > 1 else []
+
+        points: list[WSJMACDPoint] = []
+        for i, (ts, p_val) in enumerate(zip(ticks, price_points, strict=False)):
+            if not p_val or p_val[0] is None:
+                continue
+            dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+            price = float(p_val[0])
+            if i < len(macd_points) and macd_points[i] and len(macd_points[i]) >= 3:
+                m_line, s_line, hist = (
+                    float(macd_points[i][0]),
+                    float(macd_points[i][1]),
+                    float(macd_points[i][2]),
+                )
+                points.append(
+                    WSJMACDPoint(
+                        timestamp=ts,
+                        date=dt_str,
+                        price=price,
+                        macd=round(m_line, 4),
+                        signal=round(s_line, 4),
+                        histogram=round(hist, 4),
+                    )
+                )
+
+        return WSJMACDSeries(
+            symbol=ticker.upper(),
+            fast_window=fast_window,
+            slow_window=slow_window,
+            signal_window=signal_window,
+            data_points=points,
+        )

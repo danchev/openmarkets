@@ -1,5 +1,7 @@
 from typing import Annotated, TypedDict
 
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class SupportResistanceLevelsDict(TypedDict):
     current_price: Annotated[float, "Current market price of the security"]
@@ -34,3 +36,50 @@ class TechnicalIndicatorsDict(TypedDict):
     price_vs_sma_20: Annotated[float | None, "Percentage difference between current price and 20-day SMA"]
     price_vs_sma_50: Annotated[float | None, "Percentage difference between current price and 50-day SMA"]
     price_vs_sma_200: Annotated[float | None, "Percentage difference between current price and 200-day SMA"]
+
+
+class WSJIndicatorPoint(BaseModel):
+    """A single data point for a technical indicator."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    timestamp: int = Field(..., description="Epoch timestamp in milliseconds")
+    date: str = Field(..., description="Date string (UTC)")
+    price: float = Field(..., description="Underlying close/last price")
+    value: float = Field(..., description="Indicator value (e.g. SMA, EMA, RSI)")
+
+
+class WSJIndicatorSeries(BaseModel):
+    """Timeseries of server-side computed indicator from WSJ."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str = Field(..., description="Ticker symbol")
+    indicator: str = Field(..., description="Indicator name (e.g. 'SMA', 'EMA', 'RSI')")
+    window: int = Field(..., description="Calculation window period (e.g. 50)")
+    data_points: list[WSJIndicatorPoint] = Field(default_factory=list, description="Ordered indicator data points")
+
+
+class WSJMACDPoint(BaseModel):
+    """A single MACD data point."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    timestamp: int = Field(..., description="Epoch timestamp in milliseconds")
+    date: str = Field(..., description="Date string (UTC)")
+    price: float = Field(..., description="Underlying close/last price")
+    macd: float = Field(..., description="MACD line (fast EMA - slow EMA)")
+    signal: float = Field(..., description="Signal line (EMA of MACD)")
+    histogram: float = Field(..., description="MACD histogram (MACD - signal)")
+
+
+class WSJMACDSeries(BaseModel):
+    """Timeseries of server-side computed MACD from WSJ."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    symbol: str = Field(..., description="Ticker symbol")
+    fast_window: int = Field(12, description="Fast EMA window (default 12)")
+    slow_window: int = Field(26, description="Slow EMA window (default 26)")
+    signal_window: int = Field(9, description="Signal EMA window (default 9)")
+    data_points: list[WSJMACDPoint] = Field(default_factory=list, description="Ordered MACD data points")
