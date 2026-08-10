@@ -131,6 +131,36 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
         "exchange": "Ministry of Finance Japan",
         "unit": "%",
     },
+    "CA10Y": {
+        "key": "BOND/BX/XTUP/TMBMKCA-10Y",
+        "name": "Canada 10-Year Benchmark Yield",
+        "exchange": "Bank of Canada",
+        "unit": "%",
+    },
+    "FR10Y": {
+        "key": "BOND/BX/XTUP/TMBMKFR-10Y",
+        "name": "France 10-Year OAT Yield",
+        "exchange": "Agence France Trésor",
+        "unit": "%",
+    },
+    "IT10Y": {
+        "key": "BOND/BX/XTUP/TMBMKIT-10Y",
+        "name": "Italy 10-Year BTP Yield",
+        "exchange": "Ministero Economia Finanze",
+        "unit": "%",
+    },
+    "AU10Y": {
+        "key": "BOND/BX/XTUP/TMBMKAU-10Y",
+        "name": "Australia 10-Year Sovereign Yield",
+        "exchange": "RBA",
+        "unit": "%",
+    },
+    "ES10Y": {
+        "key": "BOND/BX/XTUP/TMBMKES-10Y",
+        "name": "Spain 10-Year Bonos Yield",
+        "exchange": "Tesoro Público",
+        "unit": "%",
+    },
     # Foreign Exchange / Currencies (Forex)
     "EURUSD": {"key": "CURRENCY/US//EURUSD", "name": "EUR/USD", "exchange": "Forex", "unit": "USD"},
     "USDJPY": {"key": "CURRENCY/US//USDJPY", "name": "USD/JPY", "exchange": "Forex", "unit": "JPY"},
@@ -143,7 +173,8 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
     "USDINR": {"key": "CURRENCY/US//USDINR", "name": "USD/INR", "exchange": "Forex", "unit": "INR"},
     "DXY": {"key": "INDEX/US//DXY", "name": "US Dollar Index (DXY)", "exchange": "ICE", "unit": "Index"},
     # Major Market Benchmark Indexes & Volatility
-    "VIX": {"key": "INDEX/US//VIX", "name": "CBOE Volatility Index (VIX)", "exchange": "CBOE", "unit": "Index"},
+    "SPX": {"key": "INDEX/US//SPX", "name": "S&P 500 Index", "exchange": "S&P Dow Jones", "unit": "Index"},
+    "SP500": {"key": "INDEX/US//SPX", "name": "S&P 500 Index", "exchange": "S&P Dow Jones", "unit": "Index"},
     "DJIA": {
         "key": "INDEX/US//DJIA",
         "name": "Dow Jones Industrial Average",
@@ -151,6 +182,26 @@ SYMBOL_MAP: dict[str, dict[str, str]] = {
         "unit": "Index",
     },
     "COMP": {"key": "INDEX/US//COMP", "name": "Nasdaq Composite Index", "exchange": "NASDAQ", "unit": "Index"},
+    "NASDAQ": {"key": "INDEX/US//COMP", "name": "Nasdaq Composite Index", "exchange": "NASDAQ", "unit": "Index"},
+    "RUT": {"key": "INDEX/US//RUT", "name": "Russell 2000 Index", "exchange": "FTSE Russell", "unit": "Index"},
+    "RUSSELL2000": {"key": "INDEX/US//RUT", "name": "Russell 2000 Index", "exchange": "FTSE Russell", "unit": "Index"},
+    "VIX": {"key": "INDEX/US//VIX", "name": "CBOE Volatility Index (VIX)", "exchange": "CBOE", "unit": "Index"},
+    "DAX": {"key": "INDEX/DX//DAX", "name": "DAX 40 Index", "exchange": "Deutsche Börse", "unit": "Index"},
+    "FTSE": {"key": "INDEX/UK//UKX", "name": "FTSE 100 Index", "exchange": "FTSE Russell", "unit": "Index"},
+    "FTSE100": {"key": "INDEX/UK//UKX", "name": "FTSE 100 Index", "exchange": "FTSE Russell", "unit": "Index"},
+    "CAC": {"key": "INDEX/FR//PX1", "name": "CAC 40 Index", "exchange": "Euronext Paris", "unit": "Index"},
+    "CAC40": {"key": "INDEX/FR//PX1", "name": "CAC 40 Index", "exchange": "Euronext Paris", "unit": "Index"},
+    "SX5E": {"key": "INDEX/XX//SX5E", "name": "Euro Stoxx 50 Index", "exchange": "STOXX", "unit": "Index"},
+    "EUROSTOXX50": {"key": "INDEX/XX//SX5E", "name": "Euro Stoxx 50 Index", "exchange": "STOXX", "unit": "Index"},
+    "NIKKEI": {"key": "INDEX/JP//NI225", "name": "Nikkei 225 Index", "exchange": "Nikkei Inc.", "unit": "Index"},
+    "NIKKEI225": {"key": "INDEX/JP//NI225", "name": "Nikkei 225 Index", "exchange": "Nikkei Inc.", "unit": "Index"},
+    "HSI": {"key": "INDEX/HK/XHKG/HSI", "name": "Hang Seng Index", "exchange": "Hang Seng Indexes", "unit": "Index"},
+    "HANGSENG": {
+        "key": "INDEX/HK/XHKG/HSI",
+        "name": "Hang Seng Index",
+        "exchange": "Hang Seng Indexes",
+        "unit": "Index",
+    },
 }
 
 
@@ -165,8 +216,8 @@ def resolve_wsj_key(symbol_or_key: str) -> tuple[str, str, str, str]:
     if "/" in symbol_or_key:
         return symbol_or_key, symbol_or_key, "Unknown", "USD"
 
-    # Default fallback to stock key format
-    return f"STOCK/US/XNAS/{norm}", norm, "NASDAQ", "USD"
+    # Default fallback to universal stock key format
+    return f"STOCK/US//{norm}", norm, "US Equity", "USD"
 
 
 def _build_wsj_headers(token: str = DEFAULT_ENTITLEMENT_TOKEN) -> dict[str, str]:

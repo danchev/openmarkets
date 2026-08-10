@@ -141,6 +141,11 @@ class WSJFixedIncomeRepository:
             ("Germany", "DE10Y"),
             ("United Kingdom", "UK10Y"),
             ("Japan", "JP10Y"),
+            ("Canada", "CA10Y"),
+            ("France", "FR10Y"),
+            ("Italy", "IT10Y"),
+            ("Australia", "AU10Y"),
+            ("Spain", "ES10Y"),
         ]
 
         quotes: list[SovereignYieldQuote] = []

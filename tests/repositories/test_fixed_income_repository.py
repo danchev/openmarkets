@@ -56,7 +56,7 @@ def test_get_global_sovereign_yields():
 
     with patch("openmarkets.repositories.fixed_income.fetch_wsj_timeseries", side_effect=mock_fetch):
         global_yields = repo.get_global_sovereign_yields()
-        assert len(global_yields.sovereigns) == 4
+        assert len(global_yields.sovereigns) == 9
         de = next(s for s in global_yields.sovereigns if s.symbol == "DE10Y")
         assert de.yield_percent == 3.00
         # DE vs US: (3.00 - 4.50) * 100 = -150.0 bps

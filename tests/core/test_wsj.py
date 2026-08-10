@@ -30,7 +30,7 @@ def test_resolve_wsj_key():
 
     # Default stock fallback
     stock_key, stock_name, _, _ = resolve_wsj_key("NVDA")
-    assert stock_key == "STOCK/US/XNAS/NVDA"
+    assert stock_key == "STOCK/US//NVDA"
     assert stock_name == "NVDA"
 
 
