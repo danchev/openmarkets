@@ -7,7 +7,11 @@ from curl_cffi.requests import Session
 from openmarkets.core.cache import cached
 from openmarkets.core.http import get_session
 from openmarkets.repositories.commodities import CommoditiesRepository, WSJCommoditiesRepository
-from openmarkets.schemas.commodities import CommodityHistory, CommodityQuote
+from openmarkets.schemas.commodities import (
+    CommodityHistory,
+    CommodityQuote,
+    FertilizerIndexSeries,
+)
 from openmarkets.services.utils import ToolRegistrationMixin, tool
 
 
@@ -97,6 +101,18 @@ class CommoditiesService(ToolRegistrationMixin):
     def get_softs_prices(self) -> list[CommodityQuote]:
         """Retrieve current snapshot prices for soft commodities (Coffee, Sugar, Cocoa, Cotton)."""
         return self.repository.get_softs_quotes(session=self.session)
+
+    @tool
+    @cached(ttl=600.0)
+    def get_fertilizer_price_index(self) -> FertilizerIndexSeries:
+        """Retrieve Green Markets North American Fertilizer Price Index timeseries.
+
+        Benchmark weekly index published by Green Markets / Bloomberg / Dow Jones tracking raw agricultural input costs.
+
+        Returns:
+            FertilizerIndexSeries with latest price index and historical observations.
+        """
+        return self.repository.get_fertilizer_index(session=self.session)
 
 
 commodities_service = CommoditiesService()

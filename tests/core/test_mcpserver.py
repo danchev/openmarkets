@@ -178,7 +178,7 @@ def test_published_tool_surface_is_explicit():
 
     published = {name: getattr(services, name).tool_names() for name in services.__all__}
 
-    assert sum(len(names) for names in published.values()) == 93
+    assert sum(len(names) for names in published.values()) == 100
     for names in published.values():
         assert names, "every service must publish at least one tool"
         assert all(name.startswith(("get_", "list_", "search_", "compare_")) for name in names)

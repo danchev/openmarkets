@@ -47,3 +47,16 @@ def test_get_commodity_history_live():
         assert history.symbol == "WHEAT"
         assert len(history.data_points) > 0
         assert all(pt.close > 0 for pt in history.data_points)
+
+
+def test_get_fertilizer_index_live():
+    from openmarkets.schemas.commodities import FertilizerIndexSeries
+
+    with tolerate_network_errors("Green Markets Fertilizer Index"):
+        svc = CommoditiesService()
+        series = svc.get_fertilizer_price_index()
+
+        assert isinstance(series, FertilizerIndexSeries)
+        assert series.latest_price > 0
+        assert len(series.data_points) > 50
+        assert series.data_points[-1].price_index > 0

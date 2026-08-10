@@ -5,11 +5,14 @@ from typing import Protocol
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.http import get_session
 from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.commodities import (
     CommodityHistory,
     CommodityHistoryPoint,
     CommodityQuote,
+    FertilizerIndexSeries,
+    FertilizerPoint,
 )
 
 ENERGY_SYMBOLS = ["CRUDE_OIL", "BRENT_CRUDE", "NATURAL_GAS", "GASOLINE", "HEATING_OIL"]
@@ -41,6 +44,8 @@ class CommoditiesRepository(Protocol):
     def get_livestock_quotes(self, session: Session | None = None) -> list[CommodityQuote]: ...
 
     def get_softs_quotes(self, session: Session | None = None) -> list[CommodityQuote]: ...
+
+    def get_fertilizer_index(self, session: Session | None = None) -> FertilizerIndexSeries: ...
 
 
 class WSJCommoditiesRepository:
@@ -156,3 +161,33 @@ class WSJCommoditiesRepository:
     def get_softs_quotes(self, session: Session | None = None) -> list[CommodityQuote]:
         """Fetch quotes for soft commodities (Coffee, Sugar, Cocoa, Cotton)."""
         return [self.get_commodity_quote(sym, session=session) for sym in SOFTS_SYMBOLS]
+
+    def get_fertilizer_index(self, session: Session | None = None) -> FertilizerIndexSeries:
+        """Fetch Green Markets North American Fertilizer Price Index timeseries."""
+        url = "https://fertilizerpricing.com/wp-content/themes/greenmarkets/fcharts/fchart_lib/json/data_open.php"
+        sess = session or get_session()
+        resp = sess.get(url, timeout=10)
+        data = resp.json()
+        points: list[FertilizerPoint] = []
+
+        raw_points = []
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            raw_points = data[0].get("data", [])
+        elif isinstance(data, dict):
+            raw_points = data.get("data", [])
+
+        for item in raw_points:
+            if isinstance(item, list) and len(item) >= 2 and item[1] is not None:
+                ts = int(item[0])
+                val = round(float(item[1]), 2)
+                dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
+                points.append(FertilizerPoint(timestamp=ts, date=dt_str, price_index=val))
+
+        latest_price = points[-1].price_index if points else 0.0
+        latest_date = points[-1].date if points else ""
+
+        return FertilizerIndexSeries(
+            latest_price=latest_price,
+            latest_date=latest_date,
+            data_points=points,
+        )

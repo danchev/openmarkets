@@ -28,6 +28,7 @@ def test_commodities_service_delegation():
     repo_mock.get_agriculture_quotes.return_value = []
     repo_mock.get_livestock_quotes.return_value = []
     repo_mock.get_softs_quotes.return_value = []
+    repo_mock.get_fertilizer_index.return_value = None
 
     service = CommoditiesService(repository=repo_mock)
 
@@ -42,3 +43,4 @@ def test_commodities_service_delegation():
     assert service.get_agriculture_prices() == []
     assert service.get_livestock_prices() == []
     assert service.get_softs_prices() == []
+    assert service.get_fertilizer_price_index() is None

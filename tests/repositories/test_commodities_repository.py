@@ -86,3 +86,15 @@ def test_get_softs_quotes():
         assert len(quotes) == 4
         assert any(q.symbol == "COCOA" for q in quotes)
         assert any(q.symbol == "COTTON" for q in quotes)
+
+
+def test_get_fertilizer_index():
+    repo = WSJCommoditiesRepository()
+    mock_data = [{"data": [[1616457600000, 750.25], [1617062400000, 755.50]]}]
+    mock_resp = patch("openmarkets.repositories.commodities.get_session").start().return_value
+    mock_resp.get.return_value.json.return_value = mock_data
+
+    series = repo.get_fertilizer_index()
+    assert series.latest_price == 755.50
+    assert len(series.data_points) == 2
+    assert series.data_points[0].price_index == 750.25
