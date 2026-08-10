@@ -3,20 +3,21 @@
 [![PyPI](https://img.shields.io/pypi/v/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Downloads](https://static.pepy.tech/badge/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Monthly Downloads](https://static.pepy.tech/badge/openmarkets/month)](https://pypi.org/project/openmarkets)
-[![Tests](https://img.shields.io/badge/tests-387%20passed-success)](https://github.com/danchev/openmarkets)
-[![Tools](https://img.shields.io/badge/MCP%20Tools-109%20tools-blue)](https://github.com/danchev/openmarkets)
+[![Tests](https://img.shields.io/badge/tests-428%20passed-success)](https://github.com/danchev/openmarkets)
+[![Tools](https://img.shields.io/badge/MCP%20Tools-118%20tools-blue)](https://github.com/danchev/openmarkets)
 [![License](https://img.shields.io/badge/license-AGPLv3%2B-blue.svg)](LICENSE)
 
-A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, and macroeconomic telemetry.
+A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, macroeconomic telemetry, and SEC EDGAR regulatory disclosures.
 
 ---
 
 ## 🌟 Multi-Provider Architecture
 
 Open Markets aggregates financial telemetry across institutional-grade data providers:
-- **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
+- **SEC EDGAR Direct Ingestion Engine**: Official regulatory submissions, real-time 10-K annual reports, 10-Q quarterly reports, 8-K material events, Form 4 insider transactions, and structured US-GAAP interactive XBRL disclosures with direct document links.
 - **Federal Reserve Economic Data (FRED Engine)**: Comprehensive macroeconomic indicators (CPI Inflation, Core PCE, Effective Fed Funds Rate, SOFR, Nonfarm Payrolls, Unemployment, Real GDP, M2 Money Supply, Fed Balance Sheet, TIPS Breakeven Inflation, and Financial Stress).
 - **Wall Street Journal (WSJ Michelangelo Engine)**: High-resolution 1-minute intraday continuous ticks (with pre/post-market), continuous commodities & futures, server-side technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), global equity benchmark indices, and sovereign bond curves.
+- **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
 - **Green Markets (Bloomberg / Dow Jones)**: Weekly North American fertilizer price index benchmark.
 
 
@@ -77,14 +78,16 @@ Open Markets supports granular server profiles to tailor tool exposure to specif
 uvx openmarkets --profile equities
 uvx openmarkets --profile macro
 uvx openmarkets --profile quant
+uvx openmarkets --profile sec
 ```
 
 | Profile | Exposed Services & Focus |
 | :--- | :--- |
-| **`full`** *(default)* | All 109 tools across all 15 services. |
-| **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `screener`. |
+| **`full`** *(default)* | All 118 tools across all 16 services. |
+| **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `screener`, `sec`. |
 | **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`, `macroeconomics`. |
 | **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`, `macroeconomics`. |
+| **`sec`** | Direct SEC EDGAR submissions, 10-K, 10-Q, 8-K, Form 4, CIK search, and interactive XBRL financial statement facts. |
 | **`minimal`** | Essential 12 tools across core stock and financial lookups. |
 | **`macroeconomics`** | US Inflation, PCE, labor markets, Fed rates, GDP, M2, liquidity, and financial stress. |
 | **`commodities`** | Physical commodities, energy, metals, softs, and fertilizer indices. |
@@ -94,9 +97,9 @@ uvx openmarkets --profile quant
 
 ---
 
-## 🛠️ Complete Directory of 109 MCP Tools
+## 🛠️ Complete Directory of 118 MCP Tools
 
-Open Markets publishes **109 strictly-typed, Pydantic-validated tools** across **15 domain services**:
+Open Markets publishes **118 strictly-typed, Pydantic-validated tools** across **16 domain services**:
 
 
 ### 1. Stock & Equities (`StockService` — 19 tools)
@@ -118,7 +121,7 @@ Open Markets publishes **109 strictly-typed, Pydantic-validated tools** across *
 - `get_valuation_history(ticker)`: Quarterly & annual historical valuation ratios (P/E, P/S, P/B, EV/EBITDA).
 - `get_wsj_stock_history(ticker, timeframe, step)`: WSJ institutional price history with custom timeframes.
 - `get_wsj_intraday_bars(ticker)`: Continuous 1-minute intraday tick data including pre-market and after-hours.
-- `get_wsj_bollinger_bands(ticker, window, num_std)`: Server-side calculated Bollinger Bands (Upper, Middle, Lower, Bandwidth).
+- `get_wsj_bollinger_bands(ticker, timeframe, window, num_std)`: Server-side calculated Bollinger Bands directly from WSJ.
 
 ### 2. Technical Analysis (`TechnicalAnalysisService` — 7 tools)
 - `get_technical_indicators(ticker, period)`: Comprehensive moving averages and 52-week position metrics.
@@ -243,6 +246,18 @@ Open Markets publishes **109 strictly-typed, Pydantic-validated tools** across *
 - `get_inflation_expectations(limit)`: 5-Year and 10-Year market-implied Breakeven Inflation Rates from TIPS.
 - `get_financial_stress_and_credit_spreads(limit)`: St. Louis Fed Financial Stress Index and ICE BofA US High Yield OAS credit spreads.
 - `get_macroeconomic_series(series_id, limit)`: Universal query tool for any valid FRED economic series identifier (e.g. `MORTGAGE30US`, `INDPRO`, `UMCSENT`).
+
+### 16. SEC EDGAR Filings & XBRL Disclosures (`SECService` — 9 tools)
+- `get_sec_company_profile(ticker)`: Official SEC corporate registrant profile, 10-digit CIK, SIC code, business address, and incorporation metadata.
+- `get_sec_recent_filings(ticker, form_type, limit)`: Recent official regulatory submissions with direct HTTPS links to primary documents on SEC EDGAR.
+- `get_sec_10k_annual_filings(ticker, limit)`: Form 10-K audited annual financial reports with direct primary document links.
+- `get_sec_10q_quarterly_filings(ticker, limit)`: Form 10-Q quarterly reports with unaudited financial statements.
+- `get_sec_8k_material_events(ticker, limit)`: Form 8-K unscheduled material corporate event announcements (earnings releases, executive changes, M&A).
+- `get_sec_insider_form4_filings(ticker, limit)`: Form 4 insider transaction reports by officers, directors, and 10%+ beneficial owners.
+- `get_sec_xbrl_company_facts(ticker)`: Catalog summary of all available interactive US-GAAP XBRL disclosure concepts filed by an entity.
+- `get_sec_xbrl_concept_timeseries(ticker, concept, limit)`: Multi-quarter historical timeseries for standard GAAP concepts (`REVENUES`, `NET_INCOME`, `GROSS_PROFIT`, `ASSETS`, `CASH`, `EPS`).
+- `get_sec_cik_lookup(query, limit)`: Fast search directory resolving company names and tickers to official 10-digit SEC CIKs across 10,000+ public entities.
+
 
 ---
 

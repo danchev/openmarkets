@@ -34,6 +34,7 @@ from openmarkets.services import (
     markets_service,
     options_service,
     screener_service,
+    sec_service,
     sector_industry_service,
     stock_service,
     technical_analysis_service,
@@ -57,6 +58,7 @@ _SERVICES = [
     markets_service,
     options_service,
     screener_service,
+    sec_service,
     sector_industry_service,
     stock_service,
     technical_analysis_service,
@@ -72,6 +74,7 @@ _SERVICE_PROFILES = {
         holdings_service,
         options_service,
         screener_service,
+        sec_service,
     ],
     "quant": [
         stock_service,
@@ -107,6 +110,9 @@ _SERVICE_PROFILES = {
     ],
     "macroeconomics": [
         macroeconomics_service,
+    ],
+    "sec": [
+        sec_service,
     ],
 }
 

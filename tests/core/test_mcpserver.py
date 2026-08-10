@@ -6,13 +6,18 @@ import openmarkets.core.mcpserver as mcpserver
 
 _SERVICE_NAMES = [
     "analysis_service",
+    "commodities_service",
     "crypto_service",
     "financials_service",
+    "fixed_income_service",
+    "forex_service",
     "funds_service",
     "holdings_service",
+    "macroeconomics_service",
     "markets_service",
     "options_service",
     "screener_service",
+    "sec_service",
     "sector_industry_service",
     "stock_service",
     "technical_analysis_service",
@@ -178,7 +183,7 @@ def test_published_tool_surface_is_explicit():
 
     published = {name: getattr(services, name).tool_names() for name in services.__all__}
 
-    assert sum(len(names) for names in published.values()) == 109
+    assert sum(len(names) for names in published.values()) == 118
     for names in published.values():
         assert names, "every service must publish at least one tool"
         assert all(name.startswith(("get_", "list_", "search_", "compare_")) for name in names)
@@ -208,6 +213,7 @@ def test_export_schema():
         "crypto",
         "fixed_income",
         "macroeconomics",
+        "sec",
     ],
 )
 def test_create_mcp_profiles(profile):

@@ -10,6 +10,7 @@ from openmarkets.services.macroeconomics import macroeconomics_service
 from openmarkets.services.markets import markets_service
 from openmarkets.services.options import options_service
 from openmarkets.services.screener import screener_service
+from openmarkets.services.sec import sec_service
 from openmarkets.services.sector_industry import sector_industry_service
 from openmarkets.services.stock import stock_service
 from openmarkets.services.technical_analysis import technical_analysis_service
@@ -27,6 +28,7 @@ __all__ = [
     "markets_service",
     "options_service",
     "screener_service",
+    "sec_service",
     "sector_industry_service",
     "stock_service",
     "technical_analysis_service",

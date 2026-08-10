@@ -152,7 +152,6 @@ def test_crypto_edge_case_unknown_symbol():
             repo.get_crypto_info("NON_EXISTENT_COIN_XYZ")
 
 
-
 # ---------------------------------------------------------------------------
 # 9. Funds & ETFs Edge Cases
 # ---------------------------------------------------------------------------
