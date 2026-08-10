@@ -13,7 +13,7 @@ def test_get_crypto_info_against_real_api():
     result = CryptoService().get_crypto_info(STABLE_CRYPTO)
 
     assert isinstance(result, CryptoFastInfo)
-    assert result.last_price > 0
+    assert result.last_price is not None and result.last_price > 0
 
 
 def test_get_crypto_history_against_real_api():
