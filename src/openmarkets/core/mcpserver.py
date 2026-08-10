@@ -95,6 +95,12 @@ _SERVICE_PROFILES = {
     "forex": [
         forex_service,
     ],
+    "crypto": [
+        crypto_service,
+    ],
+    "fixed_income": [
+        fixed_income_service,
+    ],
 }
 
 

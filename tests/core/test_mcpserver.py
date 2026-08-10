@@ -195,7 +195,10 @@ def test_export_schema():
     assert result == [{"name": "sample_tool", "description": "sample"}]
 
 
-@pytest.mark.parametrize("profile", ["full", "minimal", "equities", "quant", "macro", "commodities"])
+@pytest.mark.parametrize(
+    "profile",
+    ["full", "minimal", "equities", "quant", "macro", "commodities", "forex", "crypto", "fixed_income"],
+)
 def test_create_mcp_profiles(profile):
     config = mcpserver.Settings(profile=profile)
 

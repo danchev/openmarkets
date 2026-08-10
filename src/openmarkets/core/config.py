@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     )
     profile: str = Field(
         "full",
-        description="Tool profile to expose: 'full' (all tools), 'minimal' (essential 12 tools), 'equities' (equities & options), 'quant' (technical & sector analytics).",
+        description="Tool profile to expose: 'full' (all tools), 'minimal', 'equities', 'quant', 'macro', 'commodities', 'forex', 'crypto', 'fixed_income'.",
     )
 
     model_config = SettingsConfigDict(

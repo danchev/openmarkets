@@ -1,221 +1,274 @@
-![PyPI](https://img.shields.io/pypi/v/openmarkets)
-[![PyPI - Downloads](https://static.pepy.tech/badge/openmarkets)](https://pypi.org/project/openmarkets)
-[![PyPI - Monthly Downloads](https://static.pepy.tech/badge/openmarkets/month)](https://pypi.org/project/openmarkets)
-
 # Open Markets
 
-A Model Context Protocol (MCP) server for agentic retrieval of financial data from Yahoo Finance. This server leverages YFinance to provide a simple and efficient way to access historical stock prices, dividends, stock splits, company information, and other financial metrics.
+[![PyPI](https://img.shields.io/pypi/v/openmarkets)](https://pypi.org/project/openmarkets)
+[![PyPI - Downloads](https://static.pepy.tech/badge/openmarkets)](https://pypi.org/project/openmarkets)
+[![PyPI - Monthly Downloads](https://static.pepy.tech/badge/openmarkets/month)](https://pypi.org/project/openmarkets)
+[![Tests](https://img.shields.io/badge/tests-368%20passed-success)](https://github.com/danchev/openmarkets)
+[![Tools](https://img.shields.io/badge/MCP%20Tools-100%20tools-blue)](https://github.com/danchev/openmarkets)
+[![License](https://img.shields.io/badge/license-AGPLv3%2B-blue.svg)](LICENSE)
 
-This MCP server is designed to be used with various LLM applications that support the Model Context Protocol, such as Claude Desktop, n8n, and Cursor. It allows users to retrieve financial data in a structured way, making it easy to integrate into AI applications.
+A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, and macro indicators.
 
-![MCP with OpenMarkets](https://r2.openmarkets.dev/80f5e8f644e3f9.gif)
+---
 
-## Features
+## 🌟 Multi-Provider Architecture
 
-- Get basic stock information (price, market cap, sector, etc.)
-- Fetch historical price data with customizable periods
-- Retrieve analyst recommendations
-- Download data for multiple stocks simultaneously
-- Access dividend history
+Open Markets aggregates financial telemetry across institutional-grade data providers:
+- **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
+- **Wall Street Journal (WSJ Michelangelo Engine)**: High-resolution 1-minute intraday continuous ticks (with pre/post-market), continuous commodities & futures, server-side technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), global equity benchmark indices, and sovereign bond curves.
+- **Green Markets (Bloomberg / Dow Jones)**: Weekly North American fertilizer price index benchmark.
 
-## Usage
+All network requests use modern **Chrome TLS/JA3-impersonation** (`curl_cffi`), automatic session pooling, thread-safe asynchronous concurrency, and configurable in-memory **TTL caching**.
 
-This MCP server can be used with various LLM applications that support the Model Context Protocol:
+---
 
-- **Claude Desktop**: Anthropic's desktop application for Claude
-- **Cursor**: AI-powered code editor with MCP support
-- **Custom MCP clients**: Any application implementing the MCP client specification
+## 🚀 Quick Start
 
-## Installation
+### Installation with `uvx`
+
+```bash
+uvx openmarkets
+```
+
+### Usage with Cursor
 
 [![Install MCP Server](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/en-US/install-mcp?name=openmarkets&config=eyJjb21tYW5kIjoidXZ4IG9wZW5tYXJrZXRzQGxhdGVzdCJ9)
 
-## Usage with Claude Desktop
+### Usage with Claude Desktop
 
-1. Install Claude Desktop from https://claude.ai/download
-2. Open your Claude Desktop configuration:
-
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-
-3. Add the following configuration:
+Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {
   "mcpServers": {
     "openmarkets": {
       "command": "uvx",
-      "args": [
-        "openmarkets@latest"
-      ]
+      "args": ["openmarkets@latest"]
     }
   }
 }
 ```
 
-4. Restart Claude Desktop
+### Usage with VS Code & Cline
 
-## Usage with VS Code
-
-For quick installation, use one of the one-click installation buttons below:
-
-[![Install with UVX in VS Code](https://img.shields.io/badge/VS_Code-UV-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=openmarkets&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22openmarkets%22%5D%7D) [![Install with UVX in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-UV-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=openmarkets&config=%7B%22command%22%3A%22uvx%22%2C%22args%22%3A%5B%22openmarkets%22%5D%7D&quality=insiders)
-
-For manual installation, add the following JSON block to your User Settings (JSON) file in VS Code. You can do this by pressing `Ctrl + Shift + P` and typing `Preferences: Open Settings (JSON)`.
-
-Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace. This will allow you to share the configuration with others. 
-
-> Note that the `mcp` key is not needed in the `.vscode/mcp.json` file.
-
-#### UVX
+Add to `.vscode/mcp.json`:
 
 ```json
 {
-  "mcp": {
-    "servers": {
-      "openmarkets": {
-        "command": "uvx",
-        "args": [
-          "openmarkets@latest"
-        ]
-      }
+  "servers": {
+    "openmarkets": {
+      "command": "uvx",
+      "args": ["openmarkets@latest"]
     }
   }
 }
 ```
 
-### Available Tools
-This MCP server provides a variety of tools for retrieving financial data. Below is a list of available tools and their main arguments:
-
----
-#### Stock Information
-- **get_stock_info(ticker: str)**  
-  Get basic information about a stock.
-
-#### Historical Data
-- **get_historical_data(ticker: str, period: str = "1mo", interval: str = "1d")**  
-  Get historical price data for a stock.
-- **get_multiple_tickers(tickers: list[str], period: str = "1d")**  
-  Get data for multiple stocks at once.
-- **download_bulk_data(tickers: list[str], period: str = "1mo", interval: str = "1d", ...)**  
-  Download bulk historical data for multiple tickers.
-- **get_ticker_history_metadata(ticker: str)**  
-  Get available periods, intervals, and metadata for a ticker.
-
-#### Analyst Data
-- **get_recommendations(ticker: str)**  
-  Get analyst recommendations for a stock.
-- **get_analyst_price_targets(ticker: str)**  
-  Get analyst price targets.
-- **get_upgrades_downgrades(ticker: str)**  
-  Get recent upgrades and downgrades.
-- **get_recommendations_summary(ticker: str)**  
-  Get recommendations summary.
-
-#### Corporate Actions
-- **get_dividends(symbol: str, period: str = "5y")**  
-  Get dividend history for a stock.
-- **get_splits_history(symbol: str, period: str = "5y")**  
-  Get stock split history.
-
-#### Market Data
-- **get_market_status()**  
-  Get current US market status.
-- **get_trending_tickers(region: str = "US", count: int = 10)**  
-  Get trending/popular tickers.
-- **get_sector_performance()**  
-  Get sector performance using ETFs.
-- **get_index_data(indices: list[str] = None)**  
-  Get data for major market indices.
-
-#### Calendar & Market Hours
-- **get_market_calendar_info(ticker: str)**  
-  Get market calendar and session info.
-- **get_market_hours(ticker: str)**  
-  Get market hours and session information.
-- **get_exchange_info(ticker: str)**  
-  Get detailed exchange and trading information.
-
-#### Screener & Search
-- **screen_stocks_by_criteria(...)**  
-  Screen stocks by market cap, P/E, dividend yield, sector, etc.
-- **get_similar_stocks(ticker: str, count: int = 5)**  
-  Find similar stocks by sector and market cap.
-- **get_top_performers(period: str = "1mo", sector: str = None, count: int = 10)**  
-  Get top performing stocks.
-
-#### Technical Analysis
-- **get_technical_indicators(ticker: str, period: str = "6mo")**  
-  Get technical indicators (SMA, price position, etc.).
-- **get_volatility_metrics(ticker: str, period: str = "1y")**  
-  Get volatility and risk metrics.
-- **get_support_resistance_levels(ticker: str, period: str = "6mo")**  
-  Get support and resistance levels.
-
-#### Options
-- **get_options_expiration_dates(ticker: str)**  
-  Get available options expiration dates.
-- **get_option_chain(ticker: str, expiration_date: str = None)**  
-  Get option chain for a ticker.
-- **get_options_volume_analysis(ticker: str, expiration_date: str = None)**  
-  Analyze options volume and open interest.
-- **get_options_by_moneyness(ticker: str, expiration_date: str = None, moneyness_range: float = 0.1)**  
-  Filter options by proximity to current price.
-
-#### Financial Statements
-- **get_financials_summary(ticker: str)**  
-  Get key financial metrics summary.
-
-#### Funds & ETFs
-- **get_fund_profile(ticker: str)**  
-  Get fund/ETF profile.
-- **get_fund_holdings(ticker: str, count: int = 20)**  
-  Get top holdings of a fund/ETF.
-- **get_fund_sector_allocation(ticker: str)**  
-  Get sector allocation of a fund/ETF.
-- **get_fund_performance(ticker: str)**  
-  Get fund/ETF performance metrics.
-- **compare_funds(tickers: list[str])**  
-  Compare multiple funds/ETFs.
-
-#### Crypto
-- **get_crypto_info(crypto_symbol: str)**  
-  Get cryptocurrency info.
-- **get_crypto_historical_data(crypto_symbol: str, period: str = "1mo", interval: str = "1d")**  
-  Get historical data for a cryptocurrency.
-- **get_top_cryptocurrencies(count: int = 10)**  
-  Get data for top cryptocurrencies.
-- **get_crypto_fear_greed_proxy(crypto_symbols: list[str] = None)**  
-  Get a proxy for crypto fear/greed index.
-
-#### Currency & Validation
-- **get_currency_data(base_currency: str = "USD", target_currencies: list[str] = None)**  
-  Get currency exchange rates.
-- **validate_tickers(tickers: list[str])**  
-  Validate if tickers are valid and available.
-
 ---
 
-This list reflects the tools registered in the codebase and their main arguments. For more details, see the respective files in tools.
+## 🎯 Tool Profiles
 
-## Development
-
-To test the MCP server locally, install the `uvx` and `npx` and run the following command:
+Open Markets supports granular server profiles to tailor tool exposure to specific LLM contexts:
 
 ```bash
-npx @modelcontextprotocol/inspector uvx openmarkets@latest
+# Run with specific domain profile
+uvx openmarkets --profile equities
+uvx openmarkets --profile macro
+uvx openmarkets --profile quant
 ```
 
-This command will start the MCP server and open the MCP Inspector in your default web browser. You can then interact with the server and test its functionality.
+| Profile | Exposed Services & Focus |
+| :--- | :--- |
+| **`full`** *(default)* | All 100 tools across all 14 services. |
+| **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `screener`. |
+| **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`. |
+| **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`. |
+| **`minimal`** | Essential 12 tools across core stock and financial lookups. |
+| **`commodities`** | Physical commodities, energy, metals, softs, and fertilizer indices. |
+| **`fixed_income`**| Treasury yield curves and 10Y sovereign benchmark yield spreads. |
+| **`forex`** | Foreign exchange rates, DXY dollar index, and currency conversions. |
+| **`crypto`** | Top cryptocurrencies, historical crypto pricing, and fear & greed index proxy. |
 
-## License
+---
 
-AGPLv3+ License - see [LICENSE](LICENSE) for details.
+## 🛠️ Complete Directory of 100 MCP Tools
 
-## Contributing
+Open Markets publishes **100 strictly-typed, Pydantic-validated tools** across **14 domain services**:
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a pull request
+### 1. Stock & Equities (`StockService` — 19 tools)
+- `get_fast_info(ticker)`: Fast summary with real-time price, market cap, 52-week bounds, and currency.
+- `get_info(ticker)`: Exhaustive company metadata, valuation ratios, enterprise multiples, and governance.
+- `get_history(ticker, period, interval)`: Historical OHLCV pricing with custom intervals (1m to 3mo).
+- `get_multiple_tickers(tickers, period)`: Concurrent batch pricing for multiple securities.
+- `download_bulk_data(tickers, period, interval)`: High-performance batch timeseries downloader.
+- `get_dividends(ticker)`: Historical dividend payout schedule and cash amounts.
+- `get_splits(ticker)`: Historical stock split ratios and execution dates.
+- `get_corporate_actions(ticker)`: Combined stream of splits and dividend distributions.
+- `get_news(ticker)`: Latest real-time financial news headlines and article links.
+- `get_financial_summary(ticker)`: Core financial health snapshot (Revenue, Net Income, Margins, Debt).
+- `get_extended_financial_summary(ticker)`: Deep financial metrics (Free Cash Flow, ROE, ROA, Quick Ratio).
+- `get_risk_metrics(ticker)`: Risk indicators including Beta and institutional short interest.
+- `get_dividend_summary(ticker)`: Payout ratio, trailing/forward dividend yields, and 5-year averages.
+- `get_price_target(ticker)`: Analyst consensus price targets (Low, Mean, Median, High).
+- `get_quick_technical_indicators(ticker)`: Lightweight 50-day & 200-day moving average levels.
+- `get_valuation_history(ticker)`: Quarterly & annual historical valuation ratios (P/E, P/S, P/B, EV/EBITDA).
+- `get_wsj_stock_history(ticker, timeframe, step)`: WSJ institutional price history with custom timeframes.
+- `get_wsj_intraday_bars(ticker)`: Continuous 1-minute intraday tick data including pre-market and after-hours.
+- `get_wsj_bollinger_bands(ticker, window, num_std)`: Server-side calculated Bollinger Bands (Upper, Middle, Lower, Bandwidth).
+
+### 2. Technical Analysis (`TechnicalAnalysisService` — 7 tools)
+- `get_technical_indicators(ticker, period)`: Comprehensive moving averages and 52-week position metrics.
+- `get_volatility_metrics(ticker, period)`: Annualized volatility, maximum daily gains/losses, win/loss day ratios.
+- `get_support_resistance_levels(ticker, period)`: Identified dynamic support and resistance price floors/ceilings.
+- `get_wsj_sma(ticker, window, timeframe, step)`: Server-side computed Simple Moving Average (SMA) via WSJ Michelangelo.
+- `get_wsj_ema(ticker, window, timeframe, step)`: Server-side computed Exponential Moving Average (EMA).
+- `get_wsj_rsi(ticker, window, timeframe, step)`: Server-side computed Relative Strength Index (RSI momentum).
+- `get_wsj_macd(ticker, fast_window, slow_window, signal_window)`: Server-side computed MACD Line, Signal Line, and Histogram.
+
+### 3. Financial Statements & SEC Filings (`FinancialsService` — 8 tools)
+- `get_balance_sheet(ticker, quarterly)`: Standardized balance sheet statements (Assets, Liabilities, Equity).
+- `get_income_statement(ticker, quarterly)`: Income statements (Revenues, Gross Profits, Operating Income, Net Income).
+- `get_cash_flow(ticker, quarterly)`: Cash flow statements (Operating, Investing, Financing, Free Cash Flow).
+- `get_ttm_income_statement(ticker)`: Trailing Twelve Months (TTM) income statement.
+- `get_ttm_cash_flow_statement(ticker)`: Trailing Twelve Months (TTM) cash flow statement.
+- `get_financial_calendar(ticker)`: Upcoming earnings release dates and dividend announcement schedules.
+- `get_sec_filings(ticker)`: Official EDGAR SEC filings (10-K, 10-Q, 8-K) with direct document URLs.
+- `get_eps_history(ticker)`: Historical EPS consensus estimates versus reported actuals and surprise percentages.
+
+### 4. Analyst Estimates & Consensus (`AnalysisService` — 8 tools)
+- `get_analyst_recommendations(ticker)`: Wall Street consensus ratings breakdown (Strong Buy, Buy, Hold, Sell).
+- `get_recommendation_changes(ticker)`: Recent rating upgrades and downgrades from major investment banks.
+- `get_revenue_estimates(ticker)`: Forward revenue projections and quarterly growth estimates.
+- `get_earnings_estimates(ticker)`: Forward EPS estimates (Quarterly & Annual).
+- `get_growth_estimates(ticker)`: Multi-year earnings growth forecast comparisons.
+- `get_eps_trends(ticker)`: Historical EPS revision trends (30 days, 60 days, 90 days ago).
+- `get_price_targets(ticker)`: Wall Street price targets with high, low, and median projections.
+- `get_full_analysis(ticker)`: Unified analyst research summary report.
+
+### 5. Options & Derivatives (`OptionsService` — 7 tools)
+- `get_option_expiration_dates(ticker)`: Available options chain expiration dates.
+- `get_option_chain(ticker, expiration_date)`: Complete options chain with calls and puts.
+- `get_call_options(ticker, expiration_date)`: Filtered call options with strike, bid/ask, volume, and open interest.
+- `get_put_options(ticker, expiration_date)`: Filtered put options.
+- `get_options_volume_analysis(ticker, expiration_date)`: Aggregate Put/Call volume and Open Interest ratios.
+- `get_options_by_moneyness(ticker, expiration_date, moneyness_range)`: ITM, ATM, and OTM options filtered by moneyness.
+- `get_options_skew(ticker, expiration_date)`: Volatility smile and implied volatility (IV) skew metrics.
+
+### 6. Institutional Holdings & Insider Trades (`HoldingsService` — 6 tools)
+- `get_major_holders(ticker)`: Ownership breakdown (Insiders, Institutions, Float percentages).
+- `get_institutional_holdings(ticker)`: Top institutional asset managers (Vanguard, BlackRock, etc.) and shares held.
+- `get_mutual_fund_holdings(ticker)`: Top mutual fund holders and portfolio portfolio position weights.
+- `get_insider_purchases(ticker)`: Executive insider buying vs selling transactions and dollar volumes.
+- `get_insider_roster_holders(ticker)`: Key company officers and board member share positions.
+- `get_full_holdings(ticker)`: Unified institutional and insider ownership report.
+
+### 7. Stock Screener (`ScreenerService` — 4 tools)
+- `screen_day_gainers(count)`: Top percentage gainers in US markets.
+- `screen_day_losers(count)`: Top percentage decliners in US markets.
+- `screen_most_actives(count)`: Most actively traded securities by volume.
+- `screen_top_etfs(count)`: Top-performing Exchange Traded Funds.
+
+### 8. Sectors & Industry Analytics (`SectorIndustryService` — 14 tools)
+- `get_sector_overview(sector)`: Macro sector performance and key valuation metrics.
+- `get_sector_overview_for_ticker(ticker)`: Sector intelligence inferred from any ticker.
+- `get_sector_top_companies(sector)`: Leading corporations by market capitalization in a sector.
+- `get_sector_top_companies_for_ticker(ticker)`: Sector peers for any given ticker.
+- `get_sector_top_etfs(sector)`: Benchmark ETFs representing the sector.
+- `get_sector_top_mutual_funds(sector)`: Top mutual funds specialized in the sector.
+- `get_sector_industries(sector)`: Sub-industry breakdown and market weightings within a sector.
+- `get_sector_research_reports(sector)`: Sector research notes and macro updates.
+- `get_all_industries()`: Complete directory of market industries.
+- `get_industry_overview(industry)`: Industry growth, valuation, and market capitalization.
+- `get_industry_top_companies(industry)`: Industry market leaders by market cap.
+- `get_industry_top_growth_companies(industry)`: Fastest revenue and earnings growers in an industry.
+- `get_industry_top_performing_companies(industry)`: Top price momentum leaders within an industry.
+- `get_industry_top_companies_by_region(industry, region)`: Geographic region-scoped industry leaders (e.g. US, Europe, Asia).
+
+### 9. Global Markets & Volatility (`MarketsService` — 4 tools)
+- `get_market_summary(market)`: Regional market overview (US, Europe, Asia).
+- `get_market_status(market)`: Real-time open/closed status for major global exchanges.
+- `get_global_indices()`: Live snapshot across world benchmark indices (S&P 500, Dow Jones, Nasdaq, Russell 2000, DAX 40, FTSE 100, CAC 40, Euro Stoxx 50, Nikkei 225, Hang Seng, VIX).
+- `get_volatility_vix()`: Real-time quote for CBOE Volatility Index (VIX / Wall Street Fear Gauge).
+
+### 10. Fixed Income & Sovereign Debt (`FixedIncomeService` — 3 tools)
+- `get_treasury_yield_curve()`: Complete US Treasury yield curve snapshot (1M to 30Y), 2Y/10Y spread, 3M/10Y spread, and inversion status.
+- `get_treasury_yield_history(maturity, timeframe, step)`: Historical yield timeseries for any Treasury tenor.
+- `get_global_sovereign_yields()`: Benchmark 10-year sovereign yields and basis-point spreads vs US 10Y across 9 nations (US, Germany, UK, Japan, Canada, France, Italy, Australia, Spain).
+
+### 11. Physical Commodities & Agriculture (`CommoditiesService` — 9 tools)
+- `get_commodity_quote(symbol)`: Real-time price quote for Energy, Metals, Agriculture, Livestock, or Softs.
+- `get_commodity_history(symbol, timeframe, step)`: Historical continuous futures price charts.
+- `get_energy_prices()`: Multi-quote snapshot for WTI Crude, Brent, Natural Gas, Gasoline, and Heating Oil.
+- `get_metals_prices()`: Multi-quote snapshot for Gold, Silver, Copper, Platinum, and Palladium.
+- `get_agriculture_prices()`: Multi-quote snapshot for Wheat, Corn, Soybeans, Coffee, and Sugar.
+- `get_livestock_prices()`: Live snapshot for Live Cattle, Feeder Cattle, and Lean Hogs.
+- `get_softs_prices()`: Live snapshot for Coffee, Sugar, Cocoa, and Cotton.
+- `get_crude_oil_price()`: Shortcut quote for WTI Crude Oil.
+- `get_fertilizer_price_index()`: Green Markets North American Fertilizer Price Index weekly benchmark timeseries.
+
+### 12. Foreign Exchange (`ForexService` — 5 tools)
+- `get_forex_quote(pair)`: Real-time FX exchange rate (e.g. `EURUSD`, `USDJPY`, `GBPUSD`).
+- `get_forex_history(pair, timeframe, step)`: Historical FX exchange rate timeseries.
+- `get_dollar_index_dxy()`: Real-time quote for the US Dollar Index (DXY).
+- `get_major_currencies()`: Currency matrix across EUR, GBP, JPY, CAD, AUD, CHF, CNH.
+- `convert_currency(amount, from_currency, to_currency)`: Real-time currency conversion calculation.
+
+### 13. ETFs & Mutual Funds (`FundsService` — 8 tools)
+- `get_fund_info(ticker)`: ETF/Fund profile, expense ratio, AUM, category, and NAV.
+- `get_fund_sector_weightings(ticker)`: Fund portfolio sector allocations and percentage weights.
+- `get_fund_operations(ticker)`: Annual turnover, minimum investment, and operational parameters.
+- `get_fund_overview(ticker)`: Unified fund overview with performance and fee metrics.
+- `get_fund_top_holdings(ticker)`: Top underlying portfolio holdings and percentage weights.
+- `get_fund_bond_holdings(ticker)`: Bond ratings breakdown, effective duration, and maturity metrics.
+- `get_fund_equity_holdings(ticker)`: Equity price-to-earnings, price-to-book, and median market cap.
+- `get_fund_asset_classes(ticker)`: Asset class allocations (Cash, Stocks, Bonds, Real Estate).
+
+### 14. Cryptocurrency (`CryptoService` — 4 tools)
+- `get_crypto_info(symbol)`: Cryptocurrency price, market cap, 24h volume, and circulating supply.
+- `get_crypto_history(symbol, period, interval)`: Historical OHLCV crypto price bars.
+- `get_top_cryptocurrencies(count)`: Leading cryptocurrencies ranked by market cap.
+- `get_crypto_fear_greed_proxy()`: Volatility and momentum proxy for crypto market sentiment.
+
+---
+
+## 🔧 HTTP Transport & Production Deployment
+
+Open Markets can be run as a standalone HTTP service supporting SSE streaming, Bearer token authentication, CORS, and Prometheus metrics:
+
+```bash
+# Run streamable HTTP server with auth
+uv run python -m openmarkets \
+  --transport http \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --http-auth-enabled \
+  --http-auth-secret "your-production-secret"
+```
+
+Endpoints:
+- `GET /health` — Liveness & readiness probe.
+- `GET /metrics` — Prometheus metrics (uptime, cache entries).
+- `POST /` — MCP streamable JSON-RPC endpoint.
+
+---
+
+## 🧪 Testing & Validation
+
+Open Markets maintains a comprehensive suite of unit tests, property tests, and live network integration tests:
+
+```bash
+# Run all unit tests with coverage enforcement (95%+ achieved)
+uv run pytest
+
+# Run live endpoint integration tests against real APIs
+uv run pytest -m live -o addopts="" tests/live/
+
+# Run code formatters and type checkers
+uv run ruff format && uv run ruff check && uv run pyright
+```
+
+---
+
+## 📄 License
+
+AGPLv3+ License — see [LICENSE](LICENSE) for details.
