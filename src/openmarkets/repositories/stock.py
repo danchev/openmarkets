@@ -192,7 +192,9 @@ class YFinanceStockRepository:
             List of dividend records.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        dividends = ticker_obj.dividends
+        dividends = getattr(ticker_obj, "dividends", None)
+        if dividends is None or (hasattr(dividends, "empty") and dividends.empty):
+            return []
         dividend_dict = dividends.to_dict()
         return [StockDividends(Date=row[0], Dividends=row[1]) for row in dividend_dict.items()]
 
@@ -382,7 +384,9 @@ class YFinanceStockRepository:
             List of stock split records.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        splits = ticker_obj.splits
+        splits = getattr(ticker_obj, "splits", None)
+        if splits is None or (hasattr(splits, "empty") and splits.empty):
+            return []
         return [
             StockSplit(date=pd.Timestamp(str(index)).to_pydatetime(), stock_splits=value)
             for index, value in splits.items()
@@ -399,7 +403,9 @@ class YFinanceStockRepository:
             List of corporate action records.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        actions = ticker_obj.actions
+        actions = getattr(ticker_obj, "actions", None)
+        if actions is None or (hasattr(actions, "empty") and actions.empty):
+            return []
         reset_actions = actions.reset_index()
         return [CorporateActions(**row) for row in reset_actions.to_dict(orient="records")]
 

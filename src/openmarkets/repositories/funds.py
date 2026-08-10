@@ -131,9 +131,9 @@ class YFinanceFundsRepository:
         fund_info = fund_ticker.get_funds_data()
         if not fund_info:
             return []
-        if not hasattr(fund_info, "bond_holdings"):
+        df = getattr(fund_info, "bond_holdings", None)
+        if df is None or (hasattr(df, "empty") and df.empty):
             return []
-        df = fund_info.bond_holdings
         transposed = df.transpose()
         reset_df = transposed.reset_index()
         return [FundBondHolding(**row) for row in reset_df.to_dict(orient="records")]
@@ -152,9 +152,9 @@ class YFinanceFundsRepository:
         fund_info = fund_ticker.get_funds_data()
         if not fund_info:
             return []
-        if not hasattr(fund_info, "equity_holdings"):
+        df = getattr(fund_info, "equity_holdings", None)
+        if df is None or (hasattr(df, "empty") and df.empty):
             return []
-        df = fund_info.equity_holdings
         transposed = df.transpose()
         reset_df = transposed.reset_index()
         return [FundEquityHolding(**row) for row in reset_df.to_dict(orient="records")]
