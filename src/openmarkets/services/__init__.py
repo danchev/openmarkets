@@ -6,6 +6,7 @@ from openmarkets.services.fixed_income import fixed_income_service
 from openmarkets.services.forex import forex_service
 from openmarkets.services.funds import funds_service
 from openmarkets.services.holdings import holdings_service
+from openmarkets.services.macroeconomics import macroeconomics_service
 from openmarkets.services.markets import markets_service
 from openmarkets.services.options import options_service
 from openmarkets.services.screener import screener_service
@@ -22,6 +23,7 @@ __all__ = [
     "forex_service",
     "funds_service",
     "holdings_service",
+    "macroeconomics_service",
     "markets_service",
     "options_service",
     "screener_service",

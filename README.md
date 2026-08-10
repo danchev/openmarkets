@@ -3,11 +3,11 @@
 [![PyPI](https://img.shields.io/pypi/v/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Downloads](https://static.pepy.tech/badge/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Monthly Downloads](https://static.pepy.tech/badge/openmarkets/month)](https://pypi.org/project/openmarkets)
-[![Tests](https://img.shields.io/badge/tests-368%20passed-success)](https://github.com/danchev/openmarkets)
-[![Tools](https://img.shields.io/badge/MCP%20Tools-100%20tools-blue)](https://github.com/danchev/openmarkets)
+[![Tests](https://img.shields.io/badge/tests-387%20passed-success)](https://github.com/danchev/openmarkets)
+[![Tools](https://img.shields.io/badge/MCP%20Tools-109%20tools-blue)](https://github.com/danchev/openmarkets)
 [![License](https://img.shields.io/badge/license-AGPLv3%2B-blue.svg)](LICENSE)
 
-A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, and macro indicators.
+A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, and macroeconomic telemetry.
 
 ---
 
@@ -15,8 +15,10 @@ A production-grade **Model Context Protocol (MCP) server** for agentic financial
 
 Open Markets aggregates financial telemetry across institutional-grade data providers:
 - **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
+- **Federal Reserve Economic Data (FRED Engine)**: Comprehensive macroeconomic indicators (CPI Inflation, Core PCE, Effective Fed Funds Rate, SOFR, Nonfarm Payrolls, Unemployment, Real GDP, M2 Money Supply, Fed Balance Sheet, TIPS Breakeven Inflation, and Financial Stress).
 - **Wall Street Journal (WSJ Michelangelo Engine)**: High-resolution 1-minute intraday continuous ticks (with pre/post-market), continuous commodities & futures, server-side technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), global equity benchmark indices, and sovereign bond curves.
 - **Green Markets (Bloomberg / Dow Jones)**: Weekly North American fertilizer price index benchmark.
+
 
 All network requests use modern **Chrome TLS/JA3-impersonation** (`curl_cffi`), automatic session pooling, thread-safe asynchronous concurrency, and configurable in-memory **TTL caching**.
 
@@ -79,11 +81,12 @@ uvx openmarkets --profile quant
 
 | Profile | Exposed Services & Focus |
 | :--- | :--- |
-| **`full`** *(default)* | All 100 tools across all 14 services. |
+| **`full`** *(default)* | All 109 tools across all 15 services. |
 | **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `screener`. |
-| **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`. |
-| **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`. |
+| **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`, `macroeconomics`. |
+| **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`, `macroeconomics`. |
 | **`minimal`** | Essential 12 tools across core stock and financial lookups. |
+| **`macroeconomics`** | US Inflation, PCE, labor markets, Fed rates, GDP, M2, liquidity, and financial stress. |
 | **`commodities`** | Physical commodities, energy, metals, softs, and fertilizer indices. |
 | **`fixed_income`**| Treasury yield curves and 10Y sovereign benchmark yield spreads. |
 | **`forex`** | Foreign exchange rates, DXY dollar index, and currency conversions. |
@@ -91,9 +94,10 @@ uvx openmarkets --profile quant
 
 ---
 
-## 🛠️ Complete Directory of 100 MCP Tools
+## 🛠️ Complete Directory of 109 MCP Tools
 
-Open Markets publishes **100 strictly-typed, Pydantic-validated tools** across **14 domain services**:
+Open Markets publishes **109 strictly-typed, Pydantic-validated tools** across **15 domain services**:
+
 
 ### 1. Stock & Equities (`StockService` — 19 tools)
 - `get_fast_info(ticker)`: Fast summary with real-time price, market cap, 52-week bounds, and currency.
@@ -229,7 +233,19 @@ Open Markets publishes **100 strictly-typed, Pydantic-validated tools** across *
 - `get_top_cryptocurrencies(count)`: Leading cryptocurrencies ranked by market cap.
 - `get_crypto_fear_greed_proxy()`: Volatility and momentum proxy for crypto market sentiment.
 
+### 15. Macroeconomics & Federal Reserve Telemetry (`MacroeconomicsService` — 9 tools)
+- `get_cpi_inflation(limit)`: US Consumer Price Index (Headline CPI & Core CPI) and YoY inflation rates.
+- `get_pce_inflation(limit)`: US Core Personal Consumption Expenditures (PCE) Price Index (Fed's primary 2% inflation target).
+- `get_employment_indicators(limit)`: Civilian Unemployment Rate (%) and Total Nonfarm Payrolls with monthly net job additions.
+- `get_interest_rates_telemetry(limit)`: Benchmark US money market rates: Effective Federal Funds Rate (EFFR) and SOFR.
+- `get_gdp_growth(limit)`: Real GDP ($B chained 2017) and Nominal GDP ($B) with quarter-over-quarter annualized real growth rates.
+- `get_money_supply_and_fed_balance_sheet(limit)`: US M2 Money Supply ($B) and Federal Reserve Balance Sheet Total Assets ($M).
+- `get_inflation_expectations(limit)`: 5-Year and 10-Year market-implied Breakeven Inflation Rates from TIPS.
+- `get_financial_stress_and_credit_spreads(limit)`: St. Louis Fed Financial Stress Index and ICE BofA US High Yield OAS credit spreads.
+- `get_macroeconomic_series(series_id, limit)`: Universal query tool for any valid FRED economic series identifier (e.g. `MORTGAGE30US`, `INDPRO`, `UMCSENT`).
+
 ---
+
 
 ## 🔧 HTTP Transport & Production Deployment
 
