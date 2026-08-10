@@ -3,11 +3,11 @@
 [![PyPI](https://img.shields.io/pypi/v/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Downloads](https://static.pepy.tech/badge/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Monthly Downloads](https://static.pepy.tech/badge/openmarkets/month)](https://pypi.org/project/openmarkets)
-[![Tests](https://img.shields.io/badge/tests-428%20passed-success)](https://github.com/danchev/openmarkets)
-[![Tools](https://img.shields.io/badge/MCP%20Tools-118%20tools-blue)](https://github.com/danchev/openmarkets)
+[![Tests](https://img.shields.io/badge/tests-446%20passed-success)](https://github.com/danchev/openmarkets)
+[![Tools](https://img.shields.io/badge/MCP%20Tools-127%20tools-blue)](https://github.com/danchev/openmarkets)
 [![License](https://img.shields.io/badge/license-AGPLv3%2B-blue.svg)](LICENSE)
 
-A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, macroeconomic telemetry, and SEC EDGAR regulatory disclosures.
+A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, macroeconomic telemetry, SEC EDGAR regulatory disclosures, and quantitative portfolio risk analytics.
 
 ---
 
@@ -18,6 +18,7 @@ Open Markets aggregates financial telemetry across institutional-grade data prov
 - **Federal Reserve Economic Data (FRED Engine)**: Comprehensive macroeconomic indicators (CPI Inflation, Core PCE, Effective Fed Funds Rate, SOFR, Nonfarm Payrolls, Unemployment, Real GDP, M2 Money Supply, Fed Balance Sheet, TIPS Breakeven Inflation, and Financial Stress).
 - **Wall Street Journal (WSJ Michelangelo Engine)**: High-resolution 1-minute intraday continuous ticks (with pre/post-market), continuous commodities & futures, server-side technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), global equity benchmark indices, and sovereign bond curves.
 - **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
+- **Quantitative Portfolio & Backtesting Engine**: Vectorized multi-asset Sharpe/Sortino ratios, Value-at-Risk (VaR/CVaR), correlation matrices, Inverse-Volatility Risk Parity, Markowitz Minimum Variance optimization, and SMA/RSI strategy backtesting.
 - **Green Markets (Bloomberg / Dow Jones)**: Weekly North American fertilizer price index benchmark.
 
 
@@ -78,14 +79,16 @@ Open Markets supports granular server profiles to tailor tool exposure to specif
 uvx openmarkets --profile equities
 uvx openmarkets --profile macro
 uvx openmarkets --profile quant
+uvx openmarkets --profile portfolio
 uvx openmarkets --profile sec
 ```
 
 | Profile | Exposed Services & Focus |
 | :--- | :--- |
-| **`full`** *(default)* | All 118 tools across all 16 services. |
-| **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `screener`, `sec`. |
-| **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`, `macroeconomics`. |
+| **`full`** *(default)* | All 127 tools across all 17 services. |
+| **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `portfolio`, `screener`, `sec`. |
+| **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`, `macroeconomics`, `portfolio`. |
+| **`portfolio`** | Multi-asset Sharpe/Sortino, Value-at-Risk (VaR/CVaR), correlation matrices, Risk Parity, Minimum Variance, rolling Beta, and strategy backtesters. |
 | **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`, `macroeconomics`. |
 | **`sec`** | Direct SEC EDGAR submissions, 10-K, 10-Q, 8-K, Form 4, CIK search, and interactive XBRL financial statement facts. |
 | **`minimal`** | Essential 12 tools across core stock and financial lookups. |
@@ -97,9 +100,10 @@ uvx openmarkets --profile sec
 
 ---
 
-## 🛠️ Complete Directory of 118 MCP Tools
+## 🛠️ Complete Directory of 127 MCP Tools
 
-Open Markets publishes **118 strictly-typed, Pydantic-validated tools** across **16 domain services**:
+Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across **17 domain services**:
+
 
 
 ### 1. Stock & Equities (`StockService` — 19 tools)
@@ -257,6 +261,18 @@ Open Markets publishes **118 strictly-typed, Pydantic-validated tools** across *
 - `get_sec_xbrl_company_facts(ticker)`: Catalog summary of all available interactive US-GAAP XBRL disclosure concepts filed by an entity.
 - `get_sec_xbrl_concept_timeseries(ticker, concept, limit)`: Multi-quarter historical timeseries for standard GAAP concepts (`REVENUES`, `NET_INCOME`, `GROSS_PROFIT`, `ASSETS`, `CASH`, `EPS`).
 - `get_sec_cik_lookup(query, limit)`: Fast search directory resolving company names and tickers to official 10-digit SEC CIKs across 10,000+ public entities.
+
+### 17. Quantitative Portfolio Risk & Strategy Backtesting (`PortfolioService` — 9 tools)
+- `calculate_portfolio_risk_metrics(tickers, weights, benchmark, period, risk_free_rate)`: Multi-asset Sharpe/Sortino/Calmar ratios, Max Drawdown, Historical VaR (95%/99%), Expected Shortfall (CVaR), Beta, and Alpha.
+- `calculate_asset_correlation_matrix(tickers, period)`: Pairwise Pearson correlation matrix and annualized covariance matrix across cross-asset baskets.
+- `calculate_risk_parity_weights(tickers, period)`: Inverse-Volatility Risk Parity asset allocation weights for equal risk contribution.
+- `calculate_minimum_variance_portfolio(tickers, period)`: Analytical long-only Markowitz Minimum Variance portfolio allocation weights.
+- `calculate_rolling_beta(ticker, benchmark, window, period)`: Historical rolling window Beta sensitivity series tracking evolving market risk.
+- `calculate_drawdown_series(tickers, weights, period)`: Historical underwater percentage drawdown curve and peak/trough timeline points.
+- `backtest_trend_following_strategy(ticker, fast_window, slow_window, period, initial_capital)`: Moving Average Crossover (Golden Cross / Death Cross) rule-based backtester with win rate, profit factor, and equity curve.
+- `backtest_mean_reversion_strategy(ticker, rsi_window, oversold_threshold, overbought_threshold, period, initial_capital)`: RSI Mean-Reversion strategy backtester with closed trades and performance breakdown.
+- `calculate_factor_exposures(ticker, period)`: Multi-factor linear regression estimating systematic market loadings (SPY, QQQ, IWM, TLT, GLD) and Jensen's Alpha.
+
 
 
 ---

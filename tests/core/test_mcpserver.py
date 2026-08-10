@@ -16,6 +16,7 @@ _SERVICE_NAMES = [
     "macroeconomics_service",
     "markets_service",
     "options_service",
+    "portfolio_service",
     "screener_service",
     "sec_service",
     "sector_industry_service",
@@ -183,10 +184,12 @@ def test_published_tool_surface_is_explicit():
 
     published = {name: getattr(services, name).tool_names() for name in services.__all__}
 
-    assert sum(len(names) for names in published.values()) == 118
+    assert sum(len(names) for names in published.values()) == 127
     for names in published.values():
         assert names, "every service must publish at least one tool"
-        assert all(name.startswith(("get_", "list_", "search_", "compare_")) for name in names)
+        assert all(
+            name.startswith(("get_", "list_", "search_", "compare_", "calculate_", "backtest_")) for name in names
+        )
 
 
 def test_export_schema():
@@ -214,6 +217,7 @@ def test_export_schema():
         "fixed_income",
         "macroeconomics",
         "sec",
+        "portfolio",
     ],
 )
 def test_create_mcp_profiles(profile):

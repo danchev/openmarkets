@@ -1,0 +1,107 @@
+"""Unit tests for QuantPortfolioRepository layer."""
+
+from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
+
+from openmarkets.repositories.portfolio import QuantPortfolioRepository
+from openmarkets.schemas.portfolio import (
+    BacktestResult,
+    CorrelationMatrixResult,
+    DrawdownSeriesResult,
+    FactorExposuresResult,
+    PortfolioAllocationResult,
+    PortfolioRiskMetrics,
+    RollingBetaSeries,
+)
+
+
+def _mock_df():
+    np.random.seed(42)
+    dates = pd.date_range("2024-01-01", periods=100, freq="B")
+    return pd.DataFrame(
+        {
+            "AAPL": np.linspace(150, 180, 100),
+            "MSFT": np.linspace(300, 350, 100),
+            "SPY": np.linspace(450, 500, 100),
+            "QQQ": np.linspace(350, 400, 100),
+            "IWM": np.linspace(190, 210, 100),
+            "TLT": np.linspace(95, 90, 100),
+            "GLD": np.linspace(180, 200, 100),
+        },
+        index=dates,
+    )
+
+
+def test_calculate_portfolio_risk():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()):
+        res = repo.calculate_portfolio_risk(["AAPL", "MSFT"], weights=[0.5, 0.5])
+        assert isinstance(res, PortfolioRiskMetrics)
+        assert res.tickers == ["AAPL", "MSFT"]
+        assert res.sharpe_ratio is not None
+
+
+def test_calculate_correlation_matrix():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL", "MSFT"]]):
+        res = repo.calculate_correlation_matrix(["AAPL", "MSFT"])
+        assert isinstance(res, CorrelationMatrixResult)
+        assert res.assets == ["AAPL", "MSFT"]
+
+
+def test_calculate_risk_parity_weights():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL", "MSFT"]]):
+        res = repo.calculate_risk_parity_weights(["AAPL", "MSFT"])
+        assert isinstance(res, PortfolioAllocationResult)
+        assert len(res.allocations) == 2
+
+
+def test_calculate_minimum_variance_portfolio():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL", "MSFT"]]):
+        res = repo.calculate_minimum_variance_portfolio(["AAPL", "MSFT"])
+        assert isinstance(res, PortfolioAllocationResult)
+        assert len(res.allocations) == 2
+
+
+def test_calculate_rolling_beta():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL", "SPY"]]):
+        res = repo.calculate_rolling_beta("AAPL", benchmark="SPY", window=20)
+        assert isinstance(res, RollingBetaSeries)
+        assert res.ticker == "AAPL"
+
+
+def test_calculate_drawdown_series():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL", "MSFT"]]):
+        res = repo.calculate_drawdown_series(["AAPL", "MSFT"])
+        assert isinstance(res, DrawdownSeriesResult)
+        assert len(res.data_points) > 0
+
+
+def test_backtest_trend_following_strategy():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL"]]):
+        res = repo.backtest_trend_following_strategy("AAPL", fast_window=10, slow_window=20)
+        assert isinstance(res, BacktestResult)
+        assert res.ticker == "AAPL"
+
+
+def test_backtest_mean_reversion_strategy():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()[["AAPL"]]):
+        res = repo.backtest_mean_reversion_strategy("AAPL", rsi_window=10)
+        assert isinstance(res, BacktestResult)
+        assert res.ticker == "AAPL"
+
+
+def test_calculate_factor_exposures():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()):
+        res = repo.calculate_factor_exposures("AAPL")
+        assert isinstance(res, FactorExposuresResult)
+        assert len(res.exposures) > 0
