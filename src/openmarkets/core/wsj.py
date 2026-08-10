@@ -212,8 +212,14 @@ def resolve_wsj_key(symbol_or_key: str) -> tuple[str, str, str, str]:
         meta = SYMBOL_MAP[norm]
         return meta["key"], meta["name"], meta["exchange"], meta["unit"]
 
+    # Check without slashes (e.g. 'EUR/USD' -> 'EURUSD')
+    stripped = norm.replace("/", "")
+    if stripped in SYMBOL_MAP:
+        meta = SYMBOL_MAP[stripped]
+        return meta["key"], meta["name"], meta["exchange"], meta["unit"]
+
     # Direct WSJ key format (e.g. FUTURE/US/XCBT/W00 or BOND/US/TMUBMUSD10Y or STOCK/US/XNAS/TSLA)
-    if "/" in symbol_or_key:
+    if any(norm.startswith(prefix) for prefix in ("STOCK/", "FUTURE/", "BOND/", "INDEX/", "CURRENCY/")):
         return symbol_or_key, symbol_or_key, "Unknown", "USD"
 
     # Default fallback to universal stock key format

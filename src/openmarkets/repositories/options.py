@@ -3,7 +3,7 @@
 Provides access to option chains, contracts, and analytics using yfinance.
 """
 
-from datetime import date
+from datetime import date, datetime
 from typing import Protocol
 
 import yfinance as yf
@@ -64,6 +64,14 @@ class OptionsRepository(Protocol):
     ) -> OptionsSkew: ...
 
 
+def _format_expiration(expiration: date | datetime | str | None) -> str | None:
+    if expiration is None:
+        return None
+    if hasattr(expiration, "strftime"):
+        return expiration.strftime("%Y-%m-%d")
+    return str(expiration).split(" ")[0]
+
+
 class YFinanceOptionsRepository:
     """YFinance-based implementation of options repository."""
 
@@ -95,7 +103,7 @@ class YFinanceOptionsRepository:
             Option contract chain containing calls and puts.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        expiration_str = str(expiration) if expiration else None
+        expiration_str = _format_expiration(expiration)
         option_chain = ticker_obj.option_chain(date=expiration_str)
         calls = option_chain.calls
         puts = option_chain.puts
@@ -125,7 +133,7 @@ class YFinanceOptionsRepository:
             List of call options or None if unavailable.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        expiration_str = str(expiration) if expiration else None
+        expiration_str = _format_expiration(expiration)
         option_chain = ticker_obj.option_chain(expiration_str)
         calls = option_chain.calls
         if calls.empty:
@@ -146,7 +154,7 @@ class YFinanceOptionsRepository:
             List of put options or None if unavailable.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        expiration_str = str(expiration) if expiration else None
+        expiration_str = _format_expiration(expiration)
         option_chain = ticker_obj.option_chain(expiration_str)
         puts = option_chain.puts
         if puts.empty:
