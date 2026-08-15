@@ -68,13 +68,23 @@ def get_global_cache() -> TTLCache:
 
 
 def _is_ignorable_arg(obj: Any) -> bool:
-    """Determine whether an argument should be excluded from cache key calculation."""
+    """Determine whether an argument should be excluded from cache key calculation.
+
+    Repositories and Sessions are excluded because they are infrastructure details
+    that should not affect cache keys. Service instances (self) are NOT excluded
+    to ensure different service instances have separate cache entries.
+
+    Session detection uses curl_cffi-specific attributes (impersonate, cookies)
+    rather than checking for repository attribute, which is too broad since
+    Service instances also have a repository attribute.
+    """
     if obj is None:
         return False
     cls_name = type(obj).__name__
-    if cls_name.endswith(("Service", "Repository", "Session")):
+    if cls_name.endswith(("Repository", "Session")):
         return True
-    return hasattr(obj, "impersonate") or hasattr(obj, "cookies") or hasattr(obj, "repository")
+    # Check for Session-specific attributes from curl_cffi
+    return hasattr(obj, "impersonate") or hasattr(obj, "cookies")
 
 
 def cached(ttl: float = 300.0, key_prefix: str = "") -> Callable[[_F], _F]:

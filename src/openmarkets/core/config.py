@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, CliSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
 
 
@@ -59,6 +59,28 @@ class Settings(BaseSettings):
         "full",
         description="Tool profile to expose: 'full' (all tools), 'minimal', 'equities', 'quant', 'macro', 'commodities', 'forex', 'crypto', 'fixed_income', 'macroeconomics', 'sec', 'portfolio'.",
     )
+
+    @field_validator("profile")
+    @classmethod
+    def validate_profile(cls, v: str) -> str:
+        """Validate that the profile name is valid.
+
+        Args:
+            v: The profile name to validate.
+
+        Returns:
+            The validated profile name.
+
+        Raises:
+            ValueError: If the profile is not recognized.
+        """
+        # Import here to avoid circular imports
+        from openmarkets.core.mcpserver import _SERVICE_PROFILES
+
+        if v not in _SERVICE_PROFILES:
+            available = ", ".join(sorted(_SERVICE_PROFILES.keys()))
+            raise ValueError(f"Invalid profile '{v}'. Must be one of: {available}")
+        return v
 
     model_config = SettingsConfigDict(
         env_file=".env",
