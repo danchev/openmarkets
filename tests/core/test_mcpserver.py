@@ -1,3 +1,5 @@
+import re
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -205,6 +207,36 @@ def test_published_tool_surface_is_explicit():
         assert all(
             name.startswith(("get_", "list_", "search_", "compare_", "calculate_", "backtest_")) for name in names
         )
+
+
+def test_readme_tool_catalog_matches_published_surface():
+    """Keep the public tool catalog aligned with runtime registration.
+
+    A correct grand total is insufficient: additions and removals in different
+    services can cancel out while leaving clients with nonexistent tool names.
+    """
+    readme = Path(__file__).parents[2] / "README.md"
+    catalog = readme.read_text(encoding="utf-8").split("## 🛠️ Complete Directory", 1)[1].split("\n---", 1)[0]
+    sections = re.finditer(
+        r"^### \d+\. .*?\(`(?P<class>\w+)` — (?P<count>\d+) tools?\)\n"
+        r"(?P<body>.*?)(?=^### \d+\.|\Z)",
+        catalog,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    documented = {
+        match["class"]: (
+            int(match["count"]),
+            set(re.findall(r"^- `([A-Za-z0-9_]+)\(", match["body"], flags=re.MULTILINE)),
+        )
+        for match in sections
+    }
+    published = {type(service).__name__: set(service.tool_names()) for service in mcpserver._SERVICES}
+
+    assert set(documented) == set(published)
+    for service_class, tool_names in published.items():
+        documented_count, documented_names = documented[service_class]
+        assert documented_count == len(tool_names), service_class
+        assert documented_names == tool_names, service_class
 
 
 def test_export_schema():

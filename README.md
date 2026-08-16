@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Downloads](https://static.pepy.tech/badge/openmarkets)](https://pypi.org/project/openmarkets)
 [![PyPI - Monthly Downloads](https://static.pepy.tech/badge/openmarkets/month)](https://pypi.org/project/openmarkets)
-[![Tests](https://img.shields.io/badge/tests-446%20passed-success)](https://github.com/danchev/openmarkets)
+[![Tests](https://github.com/danchev/openmarkets/actions/workflows/checks.yaml/badge.svg)](https://github.com/danchev/openmarkets/actions/workflows/checks.yaml)
 [![Tools](https://img.shields.io/badge/MCP%20Tools-127%20tools-blue)](https://github.com/danchev/openmarkets)
 [![License](https://img.shields.io/badge/license-AGPLv3%2B-blue.svg)](LICENSE)
 
@@ -18,7 +18,7 @@ Open Markets aggregates financial telemetry across institutional-grade data prov
 - **Federal Reserve Economic Data (FRED Engine)**: Comprehensive macroeconomic indicators (CPI Inflation, Core PCE, Effective Fed Funds Rate, SOFR, Nonfarm Payrolls, Unemployment, Real GDP, M2 Money Supply, Fed Balance Sheet, TIPS Breakeven Inflation, and Financial Stress).
 - **Wall Street Journal (WSJ Michelangelo Engine)**: High-resolution 1-minute intraday continuous ticks (with pre/post-market), continuous commodities & futures, server-side technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), global equity benchmark indices, and sovereign bond curves.
 - **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
-- **Quantitative Portfolio & Backtesting Engine**: Vectorized multi-asset Sharpe/Sortino ratios, Value-at-Risk (VaR/CVaR), correlation matrices, Inverse-Volatility Risk Parity, Markowitz Minimum Variance optimization, and SMA/RSI strategy backtesting.
+- **Quantitative Portfolio & Backtesting Engine**: Vectorized multi-asset Sharpe/Sortino ratios, Value-at-Risk (VaR/CVaR), correlation matrices, inverse-volatility allocation, constrained Markowitz Minimum Variance optimization, and SMA/RSI strategy backtesting.
 - **Green Markets (Bloomberg / Dow Jones)**: Weekly North American fertilizer price index benchmark.
 
 
@@ -32,6 +32,21 @@ All network requests use modern **Chrome TLS/JA3-impersonation** (`curl_cffi`), 
 
 ```bash
 uvx openmarkets
+```
+
+### Dependency security
+
+Audit the committed lockfile with uv's native OSV integration:
+
+```bash
+uv audit --locked
+```
+
+CI also enables uv's preview malware check during a locked sync. This check is
+opt-in and requires a current uv release:
+
+```bash
+UV_MALWARE_CHECK=1 uv --preview-features malware-check sync --locked --all-groups --all-extras
 ```
 
 ### Usage with Cursor
@@ -88,10 +103,10 @@ uvx openmarkets --profile sec
 | **`full`** *(default)* | All 127 tools across all 17 services. |
 | **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `portfolio`, `screener`, `sec`. |
 | **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`, `macroeconomics`, `portfolio`. |
-| **`portfolio`** | Multi-asset Sharpe/Sortino, Value-at-Risk (VaR/CVaR), correlation matrices, Risk Parity, Minimum Variance, rolling Beta, and strategy backtesters. |
+| **`portfolio`** | Multi-asset Sharpe/Sortino, Value-at-Risk (VaR/CVaR), correlation matrices, inverse-volatility allocation, Minimum Variance, rolling Beta, and strategy backtesters. |
 | **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`, `macroeconomics`. |
 | **`sec`** | Direct SEC EDGAR submissions, 10-K, 10-Q, 8-K, Form 4, CIK search, and interactive XBRL financial statement facts. |
-| **`minimal`** | Essential 12 tools across core stock and financial lookups. |
+| **`minimal`** | Essential 36 tools across stock, financial, analyst, and screener lookups. |
 | **`macroeconomics`** | US Inflation, PCE, labor markets, Fed rates, GDP, M2, liquidity, and financial stress. |
 | **`commodities`** | Physical commodities, energy, metals, softs, and fertilizer indices. |
 | **`fixed_income`**| Treasury yield curves and 10Y sovereign benchmark yield spreads. |
@@ -106,12 +121,11 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 
 
 
-### 1. Stock & Equities (`StockService` — 19 tools)
+### 1. Stock & Equities (`StockService` — 18 tools)
 - `get_fast_info(ticker)`: Fast summary with real-time price, market cap, 52-week bounds, and currency.
 - `get_info(ticker)`: Exhaustive company metadata, valuation ratios, enterprise multiples, and governance.
+- `get_curated_info(ticker)`: Context-efficient company fundamentals with 33 essential metrics.
 - `get_history(ticker, period, interval)`: Historical OHLCV pricing with custom intervals (1m to 3mo).
-- `get_multiple_tickers(tickers, period)`: Concurrent batch pricing for multiple securities.
-- `download_bulk_data(tickers, period, interval)`: High-performance batch timeseries downloader.
 - `get_dividends(ticker)`: Historical dividend payout schedule and cash amounts.
 - `get_splits(ticker)`: Historical stock split ratios and execution dates.
 - `get_corporate_actions(ticker)`: Combined stream of splits and dividend distributions.
@@ -136,15 +150,16 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 - `get_wsj_rsi(ticker, window, timeframe, step)`: Server-side computed Relative Strength Index (RSI momentum).
 - `get_wsj_macd(ticker, fast_window, slow_window, signal_window)`: Server-side computed MACD Line, Signal Line, and Histogram.
 
-### 3. Financial Statements & SEC Filings (`FinancialsService` — 8 tools)
+### 3. Financial Statements & SEC Filings (`FinancialsService` — 9 tools)
+- `get_curated_financials(ticker)`: Context-efficient financial performance and solvency snapshot.
 - `get_balance_sheet(ticker, quarterly)`: Standardized balance sheet statements (Assets, Liabilities, Equity).
 - `get_income_statement(ticker, quarterly)`: Income statements (Revenues, Gross Profits, Operating Income, Net Income).
-- `get_cash_flow(ticker, quarterly)`: Cash flow statements (Operating, Investing, Financing, Free Cash Flow).
 - `get_ttm_income_statement(ticker)`: Trailing Twelve Months (TTM) income statement.
 - `get_ttm_cash_flow_statement(ticker)`: Trailing Twelve Months (TTM) cash flow statement.
 - `get_financial_calendar(ticker)`: Upcoming earnings release dates and dividend announcement schedules.
 - `get_sec_filings(ticker)`: Official EDGAR SEC filings (10-K, 10-Q, 8-K) with direct document URLs.
 - `get_eps_history(ticker)`: Historical EPS consensus estimates versus reported actuals and surprise percentages.
+- `get_full_financials(ticker)`: Concurrent aggregate of statements, calendar, filings, and EPS history.
 
 ### 4. Analyst Estimates & Consensus (`AnalysisService` — 8 tools)
 - `get_analyst_recommendations(ticker)`: Wall Street consensus ratings breakdown (Strong Buy, Buy, Hold, Sell).
@@ -169,17 +184,14 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 - `get_major_holders(ticker)`: Ownership breakdown (Insiders, Institutions, Float percentages).
 - `get_institutional_holdings(ticker)`: Top institutional asset managers (Vanguard, BlackRock, etc.) and shares held.
 - `get_mutual_fund_holdings(ticker)`: Top mutual fund holders and portfolio portfolio position weights.
-- `get_insider_purchases(ticker)`: Executive insider buying vs selling transactions and dollar volumes.
+- `get_insider_purchases(ticker)`: Six-month insider purchase/sale share and transaction counts.
 - `get_insider_roster_holders(ticker)`: Key company officers and board member share positions.
 - `get_full_holdings(ticker)`: Unified institutional and insider ownership report.
 
-### 7. Stock Screener (`ScreenerService` — 4 tools)
-- `screen_day_gainers(count)`: Top percentage gainers in US markets.
-- `screen_day_losers(count)`: Top percentage decliners in US markets.
-- `screen_most_actives(count)`: Most actively traded securities by volume.
-- `screen_top_etfs(count)`: Top-performing Exchange Traded Funds.
+### 7. Stock Screener (`ScreenerService` — 1 tool)
+- `search_screener_matches(query, count, offset)`: Paginated discovery across Yahoo's predefined equity, ETF, and fund screens.
 
-### 8. Sectors & Industry Analytics (`SectorIndustryService` — 14 tools)
+### 8. Sectors & Industry Analytics (`SectorIndustryService` — 13 tools)
 - `get_sector_overview(sector)`: Macro sector performance and key valuation metrics.
 - `get_sector_overview_for_ticker(ticker)`: Sector intelligence inferred from any ticker.
 - `get_sector_top_companies(sector)`: Leading corporations by market capitalization in a sector.
@@ -193,7 +205,6 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 - `get_industry_top_companies(industry)`: Industry market leaders by market cap.
 - `get_industry_top_growth_companies(industry)`: Fastest revenue and earnings growers in an industry.
 - `get_industry_top_performing_companies(industry)`: Top price momentum leaders within an industry.
-- `get_industry_top_companies_by_region(industry, region)`: Geographic region-scoped industry leaders (e.g. US, Europe, Asia).
 
 ### 9. Global Markets & Volatility (`MarketsService` — 4 tools)
 - `get_market_summary(market)`: Regional market overview (US, Europe, Asia).
@@ -206,7 +217,7 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 - `get_treasury_yield_history(maturity, timeframe, step)`: Historical yield timeseries for any Treasury tenor.
 - `get_global_sovereign_yields()`: Benchmark 10-year sovereign yields and basis-point spreads vs US 10Y across 9 nations (US, Germany, UK, Japan, Canada, France, Italy, Australia, Spain).
 
-### 11. Physical Commodities & Agriculture (`CommoditiesService` — 9 tools)
+### 11. Physical Commodities & Agriculture (`CommoditiesService` — 8 tools)
 - `get_commodity_quote(symbol)`: Real-time price quote for Energy, Metals, Agriculture, Livestock, or Softs.
 - `get_commodity_history(symbol, timeframe, step)`: Historical continuous futures price charts.
 - `get_energy_prices()`: Multi-quote snapshot for WTI Crude, Brent, Natural Gas, Gasoline, and Heating Oil.
@@ -214,30 +225,28 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 - `get_agriculture_prices()`: Multi-quote snapshot for Wheat, Corn, Soybeans, Coffee, and Sugar.
 - `get_livestock_prices()`: Live snapshot for Live Cattle, Feeder Cattle, and Lean Hogs.
 - `get_softs_prices()`: Live snapshot for Coffee, Sugar, Cocoa, and Cotton.
-- `get_crude_oil_price()`: Shortcut quote for WTI Crude Oil.
 - `get_fertilizer_price_index()`: Green Markets North American Fertilizer Price Index weekly benchmark timeseries.
 
-### 12. Foreign Exchange (`ForexService` — 5 tools)
+### 12. Foreign Exchange (`ForexService` — 4 tools)
 - `get_forex_quote(pair)`: Real-time FX exchange rate (e.g. `EURUSD`, `USDJPY`, `GBPUSD`).
 - `get_forex_history(pair, timeframe, step)`: Historical FX exchange rate timeseries.
 - `get_dollar_index_dxy()`: Real-time quote for the US Dollar Index (DXY).
 - `get_major_currencies()`: Currency matrix across EUR, GBP, JPY, CAD, AUD, CHF, CNH.
-- `convert_currency(amount, from_currency, to_currency)`: Real-time currency conversion calculation.
 
 ### 13. ETFs & Mutual Funds (`FundsService` — 8 tools)
 - `get_fund_info(ticker)`: ETF/Fund profile, expense ratio, AUM, category, and NAV.
-- `get_fund_sector_weightings(ticker)`: Fund portfolio sector allocations and percentage weights.
+- `get_fund_sector_weighting(ticker)`: Fund portfolio sector allocations and percentage weights.
 - `get_fund_operations(ticker)`: Annual turnover, minimum investment, and operational parameters.
 - `get_fund_overview(ticker)`: Unified fund overview with performance and fee metrics.
 - `get_fund_top_holdings(ticker)`: Top underlying portfolio holdings and percentage weights.
 - `get_fund_bond_holdings(ticker)`: Bond ratings breakdown, effective duration, and maturity metrics.
 - `get_fund_equity_holdings(ticker)`: Equity price-to-earnings, price-to-book, and median market cap.
-- `get_fund_asset_classes(ticker)`: Asset class allocations (Cash, Stocks, Bonds, Real Estate).
+- `get_fund_asset_class_holdings(ticker)`: Asset class allocations (Cash, Stocks, Bonds, Real Estate).
 
 ### 14. Cryptocurrency (`CryptoService` — 4 tools)
 - `get_crypto_info(symbol)`: Cryptocurrency price, market cap, 24h volume, and circulating supply.
 - `get_crypto_history(symbol, period, interval)`: Historical OHLCV crypto price bars.
-- `get_top_cryptocurrencies(count)`: Leading cryptocurrencies ranked by market cap.
+- `get_top_cryptocurrencies(count)`: Quotes for the configured major-cryptocurrency watchlist (not a live ranking).
 - `get_crypto_fear_greed_proxy()`: Volatility and momentum proxy for crypto market sentiment.
 
 ### 15. Macroeconomics & Federal Reserve Telemetry (`MacroeconomicsService` — 9 tools)
@@ -265,7 +274,7 @@ Open Markets publishes **127 strictly-typed, Pydantic-validated tools** across *
 ### 17. Quantitative Portfolio Risk & Strategy Backtesting (`PortfolioService` — 9 tools)
 - `calculate_portfolio_risk_metrics(tickers, weights, benchmark, period, risk_free_rate)`: Multi-asset Sharpe/Sortino/Calmar ratios, Max Drawdown, Historical VaR (95%/99%), Expected Shortfall (CVaR), Beta, and Alpha.
 - `calculate_asset_correlation_matrix(tickers, period)`: Pairwise Pearson correlation matrix and annualized covariance matrix across cross-asset baskets.
-- `calculate_risk_parity_weights(tickers, period)`: Inverse-Volatility Risk Parity asset allocation weights for equal risk contribution.
+- `calculate_risk_parity_weights(tickers, period)`: Inverse-volatility allocation weights with actual covariance-based risk contributions.
 - `calculate_minimum_variance_portfolio(tickers, period)`: Analytical long-only Markowitz Minimum Variance portfolio allocation weights.
 - `calculate_rolling_beta(ticker, benchmark, window, period)`: Historical rolling window Beta sensitivity series tracking evolving market risk.
 - `calculate_drawdown_series(tickers, weights, period)`: Historical underwater percentage drawdown curve and peak/trough timeline points.
@@ -295,7 +304,7 @@ uv run python -m openmarkets \
 Endpoints:
 - `GET /health` — Liveness & readiness probe.
 - `GET /metrics` — Prometheus metrics (uptime, cache entries).
-- `POST /` — MCP streamable JSON-RPC endpoint.
+- `POST /mcp` — MCP streamable JSON-RPC endpoint.
 
 ---
 
