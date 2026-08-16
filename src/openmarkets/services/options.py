@@ -6,8 +6,10 @@ Acts as an intermediary between the MCP tools layer and repository layer.
 """
 
 from datetime import date
+from typing import Annotated
 
 from curl_cffi import Session
+from pydantic import Field
 
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Ticker
@@ -123,7 +125,7 @@ class OptionsService(ToolRegistrationMixin):
         self,
         ticker: Ticker,
         expiration_date: str | None = None,
-        moneyness_range: float = 0.1,
+        moneyness_range: Annotated[float, Field(ge=0, le=1)] = 0.1,
     ) -> OptionsByMoneyness:
         """
         Retrieve options filtered by moneyness for a given ticker and expiration date.

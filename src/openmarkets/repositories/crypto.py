@@ -10,7 +10,8 @@ import yfinance as yf
 from curl_cffi.requests import Session
 
 from openmarkets.core.constants import DEFAULT_SENTIMENT_TICKERS, TOP_CRYPTO_TICKERS
-from openmarkets.core.exceptions import APIError, InvalidSymbolError
+from openmarkets.core.exceptions import APIError, DataUnavailableError, InvalidSymbolError
+from openmarkets.core.provider import dataframe_records
 from openmarkets.core.types import INTERVALS, PERIODS, Interval, Period
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory, CryptoSentiment, CryptoSentimentEntry
 
@@ -56,21 +57,24 @@ class YFinanceCryptoRepository:
         self._validate_interval(interval)
         normalized_ticker = self._normalize_ticker(ticker)
         ticker_obj = yf.Ticker(normalized_ticker, session=session)
-        dataframe = ticker_obj.history(period=period, interval=interval)
-        dataframe.reset_index(inplace=True)
-        return self._convert_dataframe_to_history(dataframe)
+        records = dataframe_records(
+            ticker_obj.history(period=period, interval=interval), f"cryptocurrency history for {normalized_ticker}"
+        )
+        return [CryptoHistory(**row) for row in records]
 
     def get_top_cryptocurrencies(self, count: int = 10, session: Session | None = None) -> list[CryptoFastInfo]:
-        """Retrieve top cryptocurrencies by market cap.
+        """Retrieve quotes for a configured major-cryptocurrency watchlist.
 
         Args:
             count: Number of cryptocurrencies to retrieve (max 20).
             session: Optional HTTP session for request handling.
 
         Returns:
-            List of top cryptocurrencies.
+            List of configured major cryptocurrencies.
         """
-        selected_cryptos = TOP_CRYPTO_TICKERS[: min(count, 20)]
+        if not 1 <= count <= 20:
+            raise ValueError("count must be between 1 and 20")
+        selected_cryptos = TOP_CRYPTO_TICKERS[:count]
         return [self.get_crypto_info(crypto, session=session) for crypto in selected_cryptos]
 
     def get_crypto_fear_greed_proxy(
@@ -88,9 +92,14 @@ class YFinanceCryptoRepository:
         Raises:
             APIError: If sentiment data could not be retrieved from upstream.
         """
-        tickers = tickers or DEFAULT_SENTIMENT_TICKERS
+        if tickers is None:
+            tickers = DEFAULT_SENTIMENT_TICKERS
+        elif not tickers:
+            raise ValueError("tickers must contain at least one symbol")
         try:
             sentiment_data = self._collect_crypto_sentiment_data(tickers, session)
+        except DataUnavailableError:
+            raise
         except Exception as error:
             raise APIError(f"Failed to retrieve crypto sentiment data: {error}") from error
 
@@ -107,9 +116,12 @@ class YFinanceCryptoRepository:
         Returns:
             Normalized ticker with -USD suffix.
         """
-        if ticker.endswith("-USD"):
-            return ticker
-        return f"{ticker}-USD"
+        normalized = ticker.strip().upper()
+        if not normalized:
+            raise ValueError("ticker must not be empty")
+        if normalized.endswith("-USD"):
+            return normalized
+        return f"{normalized}-USD"
 
     def _validate_period(self, period: str) -> None:
         """Validate the period parameter.
@@ -161,6 +173,8 @@ class YFinanceCryptoRepository:
             crypto_data = self._fetch_crypto_sentiment(crypto, session)
             if crypto_data:
                 sentiment_data.append(crypto_data)
+        if not sentiment_data:
+            raise DataUnavailableError("No cryptocurrency history was sufficient to calculate sentiment.")
         return sentiment_data
 
     def _fetch_crypto_sentiment(self, crypto: str, session: Session | None) -> dict | None:
@@ -173,7 +187,7 @@ class YFinanceCryptoRepository:
         Returns:
             Dictionary with sentiment data or None if insufficient history.
         """
-        ticker_obj = yf.Ticker(crypto, session=session)
+        ticker_obj = yf.Ticker(self._normalize_ticker(crypto), session=session)
         history = ticker_obj.history(period="7d")
         if len(history) < 2:
             return None

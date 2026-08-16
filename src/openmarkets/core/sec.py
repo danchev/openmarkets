@@ -76,9 +76,13 @@ def resolve_cik(ticker_or_cik: str, session: Session | None = None) -> tuple[str
         InvalidSymbolError: If the ticker/CIK cannot be resolved.
     """
     cleaned = str(ticker_or_cik).strip().upper()
+    if not cleaned:
+        raise InvalidSymbolError("Security identifier must not be empty.")
 
     # If it is purely numeric, pad to 10 digits directly
     if cleaned.isdigit():
+        if len(cleaned) > 10:
+            raise InvalidSymbolError("SEC CIK identifiers cannot exceed 10 digits.")
         cik_10 = cleaned.zfill(10)
         return cik_10, f"CIK {cik_10}"
 
@@ -185,8 +189,12 @@ def search_sec_entities(query: str, limit: int = 10, session: Session | None = N
     Returns:
         List of matching company dictionary records.
     """
+    if limit <= 0:
+        raise ValueError("limit must be greater than zero")
     ticker_map = _load_sec_ticker_map(session=session)
     q = query.strip().upper()
+    if not q:
+        raise ValueError("query must not be empty")
 
     matches: list[dict[str, Any]] = []
 

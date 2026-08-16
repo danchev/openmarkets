@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from openmarkets.core.exceptions import DataUnavailableError
+from openmarkets.core.exceptions import APIError, DataUnavailableError, ProviderContractError
 from openmarkets.repositories.options import YFinanceOptionsRepository
 from openmarkets.schemas.options import OptionExpirationDate
 
@@ -107,7 +107,8 @@ def test_get_options_volume_analysis_and_helpers(monkeypatch):
 
     # _safe_ratio denominator 0
     assert repo._safe_ratio(1, 0) is None
-    assert repo._get_column_sum(calls, "missing") == 0
+    with pytest.raises(ProviderContractError, match="missing"):
+        repo._get_column_sum(calls, "missing")
     assert repo._get_column_sum(calls, "volume") == 15
 
 
@@ -141,7 +142,7 @@ def test_get_options_skew_various_cases(monkeypatch):
 
     # chain None
     monkeypatch.setattr("openmarkets.repositories.options.yf.Ticker", lambda t, session=None: SimpleNamespace())
-    with pytest.raises(DataUnavailableError):
+    with pytest.raises(APIError):
         repo.get_options_skew("A", "2020-01-01")
 
     # both empty

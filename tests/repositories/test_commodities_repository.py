@@ -92,6 +92,7 @@ def test_get_fertilizer_index():
     repo = WSJCommoditiesRepository()
     mock_data = [{"data": [[1616457600000, 750.25], [1617062400000, 755.50]]}]
     mock_resp = patch("openmarkets.repositories.commodities.get_session").start().return_value
+    mock_resp.get.return_value.status_code = 200
     mock_resp.get.return_value.json.return_value = mock_data
 
     series = repo.get_fertilizer_index()

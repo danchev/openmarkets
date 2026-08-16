@@ -2,6 +2,9 @@
 
 from unittest.mock import Mock
 
+import pytest
+
+from openmarkets.core.exceptions import ProviderContractError
 from openmarkets.core.wsj import (
     _build_wsj_headers,
     fetch_wsj_timeseries,
@@ -54,6 +57,20 @@ def test_fetch_wsj_timeseries_success():
     assert "TimeInfo" in result
     assert result["TimeInfo"]["Ticks"] == [1616457600000]
     session_mock.get.assert_called_once()
+
+
+def test_fetch_wsj_timeseries_rejects_non_object_payload():
+    session_mock = Mock()
+    session_mock.get.return_value.json.return_value = []
+
+    with pytest.raises(ProviderContractError, match="expected a JSON object"):
+        fetch_wsj_timeseries("STOCK/US//AAPL", session=session_mock)
+
+
+@pytest.mark.parametrize(("key", "step", "timeframe"), [("", "P1D", "P1Y"), ("AAPL", "", "P1Y"), ("AAPL", "P1D", "")])
+def test_fetch_wsj_timeseries_rejects_empty_request_fields(key, step, timeframe):
+    with pytest.raises(ValueError):
+        fetch_wsj_timeseries(key, step=step, timeframe=timeframe, session=Mock())
 
 
 def test_normalize_wsj_timeframe():

@@ -3,8 +3,10 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
+from openmarkets.core.exceptions import DataUnavailableError
 from openmarkets.repositories.analysis import YFinanceAnalysisRepository
 from openmarkets.repositories.crypto import YFinanceCryptoRepository
 from openmarkets.repositories.financials import YFinanceFinancialsRepository
@@ -44,8 +46,7 @@ def test_stock_edge_case_empty_dividends_and_splits():
 def test_stock_edge_case_valuation_history_empty_for_crypto():
     repo = YFinanceStockRepository()
     with patch("openmarkets.repositories.stock.yf.Ticker") as mock_ticker:
-        mock_ticker.return_value.quarterly_income_stmt = None
-        mock_ticker.return_value.quarterly_balance_sheet = None
+        mock_ticker.return_value.get_valuation_measures.return_value = pd.DataFrame()
         val = repo.get_valuation_history("BTC-USD")
         assert val == []
 
@@ -74,7 +75,7 @@ def test_options_edge_case_no_options_chain():
 def test_financials_edge_case_missing_sec_filings():
     repo = YFinanceFinancialsRepository()
     with patch("openmarkets.repositories.financials.yf.Ticker") as mock_ticker:
-        mock_ticker.return_value.sec_filings = None
+        mock_ticker.return_value.get_sec_filings.return_value = None
         filings = repo.get_sec_filings("FOREIGN_ADR")
         assert filings == []
 
@@ -82,10 +83,9 @@ def test_financials_edge_case_missing_sec_filings():
 def test_financials_edge_case_empty_financial_calendar():
     repo = YFinanceFinancialsRepository()
     with patch("openmarkets.repositories.financials.yf.Ticker") as mock_ticker:
-        mock_ticker.return_value.calendar = {}
-        cal = repo.get_financial_calendar("TICKER")
-        assert cal.earnings_date is None
-        assert cal.dividend_date is None
+        mock_ticker.return_value.get_calendar.return_value = None
+        with pytest.raises(DataUnavailableError):
+            repo.get_financial_calendar("TICKER")
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +94,7 @@ def test_financials_edge_case_empty_financial_calendar():
 def test_analysis_edge_case_zero_analyst_coverage():
     repo = YFinanceAnalysisRepository()
     with patch("openmarkets.repositories.analysis.yf.Ticker") as mock_ticker:
-        mock_ticker.return_value.recommendations = None
+        mock_ticker.return_value.upgrades_downgrades = None
         recs = repo.get_recommendation_changes("MICRO_CAP")
         assert recs == []
 
@@ -105,7 +105,7 @@ def test_analysis_edge_case_zero_analyst_coverage():
 def test_holdings_edge_case_empty_insider_purchases():
     repo = YFinanceHoldingsRepository()
     with patch("openmarkets.repositories.holdings.yf.Ticker") as mock_ticker:
-        mock_ticker.return_value.insider_purchases = None
+        mock_ticker.return_value.get_insider_purchases.return_value = None
         purchases = repo.get_insider_purchases("IPO_COMPANY")
         assert purchases == []
 
@@ -133,7 +133,7 @@ def test_forex_edge_case_valid_and_inverted():
     with patch("openmarkets.repositories.forex.fetch_wsj_timeseries", return_value=mock_ts):
         quote_slash = svc.get_forex_quote("EUR/USD")
         quote_no_slash = svc.get_forex_quote("EURUSD")
-        assert quote_slash.pair == "EUR/USD"
+        assert quote_slash.pair == "EURUSD"
         assert quote_no_slash.pair == "EURUSD"
         assert quote_slash.rate == 1.085
         assert quote_no_slash.rate == 1.085
@@ -233,6 +233,5 @@ def test_macroeconomics_extreme_limit():
         series = repo.get_series("CPIAUCSL", limit=1000)
         assert len(series.data_points) == 5
 
-        # Limit 0 returns all data
-        series_all = repo.get_series("CPIAUCSL", limit=0)
-        assert len(series_all.data_points) == 5
+        with pytest.raises(ValueError, match="greater than zero"):
+            repo.get_series("CPIAUCSL", limit=0)

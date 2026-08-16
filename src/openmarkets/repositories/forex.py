@@ -50,6 +50,15 @@ class ForexRepository(Protocol):
 class WSJForexRepository:
     """WSJ Michelangelo implementation of Forex repository."""
 
+    @staticmethod
+    def _normalize_pair(pair: str) -> str:
+        normalized = pair.strip().upper().replace("/", "").replace("-", "")
+        if not normalized:
+            raise ValueError("Currency pair must not be empty")
+        if normalized != "DXY" and len(normalized) != 6:
+            raise ValueError("Currency pair must contain exactly two three-letter currency codes")
+        return normalized
+
     def get_forex_history(
         self,
         pair: str,
@@ -58,7 +67,8 @@ class WSJForexRepository:
         session: Session | None = None,
     ) -> ForexHistory:
         """Fetch historical timeseries for a currency pair."""
-        wsj_key, name, _, _ = resolve_wsj_key(pair)
+        normalized_pair = self._normalize_pair(pair)
+        wsj_key, name, _, _ = resolve_wsj_key(normalized_pair)
         raw = fetch_wsj_timeseries(
             wsj_key=wsj_key,
             step=step,
@@ -101,7 +111,7 @@ class WSJForexRepository:
 
         points = [ForexHistoryPoint.model_validate(r) for r in rows]
         return ForexHistory(
-            pair=pair.upper(),
+            pair=normalized_pair,
             name=name,
             data_points=points,
         )
@@ -114,7 +124,7 @@ class WSJForexRepository:
             raise ValueError(msg)
 
         latest = history.data_points[-1]
-        pair_upper = pair.upper()
+        pair_upper = self._normalize_pair(pair)
         if len(pair_upper) == 6:
             base = pair_upper[:3]
             quote_curr = pair_upper[3:]

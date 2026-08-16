@@ -3,13 +3,14 @@
 Provides access to option chains, contracts, and analytics using yfinance.
 """
 
+import math
 from datetime import date, datetime
 from typing import Protocol
 
 import yfinance as yf
 from curl_cffi.requests import Session
 
-from openmarkets.core.exceptions import DataUnavailableError
+from openmarkets.core.exceptions import APIError, DataUnavailableError, ProviderContractError
 from openmarkets.schemas.options import (
     CallOption,
     OptionContractChain,
@@ -67,7 +68,7 @@ class OptionsRepository(Protocol):
 def _format_expiration(expiration: date | datetime | str | None) -> str | None:
     if expiration is None:
         return None
-    if hasattr(expiration, "strftime"):
+    if isinstance(expiration, (date, datetime)):
         return expiration.strftime("%Y-%m-%d")
     return str(expiration).split(" ")[0]
 
@@ -197,9 +198,11 @@ class YFinanceOptionsRepository:
         session: Session | None = None,
     ) -> OptionsByMoneyness:
         """Get options filtered by moneyness for a ticker and expiration date."""
+        if not math.isfinite(moneyness_range) or not 0 <= moneyness_range <= 1:
+            raise ValueError("moneyness_range must be a finite number between 0 and 1")
         stock = yf.Ticker(ticker, session=session)
         current_price = stock.info.get("currentPrice")
-        if not current_price:
+        if not isinstance(current_price, (int, float)) or not math.isfinite(current_price) or current_price <= 0:
             raise DataUnavailableError(f"Could not get current stock price for {ticker}.")
         option_chain = self._get_option_chain_for_expiration(stock, expiration_date)
         if option_chain is None:
@@ -208,6 +211,9 @@ class YFinanceOptionsRepository:
         price_max = current_price * (1 + moneyness_range)
         calls = option_chain.calls
         puts = option_chain.puts
+        for side, contracts in (("calls", calls), ("puts", puts)):
+            if "strike" not in contracts.columns:
+                raise ProviderContractError(f"Missing 'strike' in {side} options data for {ticker}.")
         filtered_calls = calls[(calls["strike"] >= price_min) & (calls["strike"] <= price_max)]
         filtered_puts = puts[(puts["strike"] >= price_min) & (puts["strike"] <= price_max)]
         return OptionsByMoneyness(
@@ -268,15 +274,17 @@ class YFinanceOptionsRepository:
         if expiration_date:
             try:
                 return stock.option_chain(expiration_date)
-            except Exception:
-                return None
+            except ValueError:
+                raise
+            except Exception as exc:
+                raise APIError(f"Failed to retrieve option chain for expiration {expiration_date}: {exc}") from exc
         expirations = getattr(stock, "options", None)
         if not expirations:
             return None
         try:
             return stock.option_chain(expirations[0])
-        except Exception:
-            return None
+        except Exception as exc:
+            raise APIError(f"Failed to retrieve nearest option chain: {exc}") from exc
 
     def _safe_ratio(self, numerator: float, denominator: float) -> float | None:
         """Safely compute ratio, returning None if denominator is zero."""
@@ -285,7 +293,10 @@ class YFinanceOptionsRepository:
         return numerator / denominator
 
     def _get_column_sum(self, dataframe, column_name: str) -> float:
-        """Get sum of column if it exists, otherwise return 0."""
+        """Get a finite numeric column sum."""
         if column_name not in dataframe.columns:
-            return 0
-        return dataframe[column_name].sum()
+            raise ProviderContractError(f"Missing required options column '{column_name}'.")
+        result = float(dataframe[column_name].sum())
+        if not math.isfinite(result):
+            raise ProviderContractError(f"Options column '{column_name}' produced a non-finite sum.")
+        return result

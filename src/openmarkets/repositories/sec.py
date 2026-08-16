@@ -4,6 +4,7 @@ from typing import Any, Protocol
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import ProviderContractError
 from openmarkets.core.sec import (
     build_sec_doc_url,
     fetch_sec_company_facts,
@@ -162,6 +163,8 @@ class SECEDGARRepository:
         session: Session | None = None,
     ) -> list[SECFilingItem]:
         """Fetch recent filings submitted by a company, optionally filtered by Form type."""
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
         cik, _ = resolve_cik(ticker, session=session)
         sub = fetch_sec_submissions(cik, session=session)
         recent = sub.get("filings", {}).get("recent", {})
@@ -173,6 +176,18 @@ class SECEDGARRepository:
         primary_docs = recent.get("primaryDocument", [])
         primary_doc_descs = recent.get("primaryDocDescription", [])
         is_xbrl_list = recent.get("isXBRL", [])
+
+        required_arrays = {
+            "form": forms,
+            "filingDate": filing_dates,
+            "accessionNumber": accession_numbers,
+            "primaryDocument": primary_docs,
+        }
+        if any(not isinstance(values, list) for values in required_arrays.values()):
+            raise ProviderContractError("SEC recent filings fields must be arrays.")
+        required_lengths = {name: len(values) for name, values in required_arrays.items()}
+        if len(set(required_lengths.values())) > 1:
+            raise ProviderContractError(f"SEC recent filings arrays have inconsistent lengths: {required_lengths}")
 
         target_form = form_type.strip().upper() if form_type else None
 
@@ -263,6 +278,8 @@ class SECEDGARRepository:
         session: Session | None = None,
     ) -> SECXBRLConceptTimeseries:
         """Fetch structured historical timeseries for a specific US-GAAP XBRL accounting concept."""
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
         cik, _ = resolve_cik(ticker, session=session)
 
         # Check if concept is an alias (e.g. 'REVENUES' or 'NET_INCOME')
@@ -338,6 +355,8 @@ class SECEDGARRepository:
 
     def search_cik(self, query: str, limit: int = 10, session: Session | None = None) -> list[SECCIKLookupResult]:
         """Search SEC registrant CIK directory by ticker or company name."""
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
         matches = search_sec_entities(query=query, limit=limit, session=session)
         return [
             SECCIKLookupResult(

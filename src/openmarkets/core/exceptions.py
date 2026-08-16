@@ -40,3 +40,9 @@ class DataUnavailableError(OpenMarketsException):
     """
 
     pass
+
+
+class ProviderContractError(APIError):
+    """Raised when an upstream provider returns an unexpected data shape."""
+
+    pass

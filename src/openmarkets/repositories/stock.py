@@ -11,7 +11,7 @@ import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
 
-from openmarkets.core.exceptions import InvalidSymbolError
+from openmarkets.core.exceptions import DataUnavailableError, InvalidSymbolError
 from openmarkets.core.types import Interval, Period, ValuationFrequency
 from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.stock import (
@@ -83,10 +83,10 @@ class StockRepository(Protocol):
 
     def get_news(self, ticker: str, session: Session | None = None) -> list[NewsItem]: ...
 
-    def get_valuation_measures(
+    def get_valuation_history(
         self,
         ticker: str,
-        frequency: ValuationFrequency = "annual",
+        freq: ValuationFrequency = "quarterly",
         periods: int | None = 5,
         session: Session | None = None,
     ) -> list[ValuationMeasuresEntry]: ...
@@ -129,6 +129,8 @@ class YFinanceStockRepository:
         """
         ticker_obj = yf.Ticker(ticker, session=session)
         info = ticker_obj.info
+        if not info:
+            raise InvalidSymbolError(f"Symbol '{ticker}' not found or invalid.")
         return StockInfo(**info)
 
     def get_curated_info(self, ticker: str, session: Session | None = None) -> StockInfo_v2:
@@ -175,7 +177,9 @@ class YFinanceStockRepository:
             )
         ticker_obj = yf.Ticker(ticker, session=session)
         df: pd.DataFrame = ticker_obj.history(period=period, interval=interval)
-        df.reset_index(inplace=True)
+        if df is None or df.empty:
+            raise DataUnavailableError(f"No price history found for symbol '{ticker}'.")
+        df = df.reset_index()
         # Normalize column name: yfinance uses "Datetime" for intraday, "Date" for daily+
         if "Datetime" in df.columns:
             df.rename(columns={"Datetime": "Date"}, inplace=True)
@@ -387,10 +391,13 @@ class YFinanceStockRepository:
         splits = getattr(ticker_obj, "splits", None)
         if splits is None or (hasattr(splits, "empty") and splits.empty):
             return []
-        return [
-            StockSplit(date=pd.Timestamp(str(index)).to_pydatetime(), stock_splits=value)
-            for index, value in splits.items()
-        ]
+        records: list[StockSplit] = []
+        for index, value in splits.items():
+            timestamp = pd.Timestamp(str(index))
+            if pd.isna(timestamp):
+                continue
+            records.append(StockSplit(date=datetime.fromisoformat(timestamp.isoformat()), stock_splits=value))
+        return records
 
     def get_corporate_actions(self, ticker: str, session: Session | None = None) -> list[CorporateActions]:
         """Retrieve corporate actions for a stock ticker.

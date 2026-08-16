@@ -24,7 +24,9 @@ class TreasuryYieldCurve(BaseModel):
     yields: list[TreasuryYieldPoint] = Field(default_factory=list, description="Yield curve points by maturity")
     spread_2y_10y_bps: float | None = Field(None, description="2Y/10Y spread in basis points ((10Y - 2Y) * 100)")
     spread_3m_10y_bps: float | None = Field(None, description="3M/10Y spread in basis points ((10Y - 3M) * 100)")
-    is_inverted: bool = Field(False, description="Whether the 2Y/10Y yield curve is currently inverted")
+    is_inverted: bool | None = Field(
+        None, description="Whether the 2Y/10Y yield curve is inverted, when both maturities are available"
+    )
 
 
 class FixedIncomeHistory(BaseModel):

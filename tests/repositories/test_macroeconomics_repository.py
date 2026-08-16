@@ -2,6 +2,8 @@
 
 from unittest.mock import patch
 
+import pytest
+
 from openmarkets.repositories.macroeconomics import FREDMacroeconomicsRepository
 from openmarkets.schemas.macroeconomics import (
     EmploymentSummary,
@@ -176,3 +178,27 @@ def test_get_financial_stress():
         assert stress.financial_stress_index == -0.52
         assert "tranquil" in stress.stress_level_interpretation.lower()
         assert stress.high_yield_oas_percent == 2.71
+
+
+def test_yoy_requires_exact_prior_year_date_and_sorts_observations():
+    repo = FREDMacroeconomicsRepository()
+    # There are 13 observations, but the exact February 2024 comparison is
+    # absent. Positional indexing would incorrectly compare January 2024.
+    points = [{"date": "2025-02-01", "value": 120.0}]
+    points.extend({"date": f"2024-{month:02d}-01", "value": 100.0 + month} for month in range(1, 13) if month != 2)
+    points.append({"date": "2023-12-01", "value": 99.0})
+
+    with patch("openmarkets.repositories.macroeconomics.fetch_fred_timeseries", return_value=points):
+        result = repo.get_cpi()
+    assert result.headline_cpi_date == "2025-02-01"
+    assert result.cpi_yoy_percent is None
+
+
+def test_duplicate_macro_dates_fail_provider_contract():
+    from openmarkets.core.exceptions import ProviderContractError
+
+    repo = FREDMacroeconomicsRepository()
+    duplicate = [{"date": "2025-01-01", "value": 1.0}, {"date": "2025-01-01", "value": 2.0}]
+    with patch("openmarkets.repositories.macroeconomics.fetch_fred_timeseries", return_value=duplicate):
+        with pytest.raises(ProviderContractError, match="duplicate"):
+            repo.get_series("CPIAUCSL")

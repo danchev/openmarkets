@@ -71,6 +71,22 @@ class TestYFinanceFundsRepository:
         assert result is not None
 
     @patch("yfinance.Ticker")
+    def test_get_fund_operations_normalizes_current_provider_dataframe(self, mock_ticker):
+        operations = pd.DataFrame(
+            {
+                "SPY": [0.000945, 0.03, 496384.34],
+                "Category Average": [0.0072, 0.94, 100000.0],
+            },
+            index=["Annual Report Expense Ratio", "Annual Holdings Turnover", "Total Net Assets"],
+        )
+        mock_ticker.return_value.get_funds_data.return_value = MagicMock(fund_operations=operations)
+        result = self.repo.get_fund_operations("SPY")
+        assert result is not None
+        assert result.index == "SPY"
+        assert result.annual_report_expense_ratio == 0.000945
+        assert result.total_net_assets == 496384.34
+
+    @patch("yfinance.Ticker")
     def test_get_fund_operations_none(self, mock_ticker):
         """Test fund operations when data is None."""
         mock_ticker.return_value.get_funds_data.return_value = None

@@ -2,7 +2,7 @@ import math
 from datetime import datetime
 
 import pandas as pd
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 
 class InsiderPurchase(BaseModel):
@@ -49,7 +49,7 @@ class InsiderRosterHolder(BaseModel):
         datetime subclass, so an isinstance test alone lets it through and it
         then fails serialization.
         """
-        if v is None or pd.isna(v):
+        if v is None or (pd.api.types.is_scalar(v) and pd.isna(v)):
             return None
         if isinstance(v, datetime):
             return v
@@ -80,15 +80,28 @@ class StockInstitutionalHoldings(BaseModel):
 
     holder: str | None = Field(None, alias="Holder", description="Name of the institutional holder")
     shares: int | None = Field(None, alias="Shares", description="Number of shares held")
-    date_report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
+    date_report: datetime | None = Field(
+        None,
+        validation_alias=AliasChoices("Date Reported", "Date Report"),
+        serialization_alias="Date Reported",
+        description="Date of the report",
+    )
     value: int | None = Field(None, alias="Value", description="Value of the holdings")
-    percent_out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
+    percent_out: float | None = Field(
+        None,
+        validation_alias=AliasChoices("pctHeld", "% Out", "Percent Out"),
+        serialization_alias="pctHeld",
+        description="Percentage of shares outstanding",
+    )
+    percent_change: float | None = Field(None, alias="pctChange", description="Change in the reported holding")
 
     @field_validator("date_report", mode="before")
     @classmethod
     def convert_date(cls, v):
         """Convert date_report field from string to datetime, or pass through if already datetime/None."""
-        if v is None or isinstance(v, datetime):
+        if v is None or (pd.api.types.is_scalar(v) and pd.isna(v)):
+            return None
+        if isinstance(v, datetime):
             return v
         try:
             return datetime.strptime(v, "%Y-%m-%d")
@@ -101,15 +114,28 @@ class StockMutualFundHoldings(BaseModel):
 
     holder: str | None = Field(None, alias="Holder", description="Name of the mutual fund holder")
     shares: int | None = Field(None, alias="Shares", description="Number of shares held")
-    date_report: datetime | None = Field(None, alias="Date Report", description="Date of the report")
+    date_report: datetime | None = Field(
+        None,
+        validation_alias=AliasChoices("Date Reported", "Date Report"),
+        serialization_alias="Date Reported",
+        description="Date of the report",
+    )
     value: int | None = Field(None, alias="Value", description="Value of the holdings")
-    percent_out: float | None = Field(None, alias="Percent Out", description="Percentage of shares outstanding")
+    percent_out: float | None = Field(
+        None,
+        validation_alias=AliasChoices("pctHeld", "% Out", "Percent Out"),
+        serialization_alias="pctHeld",
+        description="Percentage of shares outstanding",
+    )
+    percent_change: float | None = Field(None, alias="pctChange", description="Change in the reported holding")
 
     @field_validator("date_report", mode="before")
     @classmethod
     def convert_date(cls, v):
         """Convert date_report field from string to datetime, or pass through if already datetime/None."""
-        if v is None or isinstance(v, datetime):
+        if v is None or (pd.api.types.is_scalar(v) and pd.isna(v)):
+            return None
+        if isinstance(v, datetime):
             return v
         try:
             return datetime.strptime(v, "%Y-%m-%d")

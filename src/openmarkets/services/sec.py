@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from curl_cffi.requests import Session
+from pydantic import Field
 
 from openmarkets.core.cache import cached
 from openmarkets.core.http import get_session
@@ -15,6 +16,8 @@ from openmarkets.schemas.sec import (
     SECXBRLConceptTimeseries,
 )
 from openmarkets.services.utils import ToolRegistrationMixin, tool
+
+PositiveLimit = Annotated[int, Field(ge=1, le=1_000)]
 
 
 class SECService(ToolRegistrationMixin):
@@ -70,7 +73,7 @@ class SECService(ToolRegistrationMixin):
         form_type: Annotated[
             str | None, "Optional Form type filter (e.g. '10-K', '10-Q', '8-K', '4', '13F-HR', '144')"
         ] = None,
-        limit: Annotated[int, "Max number of filings to return"] = 20,
+        limit: PositiveLimit = 20,
     ) -> list[SECFilingItem]:
         """Retrieve recent regulatory filings submitted to the SEC by a company.
 
@@ -91,7 +94,7 @@ class SECService(ToolRegistrationMixin):
     def get_sec_10k_annual_filings(
         self,
         ticker: Annotated[str, "Stock ticker symbol (e.g. 'AAPL', 'AMZN', 'GOOGL')"],
-        limit: Annotated[int, "Number of 10-K annual report filings to retrieve"] = 5,
+        limit: PositiveLimit = 5,
     ) -> list[SECFilingItem]:
         """Retrieve annual Form 10-K regulatory filings with direct document links.
 
@@ -112,7 +115,7 @@ class SECService(ToolRegistrationMixin):
     def get_sec_10q_quarterly_filings(
         self,
         ticker: Annotated[str, "Stock ticker symbol (e.g. 'AAPL', 'MSFT', 'META')"],
-        limit: Annotated[int, "Number of 10-Q quarterly report filings to retrieve"] = 8,
+        limit: PositiveLimit = 8,
     ) -> list[SECFilingItem]:
         """Retrieve quarterly Form 10-Q regulatory filings with direct document links.
 
@@ -133,7 +136,7 @@ class SECService(ToolRegistrationMixin):
     def get_sec_8k_material_events(
         self,
         ticker: Annotated[str, "Stock ticker symbol (e.g. 'AAPL', 'NVDA', 'TSLA')"],
-        limit: Annotated[int, "Number of 8-K material event filings to retrieve"] = 10,
+        limit: PositiveLimit = 10,
     ) -> list[SECFilingItem]:
         """Retrieve Form 8-K unscheduled material corporate event announcements.
 
@@ -154,7 +157,7 @@ class SECService(ToolRegistrationMixin):
     def get_sec_insider_form4_filings(
         self,
         ticker: Annotated[str, "Stock ticker symbol (e.g. 'AAPL', 'NVDA', 'MSFT')"],
-        limit: Annotated[int, "Number of Form 4 insider filings to retrieve"] = 15,
+        limit: PositiveLimit = 15,
     ) -> list[SECFilingItem]:
         """Retrieve Form 4 insider ownership changes and transaction filings.
 
@@ -197,7 +200,7 @@ class SECService(ToolRegistrationMixin):
             str,
             "US-GAAP XBRL concept or standard alias: 'REVENUES', 'NET_INCOME', 'GROSS_PROFIT', 'OPERATING_INCOME', 'ASSETS', 'LIABILITIES', 'STOCKHOLDERS_EQUITY', 'CASH', 'EPS', or exact tag name (e.g. 'Revenues', 'Assets')",
         ] = "REVENUES",
-        limit: Annotated[int, "Number of historical periods to retrieve"] = 20,
+        limit: PositiveLimit = 20,
     ) -> SECXBRLConceptTimeseries:
         """Retrieve historical timeseries for a specific US-GAAP XBRL accounting concept directly from SEC filings.
 
@@ -222,7 +225,7 @@ class SECService(ToolRegistrationMixin):
         query: Annotated[
             str, "Company name or ticker symbol to search in SEC EDGAR directory (e.g. 'Apple', 'NVIDIA', 'Berkshire')"
         ],
-        limit: Annotated[int, "Maximum number of search results to return"] = 10,
+        limit: PositiveLimit = 10,
     ) -> list[SECCIKLookupResult]:
         """Search the official SEC registered company directory by ticker or company name.
 

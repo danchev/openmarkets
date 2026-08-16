@@ -27,6 +27,9 @@ def test_get_institutional_holdings_against_real_api():
 
     assert isinstance(result, list)
     assert all(isinstance(entry, StockInstitutionalHoldings) for entry in result)
+    assert result
+    assert any(entry.date_report is not None for entry in result)
+    assert any(entry.percent_out is not None for entry in result)
 
 
 def test_get_mutual_fund_holdings_against_real_api():

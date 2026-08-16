@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from openmarkets.core.exceptions import APIError
+from openmarkets.core.exceptions import APIError, DataUnavailableError
 from openmarkets.repositories.crypto import YFinanceCryptoRepository
 from openmarkets.schemas.crypto import CryptoFastInfo, CryptoHistory
 
@@ -185,11 +185,8 @@ class TestYFinanceCryptoRepository:
                 return self._hist
 
         monkeypatch.setattr("openmarkets.repositories.crypto.yf", type("Y", (), {"Ticker": T}))
-        # No usable data must be reported as unknown rather than as 0.0,
-        # which would be indistinguishable from a genuinely flat market.
-        out = self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
-        assert out.average_weekly_change is None
-        assert out.sentiment_proxy == "Unknown"
+        with pytest.raises(DataUnavailableError, match="No cryptocurrency history"):
+            self.repo.get_crypto_fear_greed_proxy(["BTC-USD"])
 
     def test_zero_baseline_price_yields_none_not_nan(self):
         """A zero close price must not produce NaN.
@@ -202,6 +199,22 @@ class TestYFinanceCryptoRepository:
 
         assert self.repo._calculate_weekly_change(history) is None
         assert self.repo._calculate_daily_change(history) is None
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [("btc", "BTC-USD"), (" btc ", "BTC-USD"), ("btc-usd", "BTC-USD")],
+    )
+    def test_ticker_normalization_is_case_and_whitespace_insensitive(self, raw, expected):
+        assert self.repo._normalize_ticker(raw) == expected
+
+    @pytest.mark.parametrize("count", [-1, 0, 21])
+    def test_top_crypto_count_is_bounded(self, count):
+        with pytest.raises(ValueError, match="between 1 and 20"):
+            self.repo.get_top_cryptocurrencies(count)
+
+    def test_explicit_empty_sentiment_tickers_are_rejected(self):
+        with pytest.raises(ValueError, match="at least one"):
+            self.repo.get_crypto_fear_greed_proxy([])
 
     def test_unusable_change_does_not_poison_average(self):
         """Entries without a usable change are excluded from the average."""

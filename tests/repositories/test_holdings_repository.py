@@ -44,6 +44,15 @@ class TestYFinanceHoldingsRepository:
 
         assert isinstance(result, list)
         assert len(result) > 0
+        assert result[0].date_report == pd.Timestamp("2024-01-01")
+        assert result[0].percent_out == 0.05
+
+    @patch("yfinance.Ticker")
+    def test_none_holdings_collections_are_empty(self, mock_ticker):
+        mock_ticker.return_value.get_institutional_holders.return_value = None
+        mock_ticker.return_value.get_mutualfund_holders.return_value = None
+        assert self.repo.get_institutional_holdings(self.ticker) == []
+        assert self.repo.get_mutual_fund_holdings(self.ticker) == []
 
     @patch("yfinance.Ticker")
     def test_get_mutual_fund_holdings(self, mock_ticker):
@@ -63,6 +72,8 @@ class TestYFinanceHoldingsRepository:
 
         assert isinstance(result, list)
         assert len(result) > 0
+        assert result[0].date_report == pd.Timestamp("2024-01-01")
+        assert result[0].percent_out == 0.025
 
     @patch("yfinance.Ticker")
     def test_get_insider_purchases(self, mock_ticker):

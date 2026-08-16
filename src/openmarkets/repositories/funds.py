@@ -7,6 +7,8 @@ holdings, sector weightings, and operational data.
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import DataUnavailableError, ProviderContractError
+from openmarkets.core.provider import dataframe_records, require_mapping
 from openmarkets.schemas.funds import (
     FundAssetClassHolding,
     FundBondHolding,
@@ -33,7 +35,7 @@ class YFinanceFundsRepository:
             Fund information.
         """
         fund_ticker = yf.Ticker(ticker, session=session)
-        fund_info = fund_ticker.info
+        fund_info = require_mapping(fund_ticker.info, f"fund info for {ticker}")
         return FundInfo(**fund_info)
 
     def get_fund_sector_weighting(self, ticker: str, session: Session | None = None) -> FundSectorWeighting | None:
@@ -43,7 +45,7 @@ class YFinanceFundsRepository:
             return None
         if not hasattr(fund_info, "sector_weightings"):
             return None
-        return FundSectorWeighting(**fund_info.sector_weightings)
+        return FundSectorWeighting(**require_mapping(fund_info.sector_weightings, f"sector weights for {ticker}"))
 
     def get_fund_operations(self, ticker: str, session: Session | None = None) -> FundOperations | None:
         fund_ticker = yf.Ticker(ticker, session=session)
@@ -53,14 +55,10 @@ class YFinanceFundsRepository:
         if not hasattr(fund_info, "fund_operations"):
             return None
 
-        ops = fund_info.fund_operations
-        if hasattr(ops, "to_dict"):
-            ops = ops.to_dict()
-
-        normalized_ops = self._normalize_fund_operations(ops)
+        normalized_ops = self._normalize_fund_operations(fund_info.fund_operations, ticker=ticker)
         return FundOperations(**normalized_ops)
 
-    def _normalize_fund_operations(self, ops: dict) -> dict:
+    def _normalize_fund_operations(self, ops, ticker: str | None = None) -> dict:
         """Normalize fund operations dictionary to native types.
 
         Args:
@@ -77,14 +75,42 @@ class YFinanceFundsRepository:
                 if len(val) == 1:
                     return to_native(val.iloc[0])
                 return val.to_list()
-            if hasattr(val, "item"):
-                try:
-                    return val.item()
-                except Exception:
-                    pass
-            if isinstance(val, (np.generic, np.ndarray)):
+            if isinstance(val, np.generic):
+                return val.item()
+            if isinstance(val, np.ndarray):
                 return val.tolist()
             return val
+
+        if isinstance(ops, pd.DataFrame):
+            if ops.empty:
+                raise DataUnavailableError("Fund operations are empty.")
+            selected_column = next(
+                (column for column in ops.columns if str(column).upper() == (ticker or "").upper()), None
+            )
+            if selected_column is None:
+                candidates = [column for column in ops.columns if str(column).lower() != "category average"]
+                if len(candidates) != 1:
+                    raise ProviderContractError("Fund operations do not identify a unique fund column.")
+                selected_column = candidates[0]
+            normalized = {str(k): to_native(v) for k, v in ops[selected_column].to_dict().items()}
+            normalized["index"] = str(selected_column)
+            return normalized
+
+        if hasattr(ops, "to_dict"):
+            ops = ops.to_dict()
+        if not isinstance(ops, dict):
+            raise ProviderContractError(f"Fund operations returned {type(ops).__name__}; expected a mapping")
+
+        # yfinance may return the DataFrame's column-oriented nested mapping.
+        if ops and all(isinstance(value, dict) for value in ops.values()):
+            key = next((k for k in ops if str(k).upper() == (ticker or "").upper()), None)
+            candidates = [k for k in ops if str(k).lower() != "category average"]
+            key = key if key is not None else (candidates[0] if len(candidates) == 1 else None)
+            if key is None:
+                raise ProviderContractError("Fund operations do not identify a unique fund column.")
+            normalized = {str(k): to_native(v) for k, v in ops[key].items()}
+            normalized["index"] = str(key)
+            return normalized
 
         return {str(k): to_native(v) for k, v in ops.items()}
 
@@ -95,7 +121,7 @@ class YFinanceFundsRepository:
             return None
         if not hasattr(fund_info, "fund_overview"):
             return None
-        return FundOverview(**fund_info.fund_overview)
+        return FundOverview(**require_mapping(fund_info.fund_overview, f"fund overview for {ticker}"))
 
     def get_fund_top_holdings(self, ticker: str, session: Session | None = None) -> list[FundTopHolding]:
         """Retrieve fund top holdings for a ticker.
@@ -113,9 +139,8 @@ class YFinanceFundsRepository:
             return []
         if not hasattr(fund_info, "top_holdings"):
             return []
-        df = fund_info.top_holdings
-        reset_df = df.reset_index()
-        return [FundTopHolding(**row) for row in reset_df.to_dict(orient="records")]
+        records = dataframe_records(fund_info.top_holdings, f"top fund holdings for {ticker}")
+        return [FundTopHolding(**row) for row in records]
 
     def get_fund_bond_holdings(self, ticker: str, session: Session | None = None) -> list[FundBondHolding]:
         """Retrieve fund bond holdings for a ticker.

@@ -7,6 +7,7 @@ mutual fund holdings, insider data, and major holders information.
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.provider import dataframe_records
 from openmarkets.schemas.holdings import (
     InsiderPurchase,
     InsiderRosterHolder,
@@ -30,10 +31,7 @@ class YFinanceHoldingsRepository:
             List of major holders data.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_major_holders()
-        transposed = df.transpose()
-        reset_df = transposed.reset_index()
-        records = reset_df.to_dict(orient="records")
+        records = dataframe_records(ticker_obj.get_major_holders(), f"major holders for {ticker}", transpose=True)
         return [StockMajorHolders(**row) for row in records]
 
     def get_institutional_holdings(
@@ -49,9 +47,8 @@ class YFinanceHoldingsRepository:
             List of institutional holdings.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_institutional_holders()
-        df.reset_index(inplace=True)
-        return [StockInstitutionalHoldings(**row) for row in df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_institutional_holders(), f"institutional holders for {ticker}")
+        return [StockInstitutionalHoldings(**row) for row in records]
 
     def get_mutual_fund_holdings(self, ticker: str, session: Session | None = None) -> list[StockMutualFundHoldings]:
         """Retrieve mutual fund holdings for a ticker.
@@ -64,9 +61,8 @@ class YFinanceHoldingsRepository:
             List of mutual fund holdings.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_mutualfund_holders()
-        df.reset_index(inplace=True)
-        return [StockMutualFundHoldings(**row) for row in df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_mutualfund_holders(), f"mutual-fund holders for {ticker}")
+        return [StockMutualFundHoldings(**row) for row in records]
 
     def get_insider_purchases(self, ticker: str, session: Session | None = None) -> list[InsiderPurchase]:
         """Retrieve insider purchase transactions for a ticker.
@@ -79,9 +75,8 @@ class YFinanceHoldingsRepository:
             List of insider purchases.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_insider_purchases()
-        df.reset_index(inplace=True)
-        return [InsiderPurchase(**row) for row in df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_insider_purchases(), f"insider purchases for {ticker}")
+        return [InsiderPurchase(**row) for row in records]
 
     def get_insider_roster_holders(self, ticker: str, session: Session | None = None) -> list[InsiderRosterHolder]:
         """Retrieve insider roster holders for a ticker.
@@ -94,6 +89,5 @@ class YFinanceHoldingsRepository:
             List of insider roster holders.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_insider_roster_holders()
-        reset_df = df.reset_index()
-        return [InsiderRosterHolder(**row) for row in reset_df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_insider_roster_holders(), f"insider roster for {ticker}")
+        return [InsiderRosterHolder(**row) for row in records]

@@ -5,7 +5,10 @@ top cryptocurrencies by market cap, and sentiment indicators. Acts as an interme
 between the MCP tools layer and repository layer.
 """
 
+from typing import Annotated
+
 from curl_cffi.requests import Session
+from pydantic import Field
 
 from openmarkets.core.http import get_session
 from openmarkets.core.types import Interval, Period, Ticker
@@ -70,9 +73,9 @@ class CryptoService(ToolRegistrationMixin):
         return self.repository.get_crypto_history(ticker, period, interval, session=self.session)
 
     @tool
-    def get_top_cryptocurrencies(self, count: int = 10) -> list[CryptoFastInfo]:
+    def get_top_cryptocurrencies(self, count: Annotated[int, Field(ge=1, le=20)] = 10) -> list[CryptoFastInfo]:
         """
-        Retrieve a list of the top cryptocurrencies by market cap or volume.
+        Retrieve quotes for the configured major-cryptocurrency watchlist.
 
         Args:
             count (int, optional): Number of top cryptocurrencies to fetch. Defaults to 10.

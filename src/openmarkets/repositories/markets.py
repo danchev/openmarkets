@@ -4,6 +4,7 @@ Provides abstractions and implementations for fetching market summaries,
 market status, and related market-level information.
 """
 
+import logging
 from datetime import datetime, timezone
 
 import yfinance as yf
@@ -17,6 +18,8 @@ from openmarkets.schemas.markets import (
     MarketSummary,
     SummaryEntry,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class YFinanceMarketsRepository:
@@ -103,7 +106,8 @@ class WSJMarketsRepository:
                             )
                         )
                         break
-            except Exception:
+            except (KeyError, IndexError, TypeError, ValueError) as exc:
+                logger.warning("Unable to retrieve WSJ index %s: %s", symbol, exc)
                 continue
 
         return GlobalMarketSnapshot(as_of=as_of, indices=quotes)

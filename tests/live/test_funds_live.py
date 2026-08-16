@@ -23,7 +23,11 @@ def test_get_fund_sector_weighting_against_real_api():
 
 def test_get_fund_operations_against_real_api():
     with tolerate_network_errors("get_fund_operations"):
-        FundsService().get_fund_operations(STABLE_FUND)
+        result = FundsService().get_fund_operations(STABLE_FUND)
+
+    assert result is not None
+    assert result.annual_report_expense_ratio is not None
+    assert result.annual_holdings_turnover is not None
 
 
 def test_get_fund_overview_against_real_api():

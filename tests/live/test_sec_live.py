@@ -21,7 +21,7 @@ def test_live_get_sec_company_profile():
     assert profile.sic == "3571"
     assert "Apple" in profile.name
     assert profile.business_address is not None
-    assert profile.business_address.city == "Cupertino"
+    assert profile.business_address.city.casefold() == "cupertino"
 
 
 @pytest.mark.live

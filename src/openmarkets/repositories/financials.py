@@ -7,6 +7,7 @@ income statements, cash flow statements, and other financial data.
 import yfinance as yf
 from curl_cffi.requests import Session
 
+from openmarkets.core.provider import dataframe_records, require_mapping
 from openmarkets.schemas.financials import (
     BalanceSheetEntry,
     CuratedFinancialSummary,
@@ -33,12 +34,12 @@ class YFinanceFinancialsRepository:
             CuratedFinancialSummary with 15 core financial metrics.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        info = ticker_obj.info or {}
+        info = require_mapping(ticker_obj.info, f"yfinance info for {ticker}")
         return CuratedFinancialSummary(
             symbol=info.get("symbol", ticker),
             total_revenue=info.get("totalRevenue"),
             gross_profit=info.get("grossProfits"),
-            operating_income=info.get("operatingIncome") or info.get("ebitda"),
+            operating_income=info.get("operatingIncome"),
             net_income=info.get("netIncomeToCommon"),
             ebitda=info.get("ebitda"),
             operating_cashflow=info.get("operatingCashflow"),
@@ -65,10 +66,8 @@ class YFinanceFinancialsRepository:
             List of balance sheet entries.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_balance_sheet()
-        transposed = df.transpose()
-        reset_df = transposed.reset_index()
-        return [BalanceSheetEntry(**row) for row in reset_df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_balance_sheet(), f"balance sheet for {ticker}", transpose=True)
+        return [BalanceSheetEntry(**row) for row in records]
 
     def get_income_statement(self, ticker: str, session: Session | None = None) -> list[IncomeStatementEntry]:
         """Retrieve income statement data for a ticker.
@@ -81,10 +80,8 @@ class YFinanceFinancialsRepository:
             List of income statement entries.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_income_stmt()
-        transposed = df.transpose()
-        reset_df = transposed.reset_index()
-        return [IncomeStatementEntry(**row) for row in reset_df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_income_stmt(), f"income statement for {ticker}", transpose=True)
+        return [IncomeStatementEntry(**row) for row in records]
 
     def get_ttm_income_statement(self, ticker: str, session: Session | None = None) -> list[TTMIncomeStatementEntry]:
         """Retrieve trailing twelve months income statement for a ticker.
@@ -97,10 +94,8 @@ class YFinanceFinancialsRepository:
             List of TTM income statement entries.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        data = ticker_obj.ttm_income_stmt
-        transposed = data.transpose()
-        reset_data = transposed.reset_index()
-        return [TTMIncomeStatementEntry(**row) for row in reset_data.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.ttm_income_stmt, f"TTM income statement for {ticker}", transpose=True)
+        return [TTMIncomeStatementEntry(**row) for row in records]
 
     def get_ttm_cash_flow_statement(
         self, ticker: str, session: Session | None = None
@@ -115,10 +110,8 @@ class YFinanceFinancialsRepository:
             List of TTM cash flow statement entries.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        data = ticker_obj.ttm_cash_flow
-        transposed = data.transpose()
-        reset_data = transposed.reset_index()
-        return [TTMCashFlowStatementEntry(**row) for row in reset_data.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.ttm_cash_flow, f"TTM cash flow statement for {ticker}", transpose=True)
+        return [TTMCashFlowStatementEntry(**row) for row in records]
 
     def get_financial_calendar(self, ticker: str, session: Session | None = None) -> FinancialCalendar:
         """Retrieve financial calendar for a ticker.
@@ -131,7 +124,7 @@ class YFinanceFinancialsRepository:
             Financial calendar data.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        data = ticker_obj.get_calendar()
+        data = require_mapping(ticker_obj.get_calendar(), f"financial calendar for {ticker}")
         return FinancialCalendar(**data)
 
     def get_sec_filings(self, ticker: str, session: Session | None = None) -> list[SecFilingRecord]:
@@ -146,6 +139,12 @@ class YFinanceFinancialsRepository:
         """
         ticker_obj = yf.Ticker(ticker, session=session)
         data = ticker_obj.get_sec_filings()
+        if data is None:
+            return []
+        if not isinstance(data, list):
+            from openmarkets.core.exceptions import ProviderContractError
+
+            raise ProviderContractError(f"SEC filings for {ticker} returned {type(data).__name__}; expected a list")
         return [SecFilingRecord(**filing) for filing in data]
 
     def get_eps_history(self, ticker: str, session: Session | None = None) -> list[EPSHistoryEntry]:
@@ -159,8 +158,5 @@ class YFinanceFinancialsRepository:
             List of EPS history entries.
         """
         ticker_obj = yf.Ticker(ticker, session=session)
-        df = ticker_obj.get_earnings_dates()
-        if df is None:
-            return []
-        reset_df = df.reset_index()
-        return [EPSHistoryEntry(**row) for row in reset_df.to_dict(orient="records")]
+        records = dataframe_records(ticker_obj.get_earnings_dates(), f"earnings dates for {ticker}")
+        return [EPSHistoryEntry(**row) for row in records]

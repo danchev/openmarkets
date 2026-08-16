@@ -162,6 +162,13 @@ class TestYFinanceTechnicalAnalysisRepository:
         with pytest.raises(ValueError, match="No historical data available"):
             self.repo.get_volatility_metrics(self.ticker)
 
+    @patch("yfinance.Ticker")
+    @pytest.mark.parametrize("closes", [[100.0], [100.0, 100.0]])
+    def test_get_volatility_metrics_rejects_insufficient_samples(self, mock_ticker, closes):
+        mock_ticker.return_value.history.return_value = pd.DataFrame({"Close": closes})
+        with pytest.raises(ValueError, match="three valid closing prices"):
+            self.repo.get_volatility_metrics(self.ticker)
+
     def test_calculate_annualized_volatility(self):
         """Test annualized volatility calculation."""
         result = self.repo._calculate_annualized_volatility(0.02)

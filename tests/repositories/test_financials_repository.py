@@ -144,3 +144,17 @@ class TestYFinanceFinancialsRepository:
         assert result.symbol == "AAPL"
         assert result.total_revenue == 380000000000.0
         assert result.free_cashflow == 105000000000.0
+
+    @patch("yfinance.Ticker")
+    def test_zero_operating_income_is_not_replaced_by_ebitda(self, mock_ticker):
+        mock_ticker.return_value.info = {"symbol": "ZERO", "operatingIncome": 0.0, "ebitda": 99.0}
+        result = self.repo.get_curated_financials("ZERO")
+        assert result.operating_income == 0.0
+        assert result.ebitda == 99.0
+
+    @patch("yfinance.Ticker")
+    def test_none_collection_results_are_empty(self, mock_ticker):
+        mock_ticker.return_value.get_balance_sheet.return_value = None
+        mock_ticker.return_value.get_sec_filings.return_value = None
+        assert self.repo.get_balance_sheet(self.ticker) == []
+        assert self.repo.get_sec_filings(self.ticker) == []

@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from openmarkets.core.exceptions import DataUnavailableError
+from openmarkets.core.exceptions import APIError, DataUnavailableError, ProviderContractError
 from openmarkets.repositories.options import YFinanceOptionsRepository
 from openmarkets.schemas.options import OptionExpirationDate
 
@@ -301,7 +301,8 @@ def test_get_column_sum_missing_column(options_repository, fake_dataframe):
     """Test _get_column_sum with missing column."""
     df = fake_dataframe([{"volume": 10}])
     assert options_repository._get_column_sum(df, "volume") == 10
-    assert options_repository._get_column_sum(df, "missing_col") == 0
+    with pytest.raises(ProviderContractError, match="missing_col"):
+        options_repository._get_column_sum(df, "missing_col")
 
 
 def test_option_chain_exception_handling(options_repository, monkeypatch):
@@ -315,5 +316,20 @@ def test_option_chain_exception_handling(options_repository, monkeypatch):
             raise Exception("Simulated failure")
 
     monkeypatch.setattr("openmarkets.repositories.options.yf", type("Y", (), {"Ticker": FailingTicker}))
-    with pytest.raises(DataUnavailableError):
+    with pytest.raises(APIError, match="Simulated failure"):
         options_repository.get_options_volume_analysis("AAPL")
+
+
+@pytest.mark.parametrize("invalid_range", [-0.1, 1.1, float("nan"), float("inf")])
+def test_moneyness_range_must_be_finite_and_bounded(options_repository, invalid_range):
+    with pytest.raises(ValueError, match="moneyness_range"):
+        options_repository.get_options_by_moneyness("AAPL", moneyness_range=invalid_range)
+
+
+def test_nan_current_price_is_unavailable(options_repository, monkeypatch):
+    monkeypatch.setattr(
+        "openmarkets.repositories.options.yf.Ticker",
+        lambda ticker, session=None: type("Ticker", (), {"info": {"currentPrice": float("nan")}})(),
+    )
+    with pytest.raises(DataUnavailableError, match="current stock price"):
+        options_repository.get_options_by_moneyness("AAPL")

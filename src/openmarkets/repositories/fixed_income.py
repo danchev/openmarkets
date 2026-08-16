@@ -5,6 +5,7 @@ from typing import Protocol
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import DataUnavailableError
 from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.fixed_income import (
     FixedIncomeHistory,
@@ -117,7 +118,7 @@ class WSJFixedIncomeRepository:
         # Calculate key recession indicator spreads
         spread_2y_10y = None
         spread_3m_10y = None
-        is_inverted = False
+        is_inverted = None
 
         if "2Y" in yield_by_mat and "10Y" in yield_by_mat:
             spread_2y_10y = round((yield_by_mat["10Y"] - yield_by_mat["2Y"]) * 100, 2)
@@ -125,6 +126,9 @@ class WSJFixedIncomeRepository:
 
         if "3M" in yield_by_mat and "10Y" in yield_by_mat:
             spread_3m_10y = round((yield_by_mat["10Y"] - yield_by_mat["3M"]) * 100, 2)
+
+        if not yield_points:
+            raise DataUnavailableError("No Treasury yield observations are available.")
 
         return TreasuryYieldCurve(
             as_of_date=as_of_date,

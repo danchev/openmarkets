@@ -100,7 +100,7 @@ def test_get_fund_overview_and_asset_classes_and_top_holdings_and_bond_equity_ho
     assert repo.get_fund_asset_class_holdings("F") is None
 
     # provide data
-    df_top = fake_dataframe([{"Symbol": "A", "Name": "Alpha", "Holding Percent": 0.1}])
+    df_top = pd.DataFrame([{"Symbol": "A", "Name": "Alpha", "Holding Percent": 0.1}])
     df_bond = fake_dataframe([{"index": "B", "Duration": 1.2, "Maturity": 5.0, "Credit Quality": 7}])
     df_equity = fake_dataframe([{"index": "E", "Price/Earnings": 10.0}])
 

@@ -4,6 +4,7 @@ This module provides repositories for retrieving technical analysis data
 including indicators, volatility metrics, and support/resistance levels.
 """
 
+import math
 from datetime import datetime, timezone
 
 import yfinance as yf
@@ -178,8 +179,12 @@ class YFinanceTechnicalAnalysisRepository:
 
         if hist.empty:
             raise ValueError("No historical data available")
+        if "Close" not in hist.columns:
+            raise ValueError("Historical data is missing the Close column")
 
         daily_returns = hist["Close"].pct_change().dropna()
+        if len(daily_returns) < 2:
+            raise ValueError("At least three valid closing prices are required for volatility metrics")
         daily_volatility = daily_returns.std()
         annualized_volatility = self._calculate_annualized_volatility(daily_volatility)
 
@@ -189,6 +194,10 @@ class YFinanceTechnicalAnalysisRepository:
         positive_days = int((daily_returns > 0).sum())
         negative_days = int((daily_returns < 0).sum())
         total_days = len(daily_returns)
+
+        values = (daily_volatility, annualized_volatility, max_daily_gain, max_daily_loss)
+        if not all(math.isfinite(float(value)) for value in values):
+            raise ValueError("Historical data produced non-finite volatility metrics")
 
         return self._build_volatility_dict(
             daily_volatility=daily_volatility,

@@ -1,6 +1,9 @@
 """Service layer for macroeconomic telemetry and Federal Reserve Economic Data (FRED)."""
 
+from typing import Annotated
+
 from curl_cffi.requests import Session
+from pydantic import Field
 
 from openmarkets.core.cache import cached
 from openmarkets.core.http import get_session
@@ -17,6 +20,8 @@ from openmarkets.schemas.macroeconomics import (
     PCESummary,
 )
 from openmarkets.services.utils import ToolRegistrationMixin, tool
+
+PositiveLimit = Annotated[int, Field(ge=1, le=10_000)]
 
 
 class MacroeconomicsService(ToolRegistrationMixin):
@@ -48,7 +53,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=600.0)
-    def get_cpi_inflation(self, limit: int = 24) -> InflationSummary:
+    def get_cpi_inflation(self, limit: PositiveLimit = 24) -> InflationSummary:
         """Retrieve US Consumer Price Index (CPI) and Core CPI with year-over-year inflation rates.
 
         Args:
@@ -61,7 +66,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=600.0)
-    def get_pce_inflation(self, limit: int = 24) -> PCESummary:
+    def get_pce_inflation(self, limit: PositiveLimit = 24) -> PCESummary:
         """Retrieve US Core Personal Consumption Expenditures (PCE) Price Index (Fed's primary inflation target).
 
         Args:
@@ -74,7 +79,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=600.0)
-    def get_employment_indicators(self, limit: int = 24) -> EmploymentSummary:
+    def get_employment_indicators(self, limit: PositiveLimit = 24) -> EmploymentSummary:
         """Retrieve US labor market telemetry including Civilian Unemployment Rate and Nonfarm Payrolls.
 
         Args:
@@ -87,7 +92,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=300.0)
-    def get_interest_rates_telemetry(self, limit: int = 30) -> InterestRatesSummary:
+    def get_interest_rates_telemetry(self, limit: PositiveLimit = 30) -> InterestRatesSummary:
         """Retrieve benchmark US money market and monetary policy interest rates (EFFR and SOFR).
 
         Args:
@@ -100,7 +105,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=600.0)
-    def get_gdp_growth(self, limit: int = 20) -> GDPSummary:
+    def get_gdp_growth(self, limit: PositiveLimit = 20) -> GDPSummary:
         """Retrieve US Real GDP and Nominal GDP output levels with quarter-over-quarter annualized growth rates.
 
         Args:
@@ -113,7 +118,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=600.0)
-    def get_money_supply_and_fed_balance_sheet(self, limit: int = 24) -> LiquiditySummary:
+    def get_money_supply_and_fed_balance_sheet(self, limit: PositiveLimit = 24) -> LiquiditySummary:
         """Retrieve US M2 Money Supply and Federal Reserve Balance Sheet (Total Assets) liquidity telemetry.
 
         Args:
@@ -126,7 +131,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=300.0)
-    def get_inflation_expectations(self, limit: int = 30) -> InflationExpectationsSummary:
+    def get_inflation_expectations(self, limit: PositiveLimit = 30) -> InflationExpectationsSummary:
         """Retrieve 5-Year and 10-Year market-implied Breakeven Inflation Rates from TIPS.
 
         Args:
@@ -139,7 +144,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=300.0)
-    def get_financial_stress_and_credit_spreads(self, limit: int = 30) -> FinancialStressSummary:
+    def get_financial_stress_and_credit_spreads(self, limit: PositiveLimit = 30) -> FinancialStressSummary:
         """Retrieve St. Louis Fed Financial Stress Index and ICE BofA US High Yield OAS credit spreads.
 
         Args:
@@ -152,7 +157,7 @@ class MacroeconomicsService(ToolRegistrationMixin):
 
     @tool
     @cached(ttl=600.0)
-    def get_macroeconomic_series(self, series_id: str, limit: int = 50) -> MacroeconomicSeries:
+    def get_macroeconomic_series(self, series_id: str, limit: PositiveLimit = 50) -> MacroeconomicSeries:
         """Query historical observations and metadata for any valid Federal Reserve Economic Data (FRED) series identifier.
 
         Examples: 'MORTGAGE30US' (30-Year Fixed Mortgage Rate), 'UMCSENT' (Consumer Sentiment), 'INDPRO' (Industrial Production).

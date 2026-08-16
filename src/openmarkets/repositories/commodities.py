@@ -5,6 +5,7 @@ from typing import Protocol
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import DataUnavailableError, ProviderContractError
 from openmarkets.core.http import get_session
 from openmarkets.core.wsj import fetch_wsj_timeseries, resolve_wsj_key
 from openmarkets.schemas.commodities import (
@@ -123,14 +124,7 @@ class WSJCommoditiesRepository:
         """Fetch latest quote for a commodity."""
         history = self.get_commodity_history(symbol=symbol, timeframe="D7", step="P1D", session=session)
         if not history.data_points:
-            return CommodityQuote(
-                symbol=symbol.upper(),
-                name=history.name,
-                exchange=history.exchange,
-                unit=history.unit,
-                price=0.0,
-                date=datetime.now(tz=timezone.utc).strftime("%Y-%m-%d"),
-            )
+            raise DataUnavailableError(f"No quote data available for commodity '{symbol}'.")
 
         latest = history.data_points[-1]
         return CommodityQuote(
@@ -167,6 +161,8 @@ class WSJCommoditiesRepository:
         url = "https://fertilizerpricing.com/wp-content/themes/greenmarkets/fcharts/fchart_lib/json/data_open.php"
         sess = session or get_session()
         resp = sess.get(url, timeout=10)
+        if resp.status_code != 200:
+            raise DataUnavailableError(f"Fertilizer endpoint returned HTTP {resp.status_code}.")
         data = resp.json()
         points: list[FertilizerPoint] = []
 
@@ -183,8 +179,10 @@ class WSJCommoditiesRepository:
                 dt_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
                 points.append(FertilizerPoint(timestamp=ts, date=dt_str, price_index=val))
 
-        latest_price = points[-1].price_index if points else 0.0
-        latest_date = points[-1].date if points else ""
+        if not points:
+            raise ProviderContractError("Fertilizer provider returned no valid price observations.")
+        latest_price = points[-1].price_index
+        latest_date = points[-1].date
 
         return FertilizerIndexSeries(
             latest_price=latest_price,

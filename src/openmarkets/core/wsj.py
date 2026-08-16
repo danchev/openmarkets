@@ -6,12 +6,15 @@ from typing import Any
 
 from curl_cffi.requests import Session
 
+from openmarkets.core.exceptions import ProviderContractError
 from openmarkets.core.http import get_session, retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
 WSJ_TIMESERIES_URL = "https://api.wsj.net/api/michelangelo/timeseries/history"
-DEFAULT_ENTITLEMENT_TOKEN = "57494d5ed7ad44af85bc59a51dd87c90"
+# This is WSJ's published client entitlement value, not an OpenMarkets
+# credential. It is sent as part of the public endpoint contract.
+DEFAULT_ENTITLEMENT_TOKEN = "57494d5ed7ad44af85bc59a51dd87c90"  # nosec B105
 DEFAULT_CKEY = "57494d5ed7"
 
 # Friendly symbol / alias to WSJ Michelangelo Series Key mapping
@@ -290,8 +293,16 @@ def fetch_wsj_timeseries(
     Returns:
         The raw JSON response from WSJ.
     """
+    if not wsj_key.strip():
+        raise ValueError("wsj_key must not be empty")
+    if not step.strip():
+        raise ValueError("step must not be empty")
+    if not timeframe.strip():
+        raise ValueError("timeframe must not be empty")
     if datatypes is None:
         datatypes = ["Open", "High", "Low", "Last"]
+    elif not datatypes:
+        raise ValueError("datatypes must contain at least one value")
 
     valid_timeframe = normalize_wsj_timeframe(timeframe)
 
@@ -341,5 +352,7 @@ def fetch_wsj_timeseries(
         timeout=15.0,
     )
     response.raise_for_status()
-    data: dict[str, Any] = response.json()
+    data = response.json()
+    if not isinstance(data, dict):
+        raise ProviderContractError(f"WSJ timeseries returned {type(data).__name__}; expected a JSON object")
     return data

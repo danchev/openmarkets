@@ -276,7 +276,7 @@ class FundSectorWeighting(BaseModel):
     """Schema for sector weightings within a fund."""
 
     real_estate: float | None = Field(None, description="Real Estate", alias="realestate")
-    consumer_cyclical: float | None = Field(None, description="Consumer Cyclical", alias="customer_ciclical")
+    consumer_cyclical: float | None = Field(None, description="Consumer Cyclical", alias="consumer_cyclical")
     basic_materials: float | None = Field(None, description="Basic Materials", alias="basic_materials")
     consumer_defensive: float | None = Field(None, description="Consumer Defensive", alias="consumer_defensive")
     utilities: float | None = Field(None, description="Utilities", alias="utilities")
