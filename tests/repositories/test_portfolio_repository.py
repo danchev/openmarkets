@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from openmarkets.repositories.portfolio import QuantPortfolioRepository
 from openmarkets.schemas.portfolio import (
@@ -41,6 +42,12 @@ def test_calculate_portfolio_risk():
         assert isinstance(res, PortfolioRiskMetrics)
         assert res.tickers == ["AAPL", "MSFT"]
         assert res.sharpe_ratio is not None
+
+
+def test_calculate_portfolio_risk_rejects_duplicate_tickers():
+    repo = QuantPortfolioRepository()
+    with pytest.raises(ValueError, match="unique"):
+        repo.calculate_portfolio_risk(["AAPL", "aapl"])
 
 
 def test_calculate_correlation_matrix():
@@ -105,3 +112,12 @@ def test_calculate_factor_exposures():
         res = repo.calculate_factor_exposures("AAPL")
         assert isinstance(res, FactorExposuresResult)
         assert len(res.exposures) > 0
+
+
+def test_calculate_factor_exposures_excludes_target_from_factor_matrix():
+    repo = QuantPortfolioRepository()
+    with patch.object(repo, "_fetch_price_history", return_value=_mock_df()) as fetch:
+        res = repo.calculate_factor_exposures("SPY")
+        assert isinstance(res, FactorExposuresResult)
+        requested = fetch.call_args.args[0]
+        assert requested.count("SPY") == 1

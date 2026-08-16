@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from openmarkets.core.quant import (
     compute_correlation_and_covariance,
@@ -120,3 +121,71 @@ def test_compute_factor_regressions():
     res = compute_factor_regressions(ret_a, factors)
     assert len(res) >= 2
     assert any(e["factor"] == "MSFT" for e in res)
+
+
+@pytest.mark.parametrize("prices", [pd.DataFrame(), pd.DataFrame(index=[0, 1])])
+def test_empty_portfolios_are_rejected(prices):
+    with pytest.raises(ValueError, match="price column"):
+        compute_portfolio_returns(prices)
+
+
+@pytest.mark.parametrize("weights", [[1.0], [-0.5, 1.5], [0.0, 0.0], [float("nan"), 1.0]])
+def test_invalid_portfolio_weights_are_rejected(weights):
+    with pytest.raises(ValueError, match="weights"):
+        compute_portfolio_returns(_make_sample_prices(), weights)
+
+
+def test_risk_metrics_use_geometric_annualization_and_consistent_beta():
+    dates = pd.date_range("2024-01-01", periods=12, freq="B")
+    benchmark = pd.Series([0.01, -0.005, 0.012, -0.004, 0.008, 0.003] * 2, index=dates)
+    asset = benchmark * 2
+    metrics = compute_risk_metrics(asset, benchmark_returns=benchmark, risk_free_rate=0.0)
+    expected = ((1 + asset).prod() ** (252 / len(asset)) - 1) * 100
+    assert metrics["annualized_return_percent"] == round(expected, 2)
+    assert metrics["beta"] == pytest.approx(2.0, abs=0.001)
+
+
+def test_unestimable_benchmark_statistics_are_not_fabricated():
+    returns = pd.Series([0.01, -0.01, 0.02, -0.02, 0.005, -0.005])
+    flat_benchmark = pd.Series([0.0] * len(returns))
+    metrics = compute_risk_metrics(returns, benchmark_returns=flat_benchmark)
+    assert metrics["beta"] is None
+    assert metrics["alpha_percent"] is None
+    assert metrics["r_squared"] is None
+
+
+def test_undefined_ratio_metrics_are_not_fabricated():
+    metrics = compute_risk_metrics(pd.Series([0.0] * 10), risk_free_rate=0.0)
+    assert metrics["sharpe_ratio"] is None
+    assert metrics["sortino_ratio"] is None
+    assert metrics["calmar_ratio"] is None
+
+
+def test_non_finite_risk_free_rate_is_rejected():
+    with pytest.raises(ValueError, match="risk_free_rate"):
+        compute_risk_metrics(pd.Series([0.01, -0.01]), risk_free_rate=float("nan"))
+
+
+def test_allocation_risk_contributions_are_true_percentages():
+    for calculate in (compute_risk_parity_weights, compute_minimum_variance_weights):
+        allocations = calculate(_make_sample_prices())
+        total = sum(item["risk_contribution_percent"] for item in allocations)
+        assert total == pytest.approx(100.0, abs=0.05)
+
+
+def test_backtest_liquidates_open_position_and_uses_final_equity():
+    dates = pd.date_range("2020-01-01", periods=80, freq="B")
+    prices = pd.Series(np.linspace(100, 180, len(dates)), index=dates)
+    result = run_moving_average_crossover(prices, fast_window=2, slow_window=5, initial_capital=1000)
+    assert result["trades"]
+    assert result["trades"][-1]["exit_date"] == str(dates[-1].date())
+    assert result["equity_curve"][-1]["equity"] == result["ending_capital"]
+    assert result["profit_factor"] is None
+
+
+def test_backtest_parameter_invariants():
+    prices = _make_sample_prices()["AAPL"]
+    with pytest.raises(ValueError, match="slow_window"):
+        run_moving_average_crossover(prices, fast_window=20, slow_window=10)
+    with pytest.raises(ValueError, match="thresholds"):
+        run_rsi_mean_reversion(prices, oversold=80, overbought=20)

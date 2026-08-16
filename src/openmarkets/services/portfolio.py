@@ -52,12 +52,13 @@ class PortfolioService(ToolRegistrationMixin):
         self,
         tickers: Annotated[
             list[str],
-            Field(description="List of asset tickers in the portfolio (e.g. ['AAPL', 'MSFT', 'NVDA', 'GOOGL'])"),
+            Field(min_length=1, description="List of asset tickers in the portfolio"),
         ],
         weights: Annotated[
             list[float] | None,
             Field(
-                description="Optional list of portfolio allocation weights summing to 1.0 (defaults to equal weighting)"
+                min_length=1,
+                description="Optional list of non-negative portfolio weights, normalized to sum to 1.0",
             ),
         ] = None,
         benchmark: Annotated[
@@ -65,7 +66,7 @@ class PortfolioService(ToolRegistrationMixin):
         ] = "SPY",
         period: Annotated[Period, Field(description="Historical lookback period")] = "1y",
         risk_free_rate: Annotated[
-            float, Field(description="Annualized risk-free interest rate (e.g. 0.045 for 4.5%)")
+            float, Field(allow_inf_nan=False, description="Annualized risk-free interest rate (e.g. 0.045 for 4.5%)")
         ] = 0.045,
     ) -> PortfolioRiskMetrics:
         """Calculate comprehensive quantitative risk and performance metrics for a multi-asset portfolio.
@@ -99,7 +100,7 @@ class PortfolioService(ToolRegistrationMixin):
         self,
         tickers: Annotated[
             list[str],
-            Field(description="List of asset tickers to correlate (e.g. ['AAPL', 'NVDA', 'BTC-USD', 'GLD', 'TLT'])"),
+            Field(min_length=1, description="List of asset tickers to correlate"),
         ],
         period: Annotated[Period, Field(description="Historical lookback period")] = "1y",
     ) -> CorrelationMatrixResult:
@@ -123,14 +124,14 @@ class PortfolioService(ToolRegistrationMixin):
         self,
         tickers: Annotated[
             list[str],
-            Field(description="List of asset tickers to allocate (e.g. ['SPY', 'TLT', 'GLD', 'DBC'])"),
+            Field(min_length=1, description="List of asset tickers to allocate"),
         ],
         period: Annotated[Period, Field(description="Historical lookback period used to measure volatility")] = "1y",
     ) -> PortfolioAllocationResult:
-        """Calculate Inverse-Volatility Risk Parity asset allocation weights.
+        """Calculate inverse-volatility asset allocation weights.
 
         Allocates capital inversely proportional to historical volatility so each asset
-        contributes approximately equal risk to the overall multi-asset portfolio.
+        reports each asset's actual covariance-based contribution to portfolio risk.
 
         Args:
             tickers: Asset symbols to allocate.
@@ -147,11 +148,11 @@ class PortfolioService(ToolRegistrationMixin):
         self,
         tickers: Annotated[
             list[str],
-            Field(description="List of asset tickers to optimize (e.g. ['AAPL', 'MSFT', 'JNJ', 'PG', 'XOM'])"),
+            Field(min_length=1, description="List of asset tickers to optimize"),
         ],
         period: Annotated[Period, Field(description="Historical lookback period")] = "1y",
     ) -> PortfolioAllocationResult:
-        """Calculate Markowitz analytical Minimum Variance portfolio allocation weights.
+        """Calculate Markowitz numerical Minimum Variance portfolio allocation weights.
 
         Solves for long-only asset weights that minimize overall portfolio variance using the empirical
         covariance matrix.
@@ -173,7 +174,7 @@ class PortfolioService(ToolRegistrationMixin):
         self,
         ticker: Annotated[str, Field(description="Asset ticker symbol to analyze (e.g. 'NVDA', 'TSLA')")],
         benchmark: Annotated[str, Field(description="Benchmark ticker (e.g. 'SPY', 'QQQ')")] = "SPY",
-        window: Annotated[int, Field(description="Rolling calculation window in trading days (e.g. 30, 60, 90)")] = 60,
+        window: Annotated[int, Field(ge=2, description="Rolling calculation window in trading days")] = 60,
         period: Annotated[Period, Field(description="Historical lookback period")] = "2y",
     ) -> RollingBetaSeries:
         """Calculate historical rolling window Beta sensitivity series against a benchmark.
@@ -203,11 +204,11 @@ class PortfolioService(ToolRegistrationMixin):
         self,
         tickers: Annotated[
             list[str],
-            Field(description="List of asset tickers in portfolio (e.g. ['AAPL', 'NVDA'])"),
+            Field(min_length=1, description="List of asset tickers in portfolio"),
         ],
         weights: Annotated[
             list[float] | None,
-            Field(description="Optional portfolio allocation weights list"),
+            Field(min_length=1, description="Optional portfolio allocation weights list"),
         ] = None,
         period: Annotated[Period, Field(description="Historical lookback period")] = "2y",
     ) -> DrawdownSeriesResult:
@@ -232,10 +233,10 @@ class PortfolioService(ToolRegistrationMixin):
     def backtest_trend_following_strategy(
         self,
         ticker: Annotated[str, Field(description="Asset ticker symbol to backtest (e.g. 'AAPL', 'NVDA', 'SPY')")],
-        fast_window: Annotated[int, Field(description="Fast moving average window in trading days")] = 50,
-        slow_window: Annotated[int, Field(description="Slow moving average window in trading days")] = 200,
+        fast_window: Annotated[int, Field(ge=1, description="Fast moving average window in trading days")] = 50,
+        slow_window: Annotated[int, Field(ge=2, description="Slow moving average window in trading days")] = 200,
         period: Annotated[Period, Field(description="Backtest duration")] = "5y",
-        initial_capital: Annotated[float, Field(description="Starting cash capital in USD")] = 10000.0,
+        initial_capital: Annotated[float, Field(gt=0, description="Starting cash capital in USD")] = 10000.0,
     ) -> BacktestResult:
         """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based strategy backtest.
 
@@ -266,15 +267,15 @@ class PortfolioService(ToolRegistrationMixin):
     def backtest_mean_reversion_strategy(
         self,
         ticker: Annotated[str, Field(description="Asset ticker symbol to backtest (e.g. 'AAPL', 'MSFT', 'SPY')")],
-        rsi_window: Annotated[int, Field(description="RSI calculation window in days")] = 14,
+        rsi_window: Annotated[int, Field(ge=2, description="RSI calculation window in days")] = 14,
         oversold_threshold: Annotated[
-            float, Field(description="RSI level to trigger position entry (e.g. 30.0)")
+            float, Field(ge=0, le=100, description="RSI level to trigger position entry")
         ] = 30.0,
         overbought_threshold: Annotated[
-            float, Field(description="RSI level to trigger position exit to cash (e.g. 70.0)")
+            float, Field(ge=0, le=100, description="RSI level to trigger position exit to cash")
         ] = 70.0,
         period: Annotated[Period, Field(description="Backtest duration")] = "2y",
-        initial_capital: Annotated[float, Field(description="Starting cash capital in USD")] = 10000.0,
+        initial_capital: Annotated[float, Field(gt=0, description="Starting cash capital in USD")] = 10000.0,
     ) -> BacktestResult:
         """Execute Relative Strength Index (RSI) Mean-Reversion strategy backtest.
 

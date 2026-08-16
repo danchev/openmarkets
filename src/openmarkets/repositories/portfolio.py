@@ -126,6 +126,8 @@ class QuantPortfolioRepository:
         cleaned_tickers = [t.strip().upper() for t in tickers if t.strip()]
         if not cleaned_tickers:
             raise DataUnavailableError("At least one ticker must be provided.")
+        if len(cleaned_tickers) != len(set(cleaned_tickers)):
+            raise ValueError("Ticker symbols must be unique.")
 
         try:
             if len(cleaned_tickers) == 1:
@@ -148,7 +150,13 @@ class QuantPortfolioRepository:
                 df = data["Close"]
                 if isinstance(df, pd.Series):
                     df = pd.DataFrame({cleaned_tickers[0]: df})
-            return df.dropna(how="all").ffill().dropna()
+            missing = [ticker for ticker in cleaned_tickers if ticker not in df.columns]
+            if missing:
+                raise DataUnavailableError(f"No price history found for tickers {missing}.")
+            cleaned = df[cleaned_tickers].dropna(how="all").ffill().dropna()
+            if len(cleaned) < 3:
+                raise DataUnavailableError("At least three complete price observations are required.")
+            return cleaned
         except Exception as e:
             if isinstance(e, DataUnavailableError):
                 raise
@@ -165,15 +173,17 @@ class QuantPortfolioRepository:
     ) -> PortfolioRiskMetrics:
         """Calculate multi-asset portfolio Sharpe, Sortino, VaR, CVaR, Beta, and Max Drawdown."""
         clean_tickers = [t.strip().upper() for t in tickers if t.strip()]
-        all_symbols = list(set(clean_tickers + [benchmark.strip().upper()]))
+        if not clean_tickers:
+            raise ValueError("At least one portfolio ticker must be provided.")
+        if len(clean_tickers) != len(set(clean_tickers)):
+            raise ValueError("Portfolio ticker symbols must be unique.")
+        bench_sym = benchmark.strip().upper()
+        if not bench_sym:
+            raise ValueError("benchmark must not be empty")
+        all_symbols = list(dict.fromkeys(clean_tickers + [bench_sym]))
 
         price_df = self._fetch_price_history(all_symbols, period=period, session=session)
-        bench_sym = benchmark.strip().upper()
-
-        if bench_sym not in price_df.columns:
-            bench_returns = None
-        else:
-            bench_returns = price_df[bench_sym].pct_change().dropna()
+        bench_returns = price_df[bench_sym].pct_change().dropna()
 
         portfolio_prices = price_df[[t for t in clean_tickers if t in price_df.columns]]
         port_returns, norm_w = compute_portfolio_returns(portfolio_prices, weights=weights)
@@ -216,7 +226,7 @@ class QuantPortfolioRepository:
         price_df = self._fetch_price_history(tickers, period=period, session=session)
         allocations = compute_risk_parity_weights(price_df)
         return PortfolioAllocationResult(
-            strategy="Inverse-Volatility Risk Parity",
+            strategy="Inverse-Volatility Allocation",
             period=period,
             allocations=[AssetAllocationWeight(**a) for a in allocations],
         )
@@ -227,7 +237,7 @@ class QuantPortfolioRepository:
         period: str = "1y",
         session: Session | None = None,
     ) -> PortfolioAllocationResult:
-        """Calculate analytical long-only Minimum Variance portfolio allocation weights."""
+        """Calculate numerical long-only Minimum Variance portfolio allocation weights."""
         price_df = self._fetch_price_history(tickers, period=period, session=session)
         allocations = compute_minimum_variance_weights(price_df)
         return PortfolioAllocationResult(
@@ -253,7 +263,7 @@ class QuantPortfolioRepository:
         ret_bench = price_df[bench].pct_change().dropna()
 
         points = compute_rolling_beta(ret_asset, ret_bench, window=window)
-        current_b = points[-1]["beta"] if points else 1.0
+        current_b = points[-1]["beta"] if points else None
 
         return RollingBetaSeries(
             ticker=sym,
@@ -304,7 +314,7 @@ class QuantPortfolioRepository:
             initial_capital=initial_capital,
         )
 
-        end_cap = round(initial_capital * (1 + raw["total_return_percent"] / 100.0), 2)
+        end_cap = raw["ending_capital"]
         trades = [BacktestTrade(**t) for t in raw.get("trades", [])]
         curve = [EquityPoint(**pt) for pt in raw.get("equity_curve", [])]
 
@@ -348,7 +358,7 @@ class QuantPortfolioRepository:
             initial_capital=initial_capital,
         )
 
-        end_cap = round(initial_capital * (1 + raw["total_return_percent"] / 100.0), 2)
+        end_cap = raw["ending_capital"]
         trades = [BacktestTrade(**t) for t in raw.get("trades", [])]
         curve = [EquityPoint(**pt) for pt in raw.get("equity_curve", [])]
 
@@ -377,7 +387,9 @@ class QuantPortfolioRepository:
     ) -> FactorExposuresResult:
         """Calculate multi-factor linear regression exposures against benchmark market factors."""
         sym = ticker.strip().upper()
-        factors = ["SPY", "QQQ", "IWM", "TLT", "GLD"]
+        factors = [factor for factor in ["SPY", "QQQ", "IWM", "TLT", "GLD"] if factor != sym]
+        if not factors:
+            raise ValueError("At least one factor distinct from the target ticker is required")
         price_df = self._fetch_price_history([sym] + factors, period=period, session=session)
 
         asset_ret = price_df[sym].pct_change().dropna()
