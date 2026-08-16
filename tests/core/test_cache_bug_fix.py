@@ -4,6 +4,7 @@ This test file validates that different service instances maintain
 separate cache entries instead of sharing them.
 """
 
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 from openmarkets.core.cache import get_global_cache
@@ -77,6 +78,26 @@ def test_same_service_instance_uses_cache():
     get_global_cache().clear()
 
 
+def test_cache_identity_does_not_depend_on_reused_object_address():
+    """A new service instance cannot inherit a collected instance's result."""
+    get_global_cache().clear()
+
+    first_repo = MagicMock()
+    first_repo.get_fast_info.return_value = {"symbol": "AAPL", "price": 100.0}
+    first = StockService(repository=first_repo)
+    first_result = cast(dict[str, Any], first.get_fast_info("AAPL"))
+    assert first_result["price"] == 100.0
+
+    second_repo = MagicMock()
+    second_repo.get_fast_info.return_value = {"symbol": "AAPL", "price": 200.0}
+    second = StockService(repository=second_repo)
+    second_result = cast(dict[str, Any], second.get_fast_info("AAPL"))
+    assert second_result["price"] == 200.0
+    assert second_repo.get_fast_info.call_count == 1
+
+    get_global_cache().clear()
+
+
 def test_cache_distinguishes_different_tickers():
     """Verify cache correctly distinguishes between different tickers."""
     # Clear global cache
@@ -93,9 +114,9 @@ def test_cache_distinguishes_different_tickers():
     service = StockService(repository=mock_repo)
 
     # Call for different tickers
-    result1 = service.get_fast_info("AAPL")
-    result2 = service.get_fast_info("MSFT")
-    result1_cached = service.get_fast_info("AAPL")
+    result1 = cast(dict[str, Any], service.get_fast_info("AAPL"))
+    result2 = cast(dict[str, Any], service.get_fast_info("MSFT"))
+    result1_cached = cast(dict[str, Any], service.get_fast_info("AAPL"))
 
     # Repository should be called twice (not three times)
     assert mock_repo.get_fast_info.call_count == 2
