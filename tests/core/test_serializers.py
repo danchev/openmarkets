@@ -58,6 +58,10 @@ class TestSafeJsonDumps:
         expected_json = '{"np_float": 12.345}'
         assert safe_json_dumps(data) == expected_json
 
+    @pytest.mark.parametrize(("value", "expected"), [(np.bool_(True), True), (np.bool_(False), False), (pd.NA, None)])
+    def test_numpy_boolean_and_pandas_missing_value(self, value, expected):
+        assert json.loads(safe_json_dumps({"value": value})) == {"value": expected}
+
     def test_numpy_array(self):
         """Test serialization of numpy arrays."""
         data = {"np_array": np.array([1, 2, 3])}
@@ -131,6 +135,18 @@ class TestNonFiniteHandling:
         payload = safe_json_dumps({"a": [1.0, float("nan"), {"b": float("-inf")}]})
 
         assert json.loads(payload) == {"a": [1.0, None, {"b": None}]}
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            np.array([1.0, np.nan]),
+            pd.Series([1.0, np.nan]),
+            pd.DataFrame({"value": [1.0, np.nan]}),
+        ],
+    )
+    def test_non_finite_inside_numpy_and_pandas_containers_becomes_null(self, value):
+        assert "NaN" not in safe_json_dumps(value)
+        assert json.loads(safe_json_dumps(value))[-1] in (None, {"value": None})
 
     def test_output_is_always_strict_json(self):
         """A strict RFC 8259 parser must accept the output."""

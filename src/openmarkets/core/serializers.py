@@ -21,12 +21,14 @@ class JSONSerializer(json.JSONEncoder):
     def default(self, o: object) -> object:
         # NaT must be handled before Timestamp: it is a Timestamp subclass and
         # isoformat() on it yields the string "NaT".
-        if o is pd.NaT:
+        if o is pd.NaT or o is pd.NA:
             return None
         if isinstance(o, pd.Timestamp):
             return o.isoformat()
         if isinstance(o, np.integer):
             return int(o)
+        if isinstance(o, np.bool_):
+            return bool(o)
         if isinstance(o, np.floating):
             value = float(o)
             return None if math.isnan(value) or math.isinf(value) else value
@@ -51,8 +53,23 @@ def _replace_non_finite(data: object) -> object:
     Returns:
         The structure with non-finite floats replaced by None.
     """
-    if isinstance(data, float):
-        return None if math.isnan(data) or math.isinf(data) else data
+    if data is pd.NaT or data is pd.NA:
+        return None
+    if isinstance(data, pd.Timestamp):
+        return data.isoformat()
+    if isinstance(data, np.integer):
+        return int(data)
+    if isinstance(data, np.bool_):
+        return bool(data)
+    if isinstance(data, (float, np.floating)):
+        value = float(data)
+        return None if math.isnan(value) or math.isinf(value) else value
+    if isinstance(data, np.ndarray):
+        return _replace_non_finite(data.tolist())
+    if isinstance(data, pd.Series):
+        return _replace_non_finite(data.tolist())
+    if isinstance(data, pd.DataFrame):
+        return _replace_non_finite(data.to_dict(orient="records"))
     if isinstance(data, dict):
         return {key: _replace_non_finite(value) for key, value in data.items()}
     if isinstance(data, (list, tuple)):
