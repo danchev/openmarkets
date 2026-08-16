@@ -56,7 +56,7 @@ def test_retry_with_backoff():
 
     attempts = 0
 
-    @retry_with_backoff(retries=3, initial_delay=0.01, backoff_factor=1.5)
+    @retry_with_backoff(retries=3, initial_delay=0.01, backoff_factor=1.5, retry_exceptions=(ValueError,))
     def flaky_fn():
         nonlocal attempts
         attempts += 1

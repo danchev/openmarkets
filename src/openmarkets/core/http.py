@@ -15,6 +15,9 @@ import logging
 import threading
 
 from curl_cffi.requests import Session
+from curl_cffi.requests.exceptions import RequestException
+
+from openmarkets.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,29 @@ logger = logging.getLogger(__name__)
 _IMPERSONATE = "chrome"
 
 _session: Session | None = None
+_session_timeout: float | None = None
 _lock = threading.Lock()
+
+
+def configure_session_timeout(timeout: float) -> None:
+    """Configure the timeout for the lazily-created shared HTTP session.
+
+    Server startup resolves CLI settings before provider calls happen. This
+    explicit hand-off prevents a later environment-only settings lookup from
+    silently replacing a CLI-provided timeout.
+    """
+    if timeout <= 0:
+        raise ValueError("HTTP session timeout must be positive")
+
+    global _session, _session_timeout
+    with _lock:
+        if _session is not None and _session_timeout != timeout:
+            try:
+                _session.close()
+            except Exception:
+                logger.debug("Failed to close the session during timeout reconfiguration.", exc_info=True)
+            _session = None
+        _session_timeout = timeout
 
 
 def get_session() -> Session:
@@ -36,11 +61,13 @@ def get_session() -> Session:
     Returns:
         Session: The shared session.
     """
-    global _session
+    global _session, _session_timeout
     if _session is None:
         with _lock:
             if _session is None:
-                _session = Session(impersonate=_IMPERSONATE)
+                timeout = _session_timeout if _session_timeout is not None else get_settings().timeout
+                _session = Session(impersonate=_IMPERSONATE, timeout=timeout)
+                _session_timeout = timeout
     return _session
 
 
@@ -50,9 +77,10 @@ def close_session() -> None:
     Registered with :mod:`atexit` so the connection pool is released on
     interpreter shutdown. Safe to call more than once.
     """
-    global _session
+    global _session, _session_timeout
     with _lock:
         if _session is None:
+            _session_timeout = None
             return
         try:
             _session.close()
@@ -60,6 +88,7 @@ def close_session() -> None:
             logger.debug("Failed to close the shared HTTP session.", exc_info=True)
         finally:
             _session = None
+            _session_timeout = None
 
 
 atexit.register(close_session)
@@ -70,7 +99,7 @@ def retry_with_backoff(
     initial_delay: float = 0.5,
     backoff_factor: float = 2.0,
     jitter: bool = True,
-    retry_exceptions: tuple[type[Exception], ...] = (Exception,),
+    retry_exceptions: tuple[type[Exception], ...] = (RequestException,),
 ):
     """Decorator to retry a function call with exponential backoff and jitter.
 
@@ -88,6 +117,11 @@ def retry_with_backoff(
     import time
     from functools import wraps
 
+    # Retry jitter is not a security primitive, but SystemRandom avoids
+    # triggering static analyzers that correctly reject predictable PRNGs in
+    # security-sensitive code paths.
+    jitter_source = random.SystemRandom()
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -100,7 +134,7 @@ def retry_with_backoff(
                     last_exc = exc
                     if attempt == retries - 1:
                         break
-                    sleep_time = delay * (random.uniform(0.8, 1.2) if jitter else 1.0)
+                    sleep_time = delay * (jitter_source.uniform(0.8, 1.2) if jitter else 1.0)
                     logger.warning(
                         "Call %s failed on attempt %d/%d with %s. Retrying in %.2fs...",
                         func.__name__,

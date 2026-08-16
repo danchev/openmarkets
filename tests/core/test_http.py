@@ -33,6 +33,27 @@ def test_get_session_is_shared_and_lazy():
     http.close_session()
 
 
+def test_configured_timeout_is_used_by_lazy_session(monkeypatch):
+    """A server timeout survives until the first provider request."""
+    calls = []
+
+    class FakeSession:
+        def __init__(self, **kwargs):
+            calls.append(kwargs)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(http, "Session", FakeSession)
+    http.close_session()
+    http.configure_session_timeout(17.5)
+
+    http.get_session()
+
+    assert calls == [{"impersonate": "chrome", "timeout": 17.5}]
+    http.close_session()
+
+
 def test_close_session_is_idempotent():
     """close_session may be called repeatedly and before any use."""
     http.close_session()
