@@ -3,7 +3,7 @@
   "source": {
     "type": "filesystem",
     "path": "src/openmarkets/core/server.py",
-    "entrypoint": "mcp"
+    "entrypoint": "create_mcp"
   },
   "environment": {
     "dependencies": [],

@@ -1729,7 +1729,7 @@ test = [
 requires-dist = [
     { name = "curl-cffi", specifier = ">=0.13.0" },
     { name = "lxml", specifier = ">=6.0.2" },
-    { name = "mcp", extras = ["cli"], specifier = ">=2.0.0" },
+    { name = "mcp", extras = ["cli"], specifier = ">=2.0.0,<3" },
     { name = "numpy", specifier = ">=2.0.0" },
     { name = "pandas", specifier = ">=2.2.2" },
     { name = "pydantic", specifier = ">=2.11.0" },

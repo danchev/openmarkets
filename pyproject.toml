@@ -4,7 +4,6 @@ version = "0.1.0.a1"
 description = "OpenMarkets is a modular Model Context Protocol (MCP) server that unifies access to financial market data for AI, research, and quantitative finance. It offers robust APIs for historical prices, corporate actions, fundamentals, and more, enabling advanced agentic retrieval, RAG, and LLM-powered workflows."
 authors = [{ name = "Dobri Danchev" }]
 classifiers = [
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Development Status :: 3 - Alpha",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
@@ -35,10 +34,11 @@ keywords = [
     "financial data retrieval",
 ]
 readme = "README.md"
-license = { text = "AGPL-3.0-or-later" }
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=2.0.0",
+    "mcp[cli]>=2.0.0,<3",
     "yfinance>=1.5.2",
     "lxml>=6.0.2",
     "curl-cffi>=0.13.0",
@@ -60,7 +60,7 @@ openmarkets = "openmarkets.core.server:main"
 mcp-server-yfinance = "openmarkets.core.server:main"
 
 [build-system]
-requires = ["uv_build>=0.9.9,<0.10.0"]
+requires = ["uv_build>=0.9.9,<0.13.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
@@ -119,10 +119,6 @@ filterwarnings = ["once::Warning"]
 markers = [
     "live: real network calls against the Yahoo Finance API (excluded by default; run with `-m live`)",
 ]
-
-[tool.mypy]
-custom_typeshed_dir = "typings"
-plugins = ["mypy_ruff"]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
