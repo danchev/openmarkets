@@ -9,11 +9,26 @@ waiting on the network.
 
 import atexit
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_EXCEPTION, Future, ThreadPoolExecutor, wait
 from typing import Any, Callable
 
 _executor: ThreadPoolExecutor | None = None
 _lock = threading.Lock()
+_submission_slots = threading.BoundedSemaphore(32)
+
+
+def _bounded_submit(executor: ThreadPoolExecutor, call: Callable[[], Any]) -> Future[Any]:
+    _submission_slots.acquire()
+    try:
+        future = executor.submit(call)
+    except BaseException:
+        _submission_slots.release()
+        raise
+    # A done callback runs for every terminal state, including cancellation.
+    # Releasing inside the worker would leak a slot when a queued future is
+    # cancelled before its callable ever starts.
+    future.add_done_callback(lambda _future: _submission_slots.release())
+    return future
 
 
 def get_executor() -> ThreadPoolExecutor:
@@ -59,5 +74,15 @@ def gather(calls: dict[str, Callable[[], Any]]) -> dict[str, Any]:
         return {}
 
     executor = get_executor()
-    futures = {key: executor.submit(call) for key, call in calls.items()}
+    futures = {key: _bounded_submit(executor, call) for key, call in calls.items()}
+    done, pending = wait(futures.values(), return_when=FIRST_EXCEPTION)
+    failure = None
+    for future in done:
+        if not future.cancelled() and (exception := future.exception()) is not None:
+            failure = exception
+            break
+    if failure is not None:
+        for future in pending:
+            future.cancel()
+        raise failure
     return {key: future.result() for key, future in futures.items()}
