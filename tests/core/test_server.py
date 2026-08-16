@@ -60,7 +60,14 @@ def test_run_stdio_server_exception(monkeypatch):
 def test_run_http_server_delegates_to_sdk():
     """Transport configuration is passed to the SDK runner, not to uvicorn."""
     mcp = mock.Mock()
-    settings = mock.Mock(host="127.0.0.1", port=9999)
+    settings = mock.Mock(
+        host="127.0.0.1",
+        port=9999,
+        dns_rebinding_protection_enabled=True,
+        http_allowed_hosts="127.0.0.1:*,localhost:*",
+        cors_allow_origins="*",
+        http_stateless=False,
+    )
 
     server.run_http_server(mcp, settings)
 
@@ -68,7 +75,25 @@ def test_run_http_server_delegates_to_sdk():
     assert kwargs["transport"] == "streamable-http"
     assert kwargs["host"] == "127.0.0.1"
     assert kwargs["port"] == 9999
-    assert kwargs["transport_security"].enable_dns_rebinding_protection is False
+    assert kwargs["transport_security"].enable_dns_rebinding_protection is True
+    assert kwargs["transport_security"].allowed_hosts == ["127.0.0.1:*", "localhost:*"]
+    assert kwargs["stateless_http"] is False
+
+
+def test_run_http_server_can_enable_stateless_legacy_mode():
+    mcp = mock.Mock()
+    settings = mock.Mock(
+        host="127.0.0.1",
+        port=9999,
+        dns_rebinding_protection_enabled=True,
+        http_allowed_hosts="127.0.0.1:*,localhost:*",
+        cors_allow_origins="*",
+        http_stateless=True,
+    )
+
+    server.run_http_server(mcp, settings)
+
+    assert mcp.run.call_args.kwargs["stateless_http"] is True
 
 
 def test_run_http_server_keyboard(monkeypatch):
@@ -87,7 +112,16 @@ def test_run_http_server_keyboard(monkeypatch):
     monkeypatch.setattr(server, "logger", logger_mock)
 
     with pytest.raises(SystemExit) as excinfo:
-        server.run_http_server(mcp, mock.Mock(host="127.0.0.1", port=8000))
+        server.run_http_server(
+            mcp,
+            mock.Mock(
+                host="127.0.0.1",
+                port=8000,
+                dns_rebinding_protection_enabled=True,
+                http_allowed_hosts="127.0.0.1:*,localhost:*",
+                cors_allow_origins="*",
+            ),
+        )
 
     assert excinfo.value.code == 0
     assert logger_mock.info.called
@@ -100,7 +134,16 @@ def test_run_http_server_exception(monkeypatch):
     monkeypatch.setattr(server, "logger", logger_mock)
 
     with pytest.raises(SystemExit) as excinfo:
-        server.run_http_server(mcp, mock.Mock(host="127.0.0.1", port=8000))
+        server.run_http_server(
+            mcp,
+            mock.Mock(
+                host="127.0.0.1",
+                port=8000,
+                dns_rebinding_protection_enabled=True,
+                http_allowed_hosts="127.0.0.1:*,localhost:*",
+                cors_allow_origins="*",
+            ),
+        )
 
     assert excinfo.value.code == 1
     assert logger_mock.exception.called

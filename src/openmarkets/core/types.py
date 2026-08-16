@@ -20,22 +20,27 @@ from openmarkets.core.constants import INDUSTRIES, MARKETS, SECTORS
 # reached the tool definition.
 Ticker = Annotated[
     str,
-    Field(description="Security ticker symbol, for example 'AAPL', 'GOOG' or 'MSFT'."),
+    Field(min_length=1, max_length=32, description="Security ticker symbol, for example 'AAPL', 'GOOG' or 'MSFT'."),
 ]
 
 Sector = Annotated[
     str,
-    Field(description="Sector name. One of: " + ", ".join(f"'{sector}'" for sector in SECTORS) + "."),
+    Field(min_length=1, description="Sector name. One of: " + ", ".join(f"'{sector}'" for sector in SECTORS) + "."),
 ]
 
 Industry = Annotated[
     str,
-    Field(description="Industry name. For example: " + ", ".join(f"'{ind}'" for ind in list(INDUSTRIES)[:5]) + "."),
+    Field(
+        min_length=1,
+        description="Industry name. For example: " + ", ".join(f"'{ind}'" for ind in list(INDUSTRIES)[:5]) + ".",
+    ),
 ]
 
 Market = Annotated[
     str,
-    Field(description="Market identifier. One of: " + ", ".join(f"'{market}'" for market in MARKETS) + "."),
+    Field(
+        min_length=1, description="Market identifier. One of: " + ", ".join(f"'{market}'" for market in MARKETS) + "."
+    ),
 ]
 
 # Not a Literal like Period/Interval: yfinance accepts any ISO 3166-1
@@ -50,7 +55,9 @@ Region = Annotated[
             "Defaults to 'US'. Only scopes company-listing results (e.g. top "
             "companies); overview and research-report data is not region-specific "
             "upstream, and ETF/mutual-fund listings return empty for non-US regions."
-        )
+        ),
+        min_length=2,
+        max_length=2,
     ),
 ]
 

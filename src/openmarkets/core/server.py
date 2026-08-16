@@ -6,7 +6,7 @@ from pathlib import Path
 from mcp.server.transport_security import TransportSecuritySettings
 
 from openmarkets.core.config import Settings, get_settings
-from openmarkets.core.mcpserver import MCPServer, create_mcp, export_schema
+from openmarkets.core.mcpserver import MCPServer, _parse_allowed_origins, create_mcp, export_schema
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,8 @@ def run_http_server(mcp: MCPServer, settings: Settings) -> None:
     """
     Runs the MCP server using the streamable HTTP transport.
 
-    DNS-rebinding protection is disabled because the server is expected to
-    run behind a reverse proxy, where the inbound Host header varies.
+    DNS-rebinding protection is enabled by default. Operators behind a
+    trusted reverse proxy may explicitly disable it through configuration.
 
     Under real operation, ``uvicorn.Server`` installs its own SIGINT/SIGTERM
     handlers and calls ``sys.exit()`` directly for both graceful shutdown
@@ -53,12 +53,26 @@ def run_http_server(mcp: MCPServer, settings: Settings) -> None:
     Raises:
         SystemExit: If our own code raises before uvicorn takes over.
     """
+    dns_protection = getattr(settings, "dns_rebinding_protection_enabled", True)
+    if not isinstance(dns_protection, bool):
+        dns_protection = True
+    stateless_http = getattr(settings, "http_stateless", False)
+    if not isinstance(stateless_http, bool):
+        stateless_http = False
+    allowed_hosts = _parse_allowed_origins(getattr(settings, "http_allowed_hosts", "127.0.0.1:*,localhost:*"))
+    cors_origins = _parse_allowed_origins(getattr(settings, "cors_allow_origins", "*"))
+    allowed_origins = ["http://127.0.0.1:*", "http://localhost:*"] if "*" in cors_origins else cors_origins
     try:
         mcp.run(
             transport="streamable-http",
             host=settings.host,
             port=settings.port,
-            transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+            transport_security=TransportSecuritySettings(
+                enable_dns_rebinding_protection=dns_protection,
+                allowed_hosts=allowed_hosts,
+                allowed_origins=allowed_origins,
+            ),
+            stateless_http=stateless_http,
         )
     except KeyboardInterrupt:
         logger.info(msg="Server shutdown requested by user.")
@@ -78,7 +92,7 @@ def main() -> None:
     Returns:
         None
     """
-    settings = get_settings()
+    settings = get_settings(tuple(sys.argv[1:]))
     logging.basicConfig(
         level=logging.DEBUG if settings.debug else logging.INFO,
         stream=sys.stderr,

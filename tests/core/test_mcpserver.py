@@ -1,6 +1,7 @@
 from unittest import mock
 
 import pytest
+from mcp import Client
 
 import openmarkets.core.mcpserver as mcpserver
 
@@ -90,6 +91,7 @@ def test_cors_middleware_defaults_to_wildcard(monkeypatch, make_middleware_spy_a
 
 def test_create_mcp_registers_all(monkeypatch):
     config = mock.Mock(cors_allow_origins="*")
+    config.timeout = 5.0
     mcp_instance = mock.Mock()
     monkeypatch.setattr(mcpserver, "CORSMCPServer", mock.Mock(return_value=mcp_instance))
     monkeypatch.setattr(mcpserver, "get_settings", mock.Mock(return_value=config))
@@ -105,6 +107,7 @@ def test_create_mcp_passes_configured_origins(monkeypatch):
     config = mock.Mock()
     config.name = "Test Server"
     config.cors_allow_origins = "https://a.example,https://b.example"
+    config.timeout = 5.0
     server_factory = mock.Mock(return_value=mock.Mock())
     monkeypatch.setattr(mcpserver, "CORSMCPServer", server_factory)
     _stub_all_services(monkeypatch)
@@ -115,6 +118,17 @@ def test_create_mcp_passes_configured_origins(monkeypatch):
         "https://a.example",
         "https://b.example",
     ]
+
+
+def test_create_mcp_configures_request_state_key_ring():
+    key_ring = "a" * 32 + "," + "b" * 32
+    server = mcpserver.create_mcp(mcpserver.Settings(profile="minimal", request_state_keys=key_ring))
+
+    boundaries = [item for item in server._lowlevel_server.middleware if type(item).__name__ == "RequestStateBoundary"]
+    assert len(boundaries) == 1
+    boundary = boundaries[0]
+    assert boundary._audience == "Open Markets Server"
+    assert len(boundary._security.codec._ring) == 2
 
 
 @pytest.mark.parametrize(
@@ -152,7 +166,7 @@ def test_parse_allowed_origins_preserves_first_occurrence_order():
 def test_create_mcp_uses_get_settings_when_not_provided(monkeypatch):
     mcp_instance = mock.Mock()
     monkeypatch.setattr(mcpserver, "CORSMCPServer", mock.Mock(return_value=mcp_instance))
-    get_settings_mock = mock.Mock(return_value=mock.Mock(cors_allow_origins="*"))
+    get_settings_mock = mock.Mock(return_value=mock.Mock(cors_allow_origins="*", timeout=5.0))
     monkeypatch.setattr(mcpserver, "get_settings", get_settings_mock)
     _stub_all_services(monkeypatch)
 
@@ -164,6 +178,7 @@ def test_create_mcp_uses_get_settings_when_not_provided(monkeypatch):
 
 def test_create_mcp_register_exception(monkeypatch):
     config = mock.Mock(cors_allow_origins="*")
+    config.timeout = 5.0
     mcp_instance = mock.Mock()
     monkeypatch.setattr(mcpserver, "CORSMCPServer", mock.Mock(return_value=mcp_instance))
     monkeypatch.setattr(mcpserver, "get_settings", mock.Mock(return_value=config))
@@ -201,6 +216,45 @@ def test_export_schema():
 
     result = mcpserver.export_schema(server_mock)
     assert result == [{"name": "sample_tool", "description": "sample"}]
+
+
+@pytest.mark.asyncio
+async def test_export_schema_requires_async_variant_inside_event_loop():
+    with pytest.raises(RuntimeError, match="export_schema_async"):
+        mcpserver.export_schema(mock.AsyncMock())
+
+
+@pytest.mark.asyncio
+async def test_v2_client_negotiates_in_memory_and_receives_server_metadata():
+    """Exercise the v2 Client path without a network or subprocess.
+
+    The raw stdio/HTTP tests cover wire framing; this specifically guards the
+    new v2 dispatcher, protocol negotiation, server identity, and cache hints.
+    """
+    server = mcpserver.create_mcp(mcpserver.Settings(profile="minimal"))
+
+    async with Client(server) as client:
+        assert client.protocol_version == "2026-07-28"
+        assert client.server_info is not None
+        assert client.server_info.version == "0.1.0a1"
+        assert client.server_info.website_url == "https://openmarkets.dev"
+        assert client.server_capabilities.tools is not None
+        tools = await client.list_tools()
+        assert tools.ttl_ms == 60_000
+        assert tools.cache_scope == "public"
+
+    assert server._lowlevel_server.cache_hints["tools/list"].ttl_ms == 60_000
+
+
+@pytest.mark.asyncio
+async def test_tools_reject_unknown_arguments_and_advertise_strict_schema():
+    server = mcpserver.create_mcp(mcpserver.Settings(profile="crypto"))
+    schemas = await server.list_tools()
+    tool_schema = next(tool for tool in schemas if tool.name == "get_crypto_info")
+    assert tool_schema.input_schema["additionalProperties"] is False
+
+    with pytest.raises(Exception, match="Extra inputs are not permitted"):
+        await server.call_tool("get_crypto_info", {"ticker": "BTC", "bogus": True})
 
 
 @pytest.mark.parametrize(

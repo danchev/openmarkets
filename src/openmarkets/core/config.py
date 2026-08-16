@@ -1,7 +1,28 @@
 from functools import lru_cache
+from typing import Literal
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, CliSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
+
+
+def parse_request_state_keys(raw: str) -> list[str]:
+    """Parse and validate comma-separated MCP request-state signing keys.
+
+    The MCP SDK's AES-GCM codec requires every key to contain at least
+    32 bytes of secret material.  Keeping this validation at the settings
+    boundary gives operators an actionable startup error and prevents a
+    partially-created server from running with an invalid key ring.
+    """
+    if not raw.strip():
+        return []
+
+    keys = [part.strip() for part in raw.split(",")]
+    if any(not key for key in keys):
+        raise ValueError("request_state_keys must not contain empty comma-separated values")
+    for index, key in enumerate(keys):
+        if len(key.encode("utf-8")) < 32:
+            raise ValueError(f"request_state_keys entry {index} must contain at least 32 bytes")
+    return keys
 
 
 class Settings(BaseSettings):
@@ -19,7 +40,7 @@ class Settings(BaseSettings):
         "development",
         description="The environment in which the server is running (e.g., development, production).",
     )
-    transport: str = Field(
+    transport: Literal["stdio", "http"] = Field(
         "stdio",
         description="The transport protocol to use (e.g., stdio, http, etc.).",
     )
@@ -30,6 +51,8 @@ class Settings(BaseSettings):
     port: int = Field(
         8000,
         description="The port number for the server.",
+        ge=1,
+        le=65535,
     )
     debug: bool = Field(
         False,
@@ -38,6 +61,7 @@ class Settings(BaseSettings):
     timeout: float = Field(
         5.0,
         description="Default timeout (in seconds) for server operations.",
+        gt=0,
     )
     cors_allow_origins: str = Field(
         "*",
@@ -51,6 +75,28 @@ class Settings(BaseSettings):
         "",
         description="Shared secret required when HTTP authentication is enabled.",
     )
+    dns_rebinding_protection_enabled: bool = Field(
+        True,
+        description="Protect HTTP transports from DNS rebinding attacks.",
+    )
+    http_allowed_hosts: str = Field(
+        "127.0.0.1:*,localhost:*",
+        description="Comma-separated Host values allowed by HTTP DNS-rebinding protection.",
+    )
+    http_stateless: bool = Field(
+        False,
+        description=(
+            "Preserve the SDK's stateless Streamable HTTP behavior for 2025-era clients; "
+            "modern 2026 clients are sessionless regardless."
+        ),
+    )
+    request_state_keys: str = Field(
+        "",
+        description=(
+            "Comma-separated MCP request-state signing keys (each at least 32 bytes) for "
+            "multi-round requests across replicas."
+        ),
+    )
     export_schema: str | None = Field(
         None,
         description="Path to export the MCP tool JSON schema and exit.",
@@ -60,16 +106,13 @@ class Settings(BaseSettings):
         description="Tool profile to expose: 'full' (all tools), 'minimal', 'equities', 'quant', 'macro', 'commodities', 'forex', 'crypto', 'fixed_income', 'macroeconomics', 'sec', 'portfolio'.",
     )
 
-    @field_validator("profile")
-    @classmethod
-    def validate_profile(cls, v: str) -> str:
+    @model_validator(mode="after")
+    def validate_configuration(self) -> "Settings":
         """Validate that the profile name is valid.
 
         Args:
-            v: The profile name to validate.
-
         Returns:
-            The validated profile name.
+            The validated settings.
 
         Raises:
             ValueError: If the profile is not recognized.
@@ -77,10 +120,13 @@ class Settings(BaseSettings):
         # Import here to avoid circular imports
         from openmarkets.core.mcpserver import _SERVICE_PROFILES
 
-        if v not in _SERVICE_PROFILES:
+        if self.profile not in _SERVICE_PROFILES:
             available = ", ".join(sorted(_SERVICE_PROFILES.keys()))
-            raise ValueError(f"Invalid profile '{v}'. Must be one of: {available}")
-        return v
+            raise ValueError(f"Invalid profile '{self.profile}'. Must be one of: {available}")
+        if self.http_auth_enabled and not self.http_auth_secret.strip():
+            raise ValueError("http_auth_secret must be non-empty when http_auth_enabled is true")
+        parse_request_state_keys(self.request_state_keys)
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -111,7 +157,6 @@ class Settings(BaseSettings):
         """
         return (
             init_settings,
-            CliSettingsSource(settings_cls, cli_parse_args=True, cli_ignore_unknown_args=True),
             env_settings,
             dotenv_settings,
             file_secret_settings,
@@ -119,10 +164,17 @@ class Settings(BaseSettings):
 
 
 @lru_cache
-def get_settings() -> Settings:
+def get_settings(cli_args: tuple[str, ...] | None = None) -> Settings:
     """Get a cached instance of the application settings.
 
     Returns:
         Settings: The application settings instance.
     """
-    return Settings()  # type: ignore
+    if cli_args is None:
+        return Settings()
+    return Settings(
+        _cli_parse_args=cli_args,
+        _cli_ignore_unknown_args=False,
+        _cli_kebab_case=True,
+        _cli_implicit_flags=True,
+    )

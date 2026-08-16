@@ -1,6 +1,8 @@
 import runpy
 from typing import get_args
 
+import pytest
+from pydantic import ValidationError
 from pydantic.fields import FieldInfo
 
 from openmarkets.core import config, types
@@ -50,3 +52,38 @@ def test_settings_env_prefix_and_profile(monkeypatch):
     assert settings.port == 9999
     assert settings.profile == "minimal"
     assert settings.host == "127.0.0.1"
+
+
+def test_cli_uses_documented_kebab_case_implicit_boolean_flags():
+    settings = config.get_settings(
+        ("--transport", "http", "--http-auth-enabled", "--http-auth-secret", "secret", "--http-stateless")
+    )
+    assert settings.transport == "http"
+    assert settings.http_auth_enabled is True
+    assert settings.http_auth_secret == "secret"
+    assert settings.http_stateless is True
+
+
+def test_cli_rejects_unknown_arguments():
+    with pytest.raises(SystemExit):
+        config.get_settings(("--not-a-real-setting", "value"))
+
+
+def test_auth_enabled_requires_nonempty_secret():
+    with pytest.raises(ValidationError, match="http_auth_secret"):
+        config.Settings(http_auth_enabled=True, http_auth_secret="   ")
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["short", "a" * 31, "a" * 32 + ","],
+)
+def test_request_state_keys_require_nonempty_32_byte_entries(raw):
+    with pytest.raises(ValidationError, match="request_state_keys"):
+        config.Settings(request_state_keys=raw)
+
+
+def test_request_state_keys_accept_key_ring_and_environment(monkeypatch):
+    monkeypatch.setenv("OPENMARKETS_REQUEST_STATE_KEYS", "a" * 32 + ", " + "b" * 32)
+    settings = config.Settings()
+    assert config.parse_request_state_keys(settings.request_state_keys) == ["a" * 32, "b" * 32]
