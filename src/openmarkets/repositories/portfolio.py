@@ -1,6 +1,6 @@
 """Repository layer for quantitative portfolio risk calculations, allocation, and backtesting."""
 
-from typing import Protocol
+from typing import Protocol, cast
 
 import pandas as pd
 import yfinance as yf
@@ -130,30 +130,36 @@ class QuantPortfolioRepository:
             raise ValueError("Ticker symbols must be unique.")
 
         try:
+            df: pd.DataFrame
             if len(cleaned_tickers) == 1:
                 t = yf.Ticker(cleaned_tickers[0], session=session)
-                hist = t.history(period=period, interval="1d")
+                hist = t.history(period=period, interval="1d", auto_adjust=True)
                 if hist.empty:
                     raise DataUnavailableError(f"No price history found for ticker '{cleaned_tickers[0]}'.")
                 df = pd.DataFrame({cleaned_tickers[0]: hist["Close"]})
             else:
-                data = yf.download(
-                    cleaned_tickers,
-                    period=period,
-                    interval="1d",
-                    session=session,
-                    progress=False,
-                    auto_adjust=True,
+                data = pd.DataFrame(
+                    yf.download(
+                        cleaned_tickers,
+                        period=period,
+                        interval="1d",
+                        session=session,
+                        progress=False,
+                        auto_adjust=True,
+                    )
                 )
                 if data.empty:
                     raise DataUnavailableError(f"No price history found for tickers {cleaned_tickers}.")
-                df = data["Close"]
-                if isinstance(df, pd.Series):
-                    df = pd.DataFrame({cleaned_tickers[0]: df})
+                close_data = data["Close"]
+                df = (
+                    pd.DataFrame({cleaned_tickers[0]: close_data})
+                    if isinstance(close_data, pd.Series)
+                    else pd.DataFrame(close_data)
+                )
             missing = [ticker for ticker in cleaned_tickers if ticker not in df.columns]
             if missing:
                 raise DataUnavailableError(f"No price history found for tickers {missing}.")
-            cleaned = df[cleaned_tickers].dropna(how="all").ffill().dropna()
+            cleaned = pd.DataFrame(df[cleaned_tickers].dropna(how="all").ffill().dropna())
             if len(cleaned) < 3:
                 raise DataUnavailableError("At least three complete price observations are required.")
             return cleaned
@@ -183,9 +189,9 @@ class QuantPortfolioRepository:
         all_symbols = list(dict.fromkeys(clean_tickers + [bench_sym]))
 
         price_df = self._fetch_price_history(all_symbols, period=period, session=session)
-        bench_returns = price_df[bench_sym].pct_change().dropna()
+        bench_returns = cast(pd.Series, price_df[bench_sym]).pct_change().dropna()
 
-        portfolio_prices = price_df[[t for t in clean_tickers if t in price_df.columns]]
+        portfolio_prices = cast(pd.DataFrame, price_df[[t for t in clean_tickers if t in price_df.columns]])
         port_returns, norm_w = compute_portfolio_returns(portfolio_prices, weights=weights)
 
         metrics = compute_risk_metrics(
@@ -226,7 +232,7 @@ class QuantPortfolioRepository:
         price_df = self._fetch_price_history(tickers, period=period, session=session)
         allocations = compute_risk_parity_weights(price_df)
         return PortfolioAllocationResult(
-            strategy="Inverse-Volatility Allocation",
+            strategy="Equal Risk Contribution (Risk Parity)",
             period=period,
             allocations=[AssetAllocationWeight(**a) for a in allocations],
         )
@@ -259,8 +265,8 @@ class QuantPortfolioRepository:
         bench = benchmark.strip().upper()
         price_df = self._fetch_price_history([sym, bench], period=period, session=session)
 
-        ret_asset = price_df[sym].pct_change().dropna()
-        ret_bench = price_df[bench].pct_change().dropna()
+        ret_asset = cast(pd.Series, price_df[sym]).pct_change().dropna()
+        ret_bench = cast(pd.Series, price_df[bench]).pct_change().dropna()
 
         points = compute_rolling_beta(ret_asset, ret_bench, window=window)
         current_b = points[-1]["beta"] if points else None
@@ -305,7 +311,7 @@ class QuantPortfolioRepository:
         """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based backtest."""
         sym = ticker.strip().upper()
         price_df = self._fetch_price_history([sym], period=period, session=session)
-        prices = price_df[sym]
+        prices = cast(pd.Series, price_df[sym])
 
         raw = run_moving_average_crossover(
             prices=prices,
@@ -348,7 +354,7 @@ class QuantPortfolioRepository:
         """Execute RSI Mean-Reversion rule-based backtest."""
         sym = ticker.strip().upper()
         price_df = self._fetch_price_history([sym], period=period, session=session)
-        prices = price_df[sym]
+        prices = cast(pd.Series, price_df[sym])
 
         raw = run_rsi_mean_reversion(
             prices=prices,
@@ -392,8 +398,8 @@ class QuantPortfolioRepository:
             raise ValueError("At least one factor distinct from the target ticker is required")
         price_df = self._fetch_price_history([sym] + factors, period=period, session=session)
 
-        asset_ret = price_df[sym].pct_change().dropna()
-        factor_df = price_df[factors].pct_change().dropna()
+        asset_ret = cast(pd.Series, price_df[sym]).pct_change().dropna()
+        factor_df = cast(pd.DataFrame, price_df[factors]).pct_change().dropna()
 
         entries = compute_factor_regressions(asset_ret, factor_df)
         return FactorExposuresResult(

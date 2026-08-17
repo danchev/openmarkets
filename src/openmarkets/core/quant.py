@@ -1,6 +1,6 @@
 """Core vectorized quantitative portfolio risk mathematics and strategy backtesting engines."""
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -106,7 +106,8 @@ def _sample_equity_curve(equity: pd.Series) -> list[dict[str, Any]]:
     if sampled.index[-1] != equity.index[-1]:
         sampled = pd.concat([sampled, equity.iloc[[-1]]])
     return [
-        {"date": str(timestamp).split(" ")[0], "equity": round(float(value), 2)} for timestamp, value in sampled.items()
+        {"date": str(timestamp).split(" ")[0], "equity": round(float(cast(float, value)), 2)}
+        for timestamp, value in sampled.items()
     ]
 
 
@@ -139,7 +140,7 @@ def compute_portfolio_returns(
         norm_weights = [w / total_w for w in weights]
 
     w_arr = np.array(norm_weights)
-    port_returns = daily_returns.dot(w_arr)
+    port_returns = cast(pd.Series, daily_returns.dot(w_arr))
     return port_returns, norm_weights
 
 
@@ -149,18 +150,24 @@ def compute_drawdown_curve(returns: pd.Series) -> tuple[list[dict[str, Any]], fl
         return [], 0.0, None, None
 
     cum_ret = (1 + returns).cumprod()
-    high_water = cum_ret.cummax()
+    # Initial capital is the first high-water mark. Without this floor, a loss
+    # in the first return observation is treated as the starting peak and is
+    # omitted from both drawdown and Calmar ratio calculations.
+    high_water = cum_ret.cummax().clip(lower=1.0)
     dd_series = (cum_ret - high_water) / high_water
 
     max_dd = float(dd_series.min())
 
     # Find trough date and peak date for max drawdown
-    trough_date = str(dd_series.idxmin()).split(" ")[0] if not dd_series.empty else None
+    trough_index = dd_series.idxmin() if not dd_series.empty and max_dd < 0 else None
+    trough_date = str(trough_index).split(" ")[0] if trough_index is not None else None
     peak_date = None
-    if trough_date is not None:
-        sub_cum = cum_ret.loc[:trough_date]
-        if not sub_cum.empty:
-            peak_date = str(sub_cum.idxmax()).split(" ")[0]
+    if trough_index is not None:
+        sub_cum = cum_ret.loc[:trough_index]
+        peak_value = float(high_water.loc[trough_index])
+        prior_peaks = sub_cum[np.isclose(sub_cum, peak_value)]
+        if not prior_peaks.empty:
+            peak_date = str(prior_peaks.index[-1]).split(" ")[0]
 
     points: list[dict[str, Any]] = []
     for dt, val in dd_series.items():
@@ -217,10 +224,10 @@ def compute_risk_metrics(
 
     # Conditional VaR (Expected Shortfall)
     tail_95 = returns[returns <= var_95]
-    cvar_95 = float(tail_95.mean()) if not tail_95.empty else var_95
+    cvar_95 = float(tail_95.mean()) if len(tail_95) > 0 else var_95
 
     tail_99 = returns[returns <= var_99]
-    cvar_99 = float(tail_99.mean()) if not tail_99.empty else var_99
+    cvar_99 = float(tail_99.mean()) if len(tail_99) > 0 else var_99
 
     # Beta and Alpha vs Benchmark
     beta = None
@@ -237,12 +244,15 @@ def compute_risk_metrics(
                 raise ValueError("Benchmark returns must be greater than -100%")
             cov = p_ret.cov(b_ret)
             b_var = b_ret.var()
-            if b_var > 0:
+            if np.isfinite(b_var) and b_var > np.finfo(float).eps:
                 beta = float(cov / b_var)
                 b_ann_ret = float((1 + b_ret).prod() ** (252 / len(b_ret)) - 1)
                 alpha = float(ann_ret - (risk_free_rate + beta * (b_ann_ret - risk_free_rate)))
-                corr = np.corrcoef(p_ret, b_ret)[0, 1]
-                r_squared = float(corr**2)
+                p_var = p_ret.var()
+                if np.isfinite(p_var) and p_var > np.finfo(float).eps:
+                    corr = np.corrcoef(p_ret, b_ret)[0, 1]
+                    if np.isfinite(corr):
+                        r_squared = float(corr**2)
 
     return {
         "annualized_return_percent": round(ann_ret * 100, 2),
@@ -288,26 +298,46 @@ def compute_correlation_and_covariance(
 
 
 def compute_risk_parity_weights(price_df: pd.DataFrame) -> list[dict[str, Any]]:
-    """Compute inverse-volatility allocation weights and actual risk contributions.
+    """Compute long-only equal-risk-contribution (risk parity) weights.
 
-    Assets with lower historical volatility receive higher allocations so each asset
-    contributes approximately equal risk to the overall portfolio.
+    The convex risk-budgeting system is solved with cyclic coordinate descent,
+    avoiding a heavyweight optimization dependency while accounting for the full
+    covariance matrix rather than using inverse volatility as a proxy.
     """
     clean_df = _clean_prices(price_df)
     returns = clean_df.pct_change().dropna()
     vols = returns.std() * np.sqrt(252)
 
     if not np.isfinite(vols.to_numpy()).all() or (vols <= 0).any():
-        raise ValueError("Inverse-volatility allocation requires positive finite asset volatility")
-    inv_vols = 1.0 / vols
-    total_inv_vol = inv_vols.sum()
-    weights = inv_vols / total_inv_vol
-
+        raise ValueError("Risk parity allocation requires positive finite asset volatility")
     covariance = returns.cov().to_numpy() * 252
-    contributions = _portfolio_risk_contributions(covariance, weights.to_numpy())
+    if not np.isfinite(covariance).all():
+        raise ValueError("Risk parity covariance matrix contains non-finite values")
+
+    num_assets = covariance.shape[0]
+    diagonal_scale = float(np.trace(covariance) / num_assets)
+    ridge = max(diagonal_scale * 1e-10, np.finfo(float).eps)
+    regularized_covariance = covariance + np.eye(num_assets) * ridge
+    budgets = np.full(num_assets, 1.0 / num_assets)
+    solution = np.ones(num_assets)
+
+    for _ in range(10_000):
+        previous = solution.copy()
+        for index in range(num_assets):
+            variance = float(regularized_covariance[index, index])
+            marginal_without_self = float(regularized_covariance[index] @ solution - variance * solution[index])
+            discriminant = marginal_without_self**2 + 4.0 * variance * budgets[index]
+            solution[index] = (-marginal_without_self + np.sqrt(discriminant)) / (2.0 * variance)
+        if np.linalg.norm(solution - previous, ord=np.inf) < 1e-12:
+            break
+    else:
+        raise ValueError("Risk parity optimization did not converge")
+
+    weights = solution / solution.sum()
+    contributions = _portfolio_risk_contributions(covariance, weights)
     res: list[dict[str, Any]] = []
     for index, ticker in enumerate(clean_df.columns):
-        w = float(weights[ticker])
+        w = float(weights[index])
         v = float(vols[ticker])
         res.append(
             {
@@ -415,9 +445,9 @@ def run_moving_average_crossover(
     slow_ma = clean_p.rolling(window=slow_window).mean()
 
     # Position signal: 1 = In Market, 0 = In Cash
-    signal = (fast_ma > slow_ma).astype(int).shift(1).fillna(0)
+    signal = cast(pd.Series, cast(pd.Series, (fast_ma > slow_ma).astype(int)).shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
-    strat_ret = signal * asset_ret
+    strat_ret = cast(pd.Series, signal * asset_ret)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
     bh_equity = initial_capital * (1 + asset_ret).cumprod()
@@ -482,10 +512,12 @@ def run_rsi_mean_reversion(
 
     # Calculate RSI
     delta = clean_p.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=rsi_window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=rsi_window).mean()
-    rs = gain / loss.replace(0, 0.0001)
-    rsi = 100 - (100 / (1 + rs))
+    gain = cast(pd.Series, (delta.where(delta > 0, 0)).rolling(window=rsi_window).mean())
+    loss = cast(pd.Series, (-delta.where(delta < 0, 0)).rolling(window=rsi_window).mean())
+    rs = gain / loss.replace(0, np.nan)
+    rsi = cast(pd.Series, 100 - (100 / (1 + rs)))
+    rsi = rsi.mask((loss == 0) & (gain > 0), 100.0)
+    rsi = rsi.mask((loss == 0) & (gain == 0), 50.0)
 
     # Generate signals
     in_pos = False
@@ -502,9 +534,9 @@ def run_rsi_mean_reversion(
         else:
             signals.append(1 if in_pos else 0)
 
-    signal_series = pd.Series(signals, index=clean_p.index).shift(1).fillna(0)
+    signal_series = cast(pd.Series, pd.Series(signals, index=clean_p.index).shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
-    strat_ret = signal_series * asset_ret
+    strat_ret = cast(pd.Series, signal_series * asset_ret)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
     bh_equity = initial_capital * (1 + asset_ret).cumprod()
@@ -546,35 +578,62 @@ def run_rsi_mean_reversion(
 
 def compute_factor_regressions(asset_returns: pd.Series, factor_returns_df: pd.DataFrame) -> list[dict[str, Any]]:
     """Compute multi-factor linear regression exposures (Beta, Alpha, t-statistic, R-squared)."""
-    aligned = pd.concat([asset_returns, factor_returns_df], axis=1).dropna()
+    if not isinstance(factor_returns_df, pd.DataFrame) or factor_returns_df.columns.empty:
+        raise ValueError("At least one factor return column is required")
+    aligned = pd.concat([asset_returns, factor_returns_df], axis=1).replace([np.inf, -np.inf], np.nan).dropna()
     if len(aligned) < 20:
         return []
 
     y = aligned.iloc[:, 0].values
     x_matrix = aligned.iloc[:, 1:].values
 
-    # Add constant intercept for Alpha
-
+    # Add constant intercept for Alpha.
     x_with_const = np.column_stack([np.ones(len(y)), x_matrix])
+    parameter_count = x_with_const.shape[1]
+    if len(y) <= parameter_count:
+        raise ValueError("Factor regression requires more observations than parameters")
+    full_rank = np.linalg.matrix_rank(x_with_const) == parameter_count
 
-    try:
-        beta_coeffs, _, _, _ = np.linalg.lstsq(x_with_const, y, rcond=None)
-        alpha = float(beta_coeffs[0] * 252)
+    beta_coeffs, _, _, _ = np.linalg.lstsq(x_with_const, y, rcond=None)
+    alpha = float(beta_coeffs[0] * 252)
 
-        # Residuals and R-squared
-        y_pred = x_with_const.dot(beta_coeffs)
-        ss_res = np.sum((y - y_pred) ** 2)
-        ss_tot = np.sum((y - y.mean()) ** 2)
-        r_sq = float(1.0 - (ss_res / ss_tot)) if ss_tot > 0 else 0.0
+    y_pred = x_with_const.dot(beta_coeffs)
+    residuals = y - y_pred
+    ss_res = float(np.sum(residuals**2))
+    ss_tot = float(np.sum((y - y.mean()) ** 2))
+    r_sq = float(1.0 - (ss_res / ss_tot)) if ss_tot > 0 else 0.0
 
-        res: list[dict[str, Any]] = [
-            {"factor": "Alpha (Annualized Intercept)", "exposure_beta": round(alpha * 100, 2), "unit": "%"}
-        ]
-        for i, col in enumerate(factor_returns_df.columns):
-            b_val = float(beta_coeffs[i + 1])
-            res.append({"factor": col, "exposure_beta": round(b_val, 3), "unit": "Beta"})
+    t_statistics = np.full_like(beta_coeffs, np.nan, dtype=float)
+    if full_rank:
+        residual_variance = ss_res / (len(y) - parameter_count)
+        coefficient_covariance = residual_variance * np.linalg.inv(x_with_const.T @ x_with_const)
+        standard_errors = np.sqrt(np.maximum(np.diag(coefficient_covariance), 0.0))
+        t_statistics = np.divide(
+            beta_coeffs,
+            standard_errors,
+            out=t_statistics,
+            where=standard_errors > 0,
+        )
 
-        res.append({"factor": "Model R-Squared", "exposure_beta": round(r_sq, 3), "unit": "R2"})
-        return res
-    except Exception:
-        return []
+    res: list[dict[str, Any]] = [
+        {
+            "factor": "Alpha (Annualized Intercept)",
+            "exposure_beta": round(alpha * 100, 2),
+            "unit": "%",
+            "t_statistic": round(float(t_statistics[0]), 3) if np.isfinite(t_statistics[0]) else None,
+        }
+    ]
+    for i, col in enumerate(factor_returns_df.columns):
+        b_val = float(beta_coeffs[i + 1])
+        t_stat = t_statistics[i + 1]
+        res.append(
+            {
+                "factor": col,
+                "exposure_beta": round(b_val, 3),
+                "unit": "Beta",
+                "t_statistic": round(float(t_stat), 3) if np.isfinite(t_stat) else None,
+            }
+        )
+
+    res.append({"factor": "Model R-Squared", "exposure_beta": round(r_sq, 3), "unit": "R2", "t_statistic": None})
+    return res

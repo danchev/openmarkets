@@ -128,7 +128,7 @@ class PortfolioService(ToolRegistrationMixin):
         ],
         period: Annotated[Period, Field(description="Historical lookback period used to measure volatility")] = "1y",
     ) -> PortfolioAllocationResult:
-        """Calculate inverse-volatility asset allocation weights.
+        """Calculate equal-risk-contribution risk parity allocation weights.
 
         Allocates capital inversely proportional to historical volatility so each asset
         reports each asset's actual covariance-based contribution to portfolio risk.
@@ -253,6 +253,8 @@ class PortfolioService(ToolRegistrationMixin):
         Returns:
             BacktestResult with complete trade log and performance statistics.
         """
+        if fast_window >= slow_window:
+            raise ValueError("fast_window must be smaller than slow_window")
         return self.repository.backtest_trend_following_strategy(
             ticker=ticker,
             fast_window=fast_window,
@@ -293,6 +295,8 @@ class PortfolioService(ToolRegistrationMixin):
         Returns:
             BacktestResult with performance metrics and closed trades.
         """
+        if oversold_threshold >= overbought_threshold:
+            raise ValueError("oversold_threshold must be smaller than overbought_threshold")
         return self.repository.backtest_mean_reversion_strategy(
             ticker=ticker,
             rsi_window=rsi_window,
