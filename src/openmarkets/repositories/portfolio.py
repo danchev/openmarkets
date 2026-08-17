@@ -2,6 +2,7 @@
 
 from typing import Protocol, cast
 
+import numpy as np
 import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
@@ -159,7 +160,8 @@ class QuantPortfolioRepository:
             missing = [ticker for ticker in cleaned_tickers if ticker not in df.columns]
             if missing:
                 raise DataUnavailableError(f"No price history found for tickers {missing}.")
-            cleaned = pd.DataFrame(df[cleaned_tickers].dropna(how="all").ffill().dropna())
+            clean_price_matrix = pd.DataFrame(df[cleaned_tickers]).replace([np.inf, -np.inf], np.nan)
+            cleaned = clean_price_matrix.dropna()
             if len(cleaned) < 3:
                 raise DataUnavailableError("At least three complete price observations are required.")
             return cleaned
@@ -186,7 +188,9 @@ class QuantPortfolioRepository:
         bench_sym = benchmark.strip().upper()
         if not bench_sym:
             raise ValueError("benchmark must not be empty")
-        all_symbols = list(dict.fromkeys(clean_tickers + [bench_sym]))
+        all_symbols = list(clean_tickers)
+        if bench_sym not in all_symbols:
+            all_symbols.append(bench_sym)
 
         price_df = self._fetch_price_history(all_symbols, period=period, session=session)
         bench_returns = cast(pd.Series, price_df[bench_sym]).pct_change().dropna()

@@ -150,3 +150,31 @@ def test_fetch_price_history_uses_adjusted_prices_for_single_ticker(monkeypatch)
     assert calls
     assert calls[0]["auto_adjust"] is True
     assert calls[0]["interval"] == "1d"
+
+
+def test_fetch_price_history_does_not_forward_fill_gaps(monkeypatch):
+    index = pd.date_range("2024-01-01", periods=5, freq="D")
+    close_data = pd.DataFrame(
+        {
+            "AAPL": [100.0, 101.0, 102.0, 103.0, 104.0],
+            "MSFT": [np.nan, 200.0, 201.0, np.nan, 204.0],
+        },
+        index=index,
+    )
+    calls = []
+
+    class FakeYFinance:
+        @staticmethod
+        def download(*args, **kwargs):
+            calls.append((args, kwargs))
+            return pd.DataFrame({"Close": close_data})
+
+    monkeypatch.setattr("openmarkets.repositories.portfolio.yf", FakeYFinance())
+    repo = QuantPortfolioRepository()
+
+    out = repo._fetch_price_history(["AAPL", "MSFT"], period="1y", session=None)
+
+    assert len(out) == 3
+    assert pd.Timestamp("2024-01-01") not in out.index
+    assert pd.Timestamp("2024-01-04") not in out.index
+    assert calls
