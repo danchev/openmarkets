@@ -5,6 +5,15 @@ from typing import Any, Callable
 
 import pytest
 
+from openmarkets.core.http import close_session
+
+
+@pytest.fixture(scope="session", autouse=True)
+def close_provider_resources():
+    """Release shared HTTP and yfinance SQLite resources before worker teardown."""
+    yield
+    close_session()
+
 
 @pytest.fixture
 def patch_yf(monkeypatch: pytest.MonkeyPatch) -> Callable[[type], None]:

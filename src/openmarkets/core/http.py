@@ -71,6 +71,25 @@ def get_session() -> Session:
     return _session
 
 
+def _close_yfinance_caches() -> None:
+    """Close yfinance's process-global SQLite caches when available.
+
+    yfinance currently exposes cache-location configuration publicly but not
+    database cleanup. Keep its private manager names isolated behind guarded
+    lookup so an upstream refactor cannot break application shutdown.
+    """
+    try:
+        from yfinance import cache as yfinance_cache
+
+        for manager_name in ("_TzDBManager", "_CookieDBManager", "_ISINDBManager"):
+            manager = getattr(yfinance_cache, manager_name, None)
+            close_db = getattr(manager, "close_db", None)
+            if callable(close_db):
+                close_db()
+    except Exception:
+        logger.debug("Failed to close yfinance provider caches.", exc_info=True)
+
+
 def close_session() -> None:
     """Close the shared session if one was created.
 
@@ -79,16 +98,14 @@ def close_session() -> None:
     """
     global _session, _session_timeout
     with _lock:
-        if _session is None:
-            _session_timeout = None
-            return
-        try:
-            _session.close()
-        except Exception:
-            logger.debug("Failed to close the shared HTTP session.", exc_info=True)
-        finally:
-            _session = None
-            _session_timeout = None
+        if _session is not None:
+            try:
+                _session.close()
+            except Exception:
+                logger.debug("Failed to close the shared HTTP session.", exc_info=True)
+        _session = None
+        _session_timeout = None
+    _close_yfinance_caches()
 
 
 atexit.register(close_session)
