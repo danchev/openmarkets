@@ -115,7 +115,10 @@ addopts = "-n auto --cov=src/openmarkets --cov-report=html --cov-report=term-mis
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
-filterwarnings = ["once::Warning"]
+filterwarnings = [
+    "once::Warning",
+    "ignore:unclosed database in <sqlite3.Connection object.*:ResourceWarning",
+]
 markers = [
     "live: real network calls against the Yahoo Finance API (excluded by default; run with `-m live`)",
 ]
