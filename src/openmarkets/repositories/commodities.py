@@ -185,6 +185,9 @@ class WSJCommoditiesRepository:
         latest_date = points[-1].date
 
         return FertilizerIndexSeries(
+            name="Green Markets North American Fertilizer Price Index",
+            provider="Green Markets / Bloomberg / Dow Jones",
+            unit="USD/short ton index",
             latest_price=latest_price,
             latest_date=latest_date,
             data_points=points,
