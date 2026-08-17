@@ -18,7 +18,7 @@ Open Markets aggregates financial telemetry across institutional-grade data prov
 - **Federal Reserve Economic Data (FRED Engine)**: Comprehensive macroeconomic indicators (CPI Inflation, Core PCE, Effective Fed Funds Rate, SOFR, Nonfarm Payrolls, Unemployment, Real GDP, M2 Money Supply, Fed Balance Sheet, TIPS Breakeven Inflation, and Financial Stress).
 - **Wall Street Journal (WSJ Michelangelo Engine)**: High-resolution 1-minute intraday continuous ticks (with pre/post-market), continuous commodities & futures, server-side technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), global equity benchmark indices, and sovereign bond curves.
 - **Yahoo Finance Engine**: Complete fundamental statements, real-time quotes, options chains, analyst consensus, institutional ownership, ETF compositions, and screener queries.
-- **Quantitative Portfolio & Backtesting Engine**: Vectorized multi-asset Sharpe/Sortino ratios, Value-at-Risk (VaR/CVaR), correlation matrices, inverse-volatility allocation, constrained Markowitz Minimum Variance optimization, and SMA/RSI strategy backtesting.
+- **Quantitative Portfolio & Backtesting Engine**: Vectorized multi-asset Sharpe/Sortino ratios, Value-at-Risk (VaR/CVaR), correlation matrices, equal-risk-contribution allocation, constrained Markowitz Minimum Variance optimization, and SMA/RSI strategy backtesting.
 - **Green Markets (Bloomberg / Dow Jones)**: Weekly North American fertilizer price index benchmark.
 
 
@@ -103,7 +103,7 @@ uvx openmarkets --profile sec
 | **`full`** *(default)* | All 127 tools across all 17 services. |
 | **`equities`** | `stock`, `financials`, `analysis`, `holdings`, `options`, `portfolio`, `screener`, `sec`. |
 | **`quant`** | `stock`, `technical_analysis`, `sector_industry`, `markets`, `crypto`, `funds`, `commodities`, `fixed_income`, `forex`, `macroeconomics`, `portfolio`. |
-| **`portfolio`** | Multi-asset Sharpe/Sortino, Value-at-Risk (VaR/CVaR), correlation matrices, inverse-volatility allocation, Minimum Variance, rolling Beta, and strategy backtesters. |
+| **`portfolio`** | Multi-asset Sharpe/Sortino, Value-at-Risk (VaR/CVaR), correlation matrices, equal-risk-contribution risk parity, Minimum Variance, rolling Beta, and strategy backtesters. |
 | **`macro`** | `commodities`, `fixed_income`, `forex`, `markets`, `sector_industry`, `macroeconomics`. |
 | **`sec`** | Direct SEC EDGAR submissions, 10-K, 10-Q, 8-K, Form 4, CIK search, and interactive XBRL financial statement facts. |
 | **`minimal`** | Essential 36 tools across stock, financial, analyst, and screener lookups. |
