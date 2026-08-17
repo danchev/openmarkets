@@ -383,7 +383,9 @@ async def export_schema_async(mcp_instance: MCPServer | None = None) -> list[dic
     if not isinstance(tools, (list, tuple)):
         return []
 
-    return [tool.model_dump(by_alias=True) if hasattr(tool, "model_dump") else tool for tool in tools]
+    # The MCP SDK types this as a union even though list_tools() returns
+    # mapping-compatible Tool models at runtime.
+    return [tool.model_dump(by_alias=True) if hasattr(tool, "model_dump") else tool for tool in tools]  # pyright: ignore[reportReturnType]
 
 
 def export_schema(mcp_instance: MCPServer | None = None) -> list[dict]:

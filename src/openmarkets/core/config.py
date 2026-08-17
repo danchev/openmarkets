@@ -171,10 +171,12 @@ def get_settings(cli_args: tuple[str, ...] | None = None) -> Settings:
         Settings: The application settings instance.
     """
     if cli_args is None:
-        return Settings()
-    return Settings(
-        _cli_parse_args=cli_args,
-        _cli_ignore_unknown_args=False,
-        _cli_kebab_case=True,
-        _cli_implicit_flags=True,
+        # pydantic-settings supplies defaults and private CLI keywords at
+        # runtime; Pyright's dataclass transform cannot represent that API.
+        return Settings()  # pyright: ignore[reportCallIssue]
+    return Settings(  # pyright: ignore[reportCallIssue]
+        _cli_parse_args=cli_args,  # pyright: ignore[reportCallIssue]
+        _cli_ignore_unknown_args=False,  # pyright: ignore[reportCallIssue]
+        _cli_kebab_case=True,  # pyright: ignore[reportCallIssue]
+        _cli_implicit_flags=True,  # pyright: ignore[reportCallIssue]
     )
