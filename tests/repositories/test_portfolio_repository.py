@@ -121,3 +121,32 @@ def test_calculate_factor_exposures_excludes_target_from_factor_matrix():
         assert isinstance(res, FactorExposuresResult)
         requested = fetch.call_args.args[0]
         assert requested.count("SPY") == 1
+
+
+def test_fetch_price_history_uses_adjusted_prices_for_single_ticker(monkeypatch):
+    history = pd.DataFrame(
+        {"Close": [150.0, 151.0, 152.0]},
+        index=pd.date_range("2024-01-01", periods=3, freq="D"),
+    )
+    calls = []
+
+    class FakeTicker:
+        def __init__(self, _ticker, session=None):
+            pass
+
+        def history(self, *args, **kwargs):
+            calls.append(kwargs)
+            return history
+
+    class FakeYFinance:
+        Ticker = FakeTicker
+
+    monkeypatch.setattr("openmarkets.repositories.portfolio.yf", FakeYFinance())
+    repo = QuantPortfolioRepository()
+
+    out = repo._fetch_price_history(["AAPL"], period="1y", session=None)
+
+    assert not out.empty
+    assert calls
+    assert calls[0]["auto_adjust"] is True
+    assert calls[0]["interval"] == "1d"

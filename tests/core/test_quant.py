@@ -145,6 +145,16 @@ def test_risk_metrics_use_geometric_annualization_and_consistent_beta():
     assert metrics["beta"] == pytest.approx(2.0, abs=0.001)
 
 
+def test_r_squared_is_none_with_constant_portfolio_returns():
+    benchmark = pd.Series([0.01, -0.01, 0.02, -0.02, 0.005, -0.005] * 5)
+    returns = pd.Series([0.02] * len(benchmark))
+
+    metrics = compute_risk_metrics(returns, benchmark_returns=benchmark, risk_free_rate=0.0)
+
+    assert metrics["beta"] == pytest.approx(0.0, abs=1e-12)
+    assert metrics["r_squared"] is None
+
+
 def test_unestimable_benchmark_statistics_are_not_fabricated():
     returns = pd.Series([0.01, -0.01, 0.02, -0.02, 0.005, -0.005])
     flat_benchmark = pd.Series([0.0] * len(returns))

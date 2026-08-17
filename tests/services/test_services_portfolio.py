@@ -2,6 +2,8 @@
 
 from unittest.mock import Mock
 
+import pytest
+
 from openmarkets.schemas.portfolio import (
     CorrelationMatrixResult,
     PortfolioRiskMetrics,
@@ -69,3 +71,23 @@ def test_calculate_asset_correlation_matrix_delegation():
 
     assert result == mock_res
     mock_repo.calculate_correlation_matrix.assert_called_once()
+
+
+def test_trend_following_strategy_enforces_fast_window_before_repository_call():
+    mock_repo = Mock()
+    service = PortfolioService(repository=mock_repo)
+
+    with pytest.raises(ValueError, match="fast_window must be smaller than slow_window"):
+        service.backtest_trend_following_strategy(ticker="AAPL", fast_window=20, slow_window=20)
+
+    mock_repo.backtest_trend_following_strategy.assert_not_called()
+
+
+def test_mean_reversion_strategy_enforces_threshold_order_before_repository_call():
+    mock_repo = Mock()
+    service = PortfolioService(repository=mock_repo)
+
+    with pytest.raises(ValueError, match="oversold_threshold must be smaller than overbought_threshold"):
+        service.backtest_mean_reversion_strategy(ticker="AAPL", oversold_threshold=80.0, overbought_threshold=70.0)
+
+    mock_repo.backtest_mean_reversion_strategy.assert_not_called()
