@@ -5,7 +5,10 @@ support and resistance levels for stock analysis. Acts as an intermediary betwee
 the MCP tools layer and repository layer.
 """
 
+from typing import Annotated
+
 from curl_cffi.requests import Session
+from pydantic import Field
 
 from openmarkets.core.cache import cached
 from openmarkets.core.http import get_session
@@ -22,6 +25,9 @@ from openmarkets.schemas.technical_analysis import (
     WSJMACDSeries,
 )
 from openmarkets.services.utils import ToolRegistrationMixin, tool
+
+PositiveWindow = Annotated[int, Field(ge=1, le=1000)]
+RSIWindow = Annotated[int, Field(ge=2, le=1000)]
 
 
 class TechnicalAnalysisService(ToolRegistrationMixin):
@@ -103,7 +109,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     def get_wsj_sma(
         self,
         ticker: Ticker,
-        window: int = 50,
+        window: PositiveWindow = 50,
         timeframe: str = "P1Y",
         step: str = "P1D",
     ) -> WSJIndicatorSeries:
@@ -133,7 +139,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     def get_wsj_ema(
         self,
         ticker: Ticker,
-        window: int = 20,
+        window: PositiveWindow = 20,
         timeframe: str = "P1Y",
         step: str = "P1D",
     ) -> WSJIndicatorSeries:
@@ -161,7 +167,7 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     def get_wsj_rsi(
         self,
         ticker: Ticker,
-        window: int = 14,
+        window: RSIWindow = 14,
         timeframe: str = "P1Y",
         step: str = "P1D",
     ) -> WSJIndicatorSeries:
@@ -189,9 +195,9 @@ class TechnicalAnalysisService(ToolRegistrationMixin):
     def get_wsj_macd(
         self,
         ticker: Ticker,
-        fast_window: int = 12,
-        slow_window: int = 26,
-        signal_window: int = 9,
+        fast_window: PositiveWindow = 12,
+        slow_window: PositiveWindow = 26,
+        signal_window: PositiveWindow = 9,
         timeframe: str = "P1Y",
         step: str = "P1D",
     ) -> WSJMACDSeries:

@@ -195,14 +195,18 @@ class CallOption(BaseModel):
     contract_symbol: str = Field(..., description="Option contract symbol.", alias="contractSymbol")
     last_trade_date: datetime = Field(..., description="Last trade date.", alias="lastTradeDate")
     strike: float = Field(..., description="Strike price.", alias="strike")
-    last_price: float = Field(..., description="Last traded price.", alias="lastPrice")
-    bid: float = Field(..., description="Bid price.", alias="bid")
-    ask: float = Field(..., description="Ask price.", alias="ask")
-    change: float = Field(..., description="Change in price.", alias="change")
-    percent_change: float = Field(..., description="Percent change in price.", alias="percentChange")
+    last_price: float | None = Field(None, description="Last traded price, when quoted.", alias="lastPrice")
+    bid: float | None = Field(None, description="Bid price, when quoted.", alias="bid")
+    ask: float | None = Field(None, description="Ask price, when quoted.", alias="ask")
+    change: float | None = Field(None, description="Change in price, when available.", alias="change")
+    percent_change: float | None = Field(
+        None, description="Percent change in price, when available.", alias="percentChange"
+    )
     volume: float | None = Field(None, description="Trading volume.", alias="volume")
     open_interest: float | None = Field(None, description="Open interest.", alias="openInterest")
-    implied_volatility: float = Field(..., description="Implied volatility.", alias="impliedVolatility")
+    implied_volatility: float | None = Field(
+        None, description="Implied volatility, when available.", alias="impliedVolatility"
+    )
     in_the_money: bool = Field(..., description="Is the option in the money.", alias="inTheMoney")
     contract_size: str = Field(..., description="Contract size.", alias="contractSize")
     currency: str = Field(..., description="Currency of the contract.", alias="currency")
@@ -221,14 +225,18 @@ class PutOption(BaseModel):
     contract_symbol: str = Field(..., description="Option contract symbol.", alias="contractSymbol")
     last_trade_date: datetime = Field(..., description="Last trade date.", alias="lastTradeDate")
     strike: float = Field(..., description="Strike price.", alias="strike")
-    last_price: float = Field(..., description="Last traded price.", alias="lastPrice")
-    bid: float = Field(..., description="Bid price.", alias="bid")
-    ask: float = Field(..., description="Ask price.", alias="ask")
-    change: float = Field(..., description="Change in price.", alias="change")
-    percent_change: float = Field(..., description="Percent change in price.", alias="percentChange")
+    last_price: float | None = Field(None, description="Last traded price, when quoted.", alias="lastPrice")
+    bid: float | None = Field(None, description="Bid price, when quoted.", alias="bid")
+    ask: float | None = Field(None, description="Ask price, when quoted.", alias="ask")
+    change: float | None = Field(None, description="Change in price, when available.", alias="change")
+    percent_change: float | None = Field(
+        None, description="Percent change in price, when available.", alias="percentChange"
+    )
     volume: float | None = Field(None, description="Trading volume.", alias="volume")
     open_interest: float | None = Field(None, description="Open interest.", alias="openInterest")
-    implied_volatility: float = Field(..., description="Implied volatility.", alias="impliedVolatility")
+    implied_volatility: float | None = Field(
+        None, description="Implied volatility, when available.", alias="impliedVolatility"
+    )
     in_the_money: bool = Field(..., description="Is the option in the money.", alias="inTheMoney")
     contract_size: str = Field(..., description="Contract size.", alias="contractSize")
     currency: str = Field(..., description="Currency of the contract.", alias="currency")

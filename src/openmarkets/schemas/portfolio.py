@@ -155,6 +155,7 @@ class FactorExposureEntry(BaseModel):
     factor: str = Field(..., description="Macro/Market Factor name (e.g. Market SPY, Tech QQQ, SmallCap IWM)")
     exposure_beta: float = Field(..., description="Factor Beta coefficient or Alpha")
     unit: str = Field("Beta", description="Unit type (Beta, %, R2)")
+    t_statistic: float | None = Field(None, description="Coefficient t-statistic, when defined")
 
 
 class FactorExposuresResult(BaseModel):

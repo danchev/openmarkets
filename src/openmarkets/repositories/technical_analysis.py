@@ -6,7 +6,9 @@ including indicators, volatility metrics, and support/resistance levels.
 
 import math
 from datetime import datetime, timezone
+from typing import cast
 
+import pandas as pd
 import yfinance as yf
 from curl_cffi.requests import Session
 
@@ -49,10 +51,14 @@ class YFinanceTechnicalAnalysisRepository:
         if hist.empty:
             raise ValueError("No historical data available")
 
-        current_price = hist["Close"].iloc[-1]
-        high_52w = hist["High"].max()
-        low_52w = hist["Low"].min()
-        avg_volume = hist["Volume"].mean()
+        range_hist = hist if period == "1y" else stock.history(period="1y")
+        if range_hist.empty:
+            raise ValueError("No 52-week historical data available")
+
+        current_price = float(cast(pd.Series, hist["Close"]).iloc[-1])
+        high_52w = float(cast(pd.Series, range_hist["High"]).max())
+        low_52w = float(cast(pd.Series, range_hist["Low"]).min())
+        avg_volume = float(cast(pd.Series, range_hist["Volume"]).mean())
 
         sma_20 = self._calculate_sma(hist, window=20)
         sma_50 = self._calculate_sma(hist, window=50)
@@ -182,14 +188,14 @@ class YFinanceTechnicalAnalysisRepository:
         if "Close" not in hist.columns:
             raise ValueError("Historical data is missing the Close column")
 
-        daily_returns = hist["Close"].pct_change().dropna()
+        daily_returns = cast(pd.Series, hist["Close"]).pct_change().dropna()
         if len(daily_returns) < 2:
             raise ValueError("At least three valid closing prices are required for volatility metrics")
-        daily_volatility = daily_returns.std()
+        daily_volatility = float(cast(float, daily_returns.std()))
         annualized_volatility = self._calculate_annualized_volatility(daily_volatility)
 
-        max_daily_gain = daily_returns.max()
-        max_daily_loss = daily_returns.min()
+        max_daily_gain = float(daily_returns.max())
+        max_daily_loss = float(daily_returns.min())
 
         positive_days = int((daily_returns > 0).sum())
         negative_days = int((daily_returns < 0).sum())
@@ -454,6 +460,8 @@ class WSJTechnicalAnalysisRepository:
         session: Session | None = None,
     ) -> WSJIndicatorSeries:
         """Fetch server-side computed Simple Moving Average (SMA)."""
+        if window < 1:
+            raise ValueError("SMA window must be positive")
         return self._fetch_single_line_indicator(
             ticker=ticker,
             indicator_name="SMA",
@@ -474,6 +482,8 @@ class WSJTechnicalAnalysisRepository:
         session: Session | None = None,
     ) -> WSJIndicatorSeries:
         """Fetch server-side computed Exponential Moving Average (EMA)."""
+        if window < 1:
+            raise ValueError("EMA window must be positive")
         return self._fetch_single_line_indicator(
             ticker=ticker,
             indicator_name="EMA",
@@ -494,6 +504,8 @@ class WSJTechnicalAnalysisRepository:
         session: Session | None = None,
     ) -> WSJIndicatorSeries:
         """Fetch server-side computed Relative Strength Index (RSI)."""
+        if window < 2:
+            raise ValueError("RSI window must be at least 2")
         return self._fetch_single_line_indicator(
             ticker=ticker,
             indicator_name="RSI",
@@ -516,6 +528,10 @@ class WSJTechnicalAnalysisRepository:
         session: Session | None = None,
     ) -> WSJMACDSeries:
         """Fetch server-side computed Moving Average Convergence Divergence (MACD)."""
+        if fast_window < 1 or slow_window <= fast_window:
+            raise ValueError("MACD slow_window must be greater than a positive fast_window")
+        if signal_window < 1:
+            raise ValueError("MACD signal_window must be positive")
         wsj_key, _, _, _ = resolve_wsj_key(ticker)
         indicators = [
             {
