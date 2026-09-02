@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from mcp import Client
 
+import openmarkets
 import openmarkets.core.mcpserver as mcpserver
 
 _SERVICE_NAMES = [
@@ -268,7 +269,7 @@ async def test_v2_client_negotiates_in_memory_and_receives_server_metadata():
     async with Client(server) as client:
         assert client.protocol_version == "2026-07-28"
         assert client.server_info is not None
-        assert client.server_info.version == "0.1.0a1"
+        assert client.server_info.version == openmarkets.__version__
         assert client.server_info.website_url == "https://openmarkets.dev"
         assert client.server_capabilities.tools is not None
         tools = await client.list_tools()
