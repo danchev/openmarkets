@@ -167,7 +167,7 @@ def test_fetch_price_history_does_not_forward_fill_gaps(monkeypatch):
         @staticmethod
         def download(*args, **kwargs):
             calls.append((args, kwargs))
-            return pd.DataFrame({"Close": close_data})
+            return pd.concat({"Close": close_data}, axis=1)
 
     monkeypatch.setattr("openmarkets.repositories.portfolio.yf", FakeYFinance())
     repo = QuantPortfolioRepository()
