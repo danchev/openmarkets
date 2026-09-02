@@ -1703,7 +1703,7 @@ wheels = [
 
 [[package]]
 name = "openmarkets"
-version = "0.1.0a1"
+version = "0.1.0b1"
 source = { editable = "." }
 dependencies = [
     { name = "curl-cffi" },
