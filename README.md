@@ -293,7 +293,7 @@ Open Markets can be run as a standalone HTTP service supporting SSE streaming, B
 
 ```bash
 # Run streamable HTTP server with auth
-uv run python -m openmarkets \
+uvx openmarkets@latest \
   --transport http \
   --host 0.0.0.0 \
   --port 8000 \

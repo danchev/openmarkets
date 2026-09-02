@@ -11,7 +11,7 @@ uvx openmarkets@latest
 For Streamable HTTP:
 
 ```bash
-uv run openmarkets \
+uvx openmarkets@latest \
   --transport http \
   --host 0.0.0.0 \
   --port 8000 \
