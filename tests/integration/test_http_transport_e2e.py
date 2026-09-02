@@ -274,7 +274,11 @@ async def test_bind_conflict_on_an_occupied_port_exits_non_zero(http_server):
             stderr = conflicting.stderr.read() if conflicting.stderr else ""
 
             assert exit_code != 0
-            assert "address already in use" in stderr.lower()
+            normalized_stderr = stderr.lower()
+            assert any(
+                message in normalized_stderr
+                for message in ("address already in use", "only one usage of each socket address", "winerror 10048")
+            )
         finally:
             if conflicting.poll() is None:
                 conflicting.terminate()
