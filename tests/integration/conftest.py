@@ -1,6 +1,7 @@
 """Shared fixtures for integration tests."""
 
 import os
+import sys
 
 import pytest
 from mcp import StdioServerParameters
@@ -16,7 +17,7 @@ def uv_index() -> str:
 def mcp_server_params(uv_index: str) -> StdioServerParameters:
     """Create StdioServerParameters for MCP server startup."""
     return StdioServerParameters(
-        command="uv",
-        args=["run", "openmarkets", "--transport", "stdio"],
+        command=sys.executable,
+        args=["-m", "openmarkets", "--transport", "stdio"],
         env={"UV_INDEX": uv_index},
     )
