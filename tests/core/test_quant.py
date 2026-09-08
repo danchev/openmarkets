@@ -6,6 +6,7 @@ import pytest
 
 from openmarkets.core.quant import (
     _execution_costs,
+    _wilder_rsi,
     compute_correlation_and_covariance,
     compute_drawdown_curve,
     compute_factor_regressions,
@@ -326,3 +327,32 @@ def test_backtest_parameter_invariants():
         run_moving_average_crossover(prices, fast_window=20, slow_window=10)
     with pytest.raises(ValueError, match="thresholds"):
         run_rsi_mean_reversion(prices, oversold=80, overbought=20)
+
+
+def test_wilder_rsi_sma_seed_and_recursive_update():
+    prices = pd.Series(100 + np.r_[0, np.cumsum([10] + [-1] * 13 + [2, -3])])
+    rsi = _wilder_rsi(prices, 14)
+    assert rsi.iloc[:14].isna().all()
+    assert rsi.iloc[14] == pytest.approx(100 * 10 / 23)
+    average_gain, average_loss = 10 / 14, 13 / 14
+    for offset, change in enumerate([2, -3], start=15):
+        average_gain = (average_gain * 13 + max(change, 0)) / 14
+        average_loss = (average_loss * 13 + max(-change, 0)) / 14
+        assert rsi.iloc[offset] == pytest.approx(100 * average_gain / (average_gain + average_loss))
+
+
+@pytest.mark.parametrize("change, expected", [(1, 100), (-1, 0), (0, 50)])
+def test_wilder_rsi_one_sided_and_flat_prices(change, expected):
+    rsi = _wilder_rsi(pd.Series(100 + change * np.arange(30)), 14)
+    assert rsi.iloc[:14].isna().all()
+    assert (rsi.iloc[14:] == expected).all()
+
+
+def test_rsi_seed_triggers_entry_at_next_close():
+    prices = pd.Series(
+        100 + np.r_[0, np.cumsum([10] + [-1] * 13 + [0] * 15)],
+        index=pd.date_range("2024-01-01", periods=30, freq="B"),
+    )
+    result = run_rsi_mean_reversion(prices, oversold=50, overbought=80)
+    assert result["total_trades"] == 1
+    assert result["trades"][0]["entry_date"] == str(prices.index[15].date())

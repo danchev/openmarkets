@@ -560,6 +560,23 @@ def run_moving_average_crossover(
     }
 
 
+def _wilder_rsi(prices: pd.Series, window: int) -> pd.Series:
+    """Compute RSI with an SMA seed over the first window price changes."""
+    delta = prices.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    for values in (gain, loss):
+        seed = values.iloc[1 : window + 1].mean()
+        values.iloc[:window] = np.nan
+        values.iloc[window] = seed
+    gain = gain.ewm(alpha=1 / window, adjust=False, min_periods=1).mean()
+    loss = loss.ewm(alpha=1 / window, adjust=False, min_periods=1).mean()
+    rs = gain / loss.replace(0, np.nan)
+    rsi = cast(pd.Series, 100 - (100 / (1 + rs)))
+    rsi = rsi.mask((loss == 0) & (gain > 0), 100.0)
+    return cast(pd.Series, rsi.mask((loss == 0) & (gain == 0), 50.0))
+
+
 def run_rsi_mean_reversion(
     prices: pd.Series,
     rsi_window: int = 14,
@@ -587,21 +604,7 @@ def run_rsi_mean_reversion(
     if len(clean_p) <= rsi_window + 10:
         raise ValueError(f"At least {rsi_window + 11} price observations are required")
 
-    # Calculate RSI
-    delta = clean_p.diff()
-    # Wilder's smoothing is an EMA with alpha=1/window, rather than an SMA.
-    gain = cast(
-        pd.Series,
-        delta.clip(lower=0).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
-    )
-    loss = cast(
-        pd.Series,
-        (-delta.clip(upper=0)).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
-    )
-    rs = gain / loss.replace(0, np.nan)
-    rsi = cast(pd.Series, 100 - (100 / (1 + rs)))
-    rsi = rsi.mask((loss == 0) & (gain > 0), 100.0)
-    rsi = rsi.mask((loss == 0) & (gain == 0), 50.0)
+    rsi = _wilder_rsi(clean_p, rsi_window)
 
     # Generate signals
     in_pos = False
