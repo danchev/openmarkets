@@ -62,6 +62,29 @@ def test_compute_risk_metrics():
     assert metrics["annualized_volatility_percent"] > 0
 
 
+def test_sharpe_and_sortino_use_arithmetic_excess_returns():
+    returns = pd.Series([0.02, -0.01, 0.03, 0.00, 0.01])
+    annualization_factor = 5.0
+    risk_free_rate = 0.05
+    periodic_rf = (1 + risk_free_rate) ** (1 / annualization_factor) - 1
+    excess = returns - periodic_rf
+    expected_sharpe = excess.mean() / excess.std() * np.sqrt(annualization_factor)
+    expected_sortino = (
+        excess.mean()
+        * annualization_factor
+        / (np.sqrt((np.minimum(excess, 0) ** 2).mean()) * np.sqrt(annualization_factor))
+    )
+
+    metrics = compute_risk_metrics(
+        returns,
+        risk_free_rate=risk_free_rate,
+        annualization_factor=annualization_factor,
+    )
+
+    assert metrics["sharpe_ratio"] == round(expected_sharpe, 3)
+    assert metrics["sortino_ratio"] == round(expected_sortino, 3)
+
+
 def test_compute_correlation_and_covariance():
     df = _make_sample_prices()
     assets, corr, cov = compute_correlation_and_covariance(df)
@@ -143,6 +166,36 @@ def test_risk_metrics_use_geometric_annualization_and_consistent_beta():
     expected = ((1 + asset).prod() ** (252 / len(asset)) - 1) * 100
     assert metrics["annualized_return_percent"] == round(expected, 2)
     assert metrics["beta"] == pytest.approx(2.0, abs=0.001)
+
+
+def test_alpha_uses_portfolio_return_from_aligned_period():
+    portfolio = pd.Series(
+        [0.20, 0.20, 0.20, 0.01, 0.02, 0.03],
+        index=pd.date_range("2024-01-01", periods=6, freq="D"),
+    )
+    benchmark = pd.Series(
+        [0.01, -0.02, 0.03],
+        index=pd.date_range("2024-01-04", periods=3, freq="D"),
+    )
+
+    metrics = compute_risk_metrics(portfolio, benchmark_returns=benchmark, risk_free_rate=0.0)
+
+    aligned_only = compute_risk_metrics(portfolio.loc[benchmark.index], benchmark_returns=benchmark, risk_free_rate=0.0)
+    assert metrics["alpha_percent"] == aligned_only["alpha_percent"]
+
+
+def test_incomplete_price_history_is_reported():
+    prices = pd.DataFrame(
+        {
+            "OLD": [100.0, 101.0, 102.0, 103.0, 104.0],
+            "NEW": [np.nan, np.nan, 50.0, 51.0, 52.0],
+        }
+    )
+
+    with pytest.warns(RuntimeWarning, match="Dropped 2 of 5 price observations"):
+        returns, _ = compute_portfolio_returns(prices)
+
+    assert len(returns) == 2
 
 
 def test_r_squared_is_none_with_constant_portfolio_returns():

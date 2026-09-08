@@ -76,13 +76,13 @@ def test_risk_parity_equalizes_sample_risk_contributions() -> None:
     assert sum(contributions) == pytest.approx(100.0, abs=0.05)
 
 
-def test_rsi_zero_loss_window_exits_at_true_one_hundred() -> None:
+def test_rsi_wilder_smoothing_exits_after_reversal() -> None:
     prices = pd.Series(
         list(np.linspace(100, 80, 21)) + list(np.linspace(81, 115, 35)),
         index=pd.date_range("2024-01-01", periods=56),
     )
 
-    result = run_rsi_mean_reversion(prices, rsi_window=14, oversold=30.0, overbought=99.995)
+    result = run_rsi_mean_reversion(prices, rsi_window=14, oversold=30.0, overbought=70.0)
 
     assert result["trades"]
     assert result["trades"][-1]["exit_date"] != str(prices.index[-1]).split(" ")[0]
