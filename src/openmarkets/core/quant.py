@@ -127,11 +127,15 @@ def _closed_trade_records(
 
 
 def _execution_costs(raw_signal: pd.Series, slippage_bps: float) -> pd.Series:
-    """Return execution costs aligned to raw signal transition dates."""
+    """Return effective close-equity cost fractions for binary long/cash positions.
+
+    Each entry or exit retains ``1 - slippage_bps / 10000`` of equity.
+    Compound both charges if entry and terminal liquidation share a close.
+    """
     turnover = raw_signal.diff().abs().fillna(raw_signal.abs())
     # Open positions are liquidated at the final close for trade reporting.
     turnover.iloc[-1] += abs(raw_signal.iloc[-1])
-    return turnover * (slippage_bps / 10_000.0)
+    return cast(pd.Series, 1.0 - (1.0 - slippage_bps / 10_000.0) ** turnover)
 
 
 def _sample_equity_curve(equity: pd.Series) -> list[dict[str, Any]]:
@@ -495,7 +499,8 @@ def run_moving_average_crossover(
     """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based backtest.
 
     Buys when fast MA crosses above slow MA; exits to cash when fast MA crosses below slow MA.
-    ``slippage_bps`` is charged once per entry or exit at the signal observation's close.
+    Signals execute at the next observation's close. ``slippage_bps`` is a
+    proportional cost on equity at that close, charged per entry or exit.
     """
     if fast_window < 1 or slow_window <= fast_window:
         raise ValueError("slow_window must be greater than fast_window, and both must be positive")
@@ -520,7 +525,7 @@ def run_moving_average_crossover(
     signal = cast(pd.Series, execution_signal.shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
     execution_cost = _execution_costs(execution_signal, slippage_bps)
-    strat_ret = cast(pd.Series, signal * asset_ret - execution_cost)
+    strat_ret = cast(pd.Series, (1.0 + signal * asset_ret) * (1.0 - execution_cost) - 1.0)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
 
@@ -588,7 +593,8 @@ def run_rsi_mean_reversion(
     """Execute RSI Mean-Reversion rule-based backtest.
 
     Buys when RSI < oversold threshold; exits to cash when RSI > overbought threshold.
-    ``slippage_bps`` is charged once per entry or exit at the signal observation's close.
+    Signals execute at the next observation's close. ``slippage_bps`` is a
+    proportional cost on equity at that close, charged per entry or exit.
     """
     if rsi_window < 2:
         raise ValueError("rsi_window must be at least 2")
@@ -626,7 +632,7 @@ def run_rsi_mean_reversion(
     signal_series = cast(pd.Series, execution_signal.shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
     execution_cost = _execution_costs(execution_signal, slippage_bps)
-    strat_ret = cast(pd.Series, signal_series * asset_ret - execution_cost)
+    strat_ret = cast(pd.Series, (1.0 + signal_series * asset_ret) * (1.0 - execution_cost) - 1.0)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
 

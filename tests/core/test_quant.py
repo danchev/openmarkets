@@ -356,3 +356,37 @@ def test_rsi_seed_triggers_entry_at_next_close():
     result = run_rsi_mean_reversion(prices, oversold=50, overbought=80)
     assert result["total_trades"] == 1
     assert result["trades"][0]["entry_date"] == str(prices.index[15].date())
+
+
+@pytest.mark.parametrize("terminal_exit", [False, True])
+def test_crossover_slippage_matches_close_equity_ledger(terminal_exit):
+    # Signal at index 1, entry at index 2. Exit at index 4, either by
+    # a signal from index 3 or by terminal liquidation.
+    values = [100, 110, 120, 130, 150] if terminal_exit else [100, 110, 120, 90, 80, 70]
+    prices = pd.Series(values, index=pd.date_range("2024-01-01", periods=len(values), freq="B"))
+    result = run_moving_average_crossover(prices, fast_window=1, slow_window=2, slippage_bps=1000)
+    expected_equity = 10000 * 0.9 * values[4] / values[2] * 0.9
+    assert result["ending_capital"] == round(expected_equity, 2)
+    assert result["total_trades"] == 1
+    assert result["trades"][0]["profit_loss"] == round(expected_equity - 10000, 2)
+    assert result["trades"][0]["return_percent"] == round((expected_equity / 10000 - 1) * 100, 2)
+
+
+def test_rsi_slippage_matches_close_equity_ledger():
+    prices = pd.Series(
+        [100, 110] + list(range(109, 81, -1)),
+        index=pd.date_range("2024-01-01", periods=30, freq="B"),
+    )
+    result = run_rsi_mean_reversion(prices, oversold=50, overbought=80, slippage_bps=1000)
+    expected_equity = 10000 * 0.9 * prices.iloc[-1] / prices.iloc[15] * 0.9
+    assert result["total_trades"] == 1
+    assert result["ending_capital"] == round(expected_equity, 2)
+    assert result["trades"][0]["profit_loss"] == round(expected_equity - 10000, 2)
+
+
+def test_terminal_entry_and_exit_compound_costs_without_negative_equity():
+    prices = pd.Series([100, 110, 120], index=pd.date_range("2024-01-01", periods=3, freq="B"))
+    result = run_moving_average_crossover(prices, fast_window=1, slow_window=2, slippage_bps=7500)
+    assert result["ending_capital"] == 625.0  # 10000 * 0.25 * 0.25
+    assert result["trades"][0]["profit_loss"] == -9375.0
+    assert result["trades"][0]["return_percent"] == -93.75
