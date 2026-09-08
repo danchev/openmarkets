@@ -549,11 +549,11 @@ def run_rsi_mean_reversion(
     # Wilder's smoothing is an EMA with alpha=1/window, rather than an SMA.
     gain = cast(
         pd.Series,
-        delta.where(delta > 0, 0).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
+        delta.clip(lower=0).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
     )
     loss = cast(
         pd.Series,
-        (-delta.where(delta < 0, 0)).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
+        (-delta.clip(upper=0)).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
     )
     rs = gain / loss.replace(0, np.nan)
     rsi = cast(pd.Series, 100 - (100 / (1 + rs)))
