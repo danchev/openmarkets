@@ -115,6 +115,14 @@ def _closed_trade_records(prices: pd.Series, signal: pd.Series, equity: pd.Serie
     return trades
 
 
+def _execution_costs(raw_signal: pd.Series, slippage_bps: float) -> pd.Series:
+    """Return execution costs aligned to raw signal transition dates."""
+    turnover = raw_signal.diff().abs().fillna(raw_signal)
+    # Open positions are liquidated at the final close for trade reporting.
+    turnover.iloc[-1] += raw_signal.iloc[-1]
+    return turnover * (slippage_bps / 10_000.0)
+
+
 def _sample_equity_curve(equity: pd.Series) -> list[dict[str, Any]]:
     sampled = equity.iloc[:: max(1, len(equity) // 30)]
     if sampled.index[-1] != equity.index[-1]:
@@ -219,6 +227,13 @@ def compute_risk_metrics(
     if not np.isfinite(annualization_factor) or annualization_factor <= 0:
         raise ValueError("annualization_factor must be finite and positive")
     returns = _validate_returns(returns)
+    if len(returns) < 100:
+        warnings.warn(
+            "VaR and CVaR are being estimated from fewer than 100 return observations; "
+            "historical tail estimates may be unstable.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     cumulative_growth = float((1 + returns).prod())
     ann_ret = cumulative_growth ** (annualization_factor / len(returns)) - 1
@@ -396,17 +411,17 @@ def compute_minimum_variance_weights(
     if not np.isfinite(cov).all():
         raise ValueError("Covariance matrix contains non-finite values")
 
-    # Projected-gradient solution of the long-only constrained problem.
+    # Projected-gradient solution of the long-only constrained problem. The
+    # sample covariance is positive semidefinite, so no ridge is needed to
+    # define this convex objective; adding one would solve a different problem.
     num_assets = cov.shape[0]
-    ridge = np.eye(num_assets) * 1e-4
-    regularized_cov = cov + ridge
-    largest_eigenvalue = float(np.linalg.eigvalsh(regularized_cov).max())
+    largest_eigenvalue = float(np.linalg.eigvalsh(cov).max())
     if not np.isfinite(largest_eigenvalue) or largest_eigenvalue <= 0:
-        raise ValueError("Covariance matrix is not positive definite")
+        raise ValueError("Covariance matrix must have positive maximum eigenvalue")
     step_size = 1.0 / (2.0 * largest_eigenvalue)
     norm_weights = np.ones(num_assets) / num_assets
     for _ in range(10_000):
-        candidate = _project_to_simplex(norm_weights - step_size * (2.0 * regularized_cov @ norm_weights))
+        candidate = _project_to_simplex(norm_weights - step_size * (2.0 * cov @ norm_weights))
         if np.linalg.norm(candidate - norm_weights, ord=1) < 1e-10:
             norm_weights = candidate
             break
@@ -460,15 +475,19 @@ def run_moving_average_crossover(
     fast_window: int = 50,
     slow_window: int = 200,
     initial_capital: float = 10000.0,
+    slippage_bps: float = 0.0,
 ) -> dict[str, Any]:
     """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based backtest.
 
     Buys when fast MA crosses above slow MA; exits to cash when fast MA crosses below slow MA.
+    ``slippage_bps`` is charged once per entry or exit at the signal observation's close.
     """
     if fast_window < 1 or slow_window <= fast_window:
         raise ValueError("slow_window must be greater than fast_window, and both must be positive")
     if not np.isfinite(initial_capital) or initial_capital <= 0:
         raise ValueError("initial_capital must be a finite positive number")
+    if not np.isfinite(slippage_bps) or slippage_bps < 0:
+        raise ValueError("slippage_bps must be finite and non-negative")
     clean_p = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if (clean_p <= 0).any():
         raise ValueError("prices must be positive")
@@ -479,9 +498,14 @@ def run_moving_average_crossover(
     slow_ma = clean_p.rolling(window=slow_window).mean()
 
     # Position signal: 1 = In Market, 0 = In Cash
-    signal = cast(pd.Series, cast(pd.Series, (fast_ma > slow_ma).astype(int)).shift(1).fillna(0))
+    raw_signal = cast(pd.Series, (fast_ma > slow_ma).astype(int))
+    # A signal observed at close t is tradable at close t. The shifted
+    # position earns the close-t-to-close-(t+1) return, while execution costs
+    # are charged on the date of the position change.
+    signal = cast(pd.Series, raw_signal.shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
-    strat_ret = cast(pd.Series, signal * asset_ret)
+    execution_cost = _execution_costs(raw_signal, slippage_bps)
+    strat_ret = cast(pd.Series, signal * asset_ret - execution_cost)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
 
@@ -527,10 +551,12 @@ def run_rsi_mean_reversion(
     oversold: float = 30.0,
     overbought: float = 70.0,
     initial_capital: float = 10000.0,
+    slippage_bps: float = 0.0,
 ) -> dict[str, Any]:
     """Execute RSI Mean-Reversion rule-based backtest.
 
     Buys when RSI < oversold threshold; exits to cash when RSI > overbought threshold.
+    ``slippage_bps`` is charged once per entry or exit at the signal observation's close.
     """
     if rsi_window < 2:
         raise ValueError("rsi_window must be at least 2")
@@ -538,6 +564,8 @@ def run_rsi_mean_reversion(
         raise ValueError("RSI thresholds must satisfy 0 <= oversold < overbought <= 100")
     if not np.isfinite(initial_capital) or initial_capital <= 0:
         raise ValueError("initial_capital must be a finite positive number")
+    if not np.isfinite(slippage_bps) or slippage_bps < 0:
+        raise ValueError("slippage_bps must be finite and non-negative")
     clean_p = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if (clean_p <= 0).any():
         raise ValueError("prices must be positive")
@@ -575,9 +603,11 @@ def run_rsi_mean_reversion(
         else:
             signals.append(1 if in_pos else 0)
 
-    signal_series = cast(pd.Series, pd.Series(signals, index=clean_p.index).shift(1).fillna(0))
+    raw_signal = cast(pd.Series, pd.Series(signals, index=clean_p.index))
+    signal_series = cast(pd.Series, raw_signal.shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
-    strat_ret = cast(pd.Series, signal_series * asset_ret)
+    execution_cost = _execution_costs(raw_signal, slippage_bps)
+    strat_ret = cast(pd.Series, signal_series * asset_ret - execution_cost)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
 

@@ -237,6 +237,9 @@ class PortfolioService(ToolRegistrationMixin):
         slow_window: Annotated[int, Field(ge=2, description="Slow moving average window in trading days")] = 200,
         period: Annotated[Period, Field(description="Backtest duration")] = "5y",
         initial_capital: Annotated[float, Field(gt=0, description="Starting cash capital in USD")] = 10000.0,
+        slippage_bps: Annotated[
+            float, Field(ge=0, description="Execution slippage charged per entry or exit in basis points")
+        ] = 0.0,
     ) -> BacktestResult:
         """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based strategy backtest.
 
@@ -249,6 +252,7 @@ class PortfolioService(ToolRegistrationMixin):
             slow_window: Slow SMA period in days.
             period: Backtest timespan.
             initial_capital: Starting capital in USD.
+            slippage_bps: Slippage charged per entry or exit, in basis points.
 
         Returns:
             BacktestResult with complete trade log and performance statistics.
@@ -261,6 +265,7 @@ class PortfolioService(ToolRegistrationMixin):
             slow_window=slow_window,
             period=period,
             initial_capital=initial_capital,
+            slippage_bps=slippage_bps,
             session=self.session,
         )
 
@@ -278,6 +283,9 @@ class PortfolioService(ToolRegistrationMixin):
         ] = 70.0,
         period: Annotated[Period, Field(description="Backtest duration")] = "2y",
         initial_capital: Annotated[float, Field(gt=0, description="Starting cash capital in USD")] = 10000.0,
+        slippage_bps: Annotated[
+            float, Field(ge=0, description="Execution slippage charged per entry or exit in basis points")
+        ] = 0.0,
     ) -> BacktestResult:
         """Execute Relative Strength Index (RSI) Mean-Reversion strategy backtest.
 
@@ -291,6 +299,7 @@ class PortfolioService(ToolRegistrationMixin):
             overbought_threshold: RSI sell trigger level.
             period: Backtest timespan.
             initial_capital: Starting capital in USD.
+            slippage_bps: Slippage charged per entry or exit, in basis points.
 
         Returns:
             BacktestResult with performance metrics and closed trades.
@@ -304,6 +313,7 @@ class PortfolioService(ToolRegistrationMixin):
             overbought_threshold=overbought_threshold,
             period=period,
             initial_capital=initial_capital,
+            slippage_bps=slippage_bps,
             session=self.session,
         )
 

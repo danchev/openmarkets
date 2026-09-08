@@ -62,6 +62,12 @@ def test_compute_risk_metrics():
     assert metrics["annualized_volatility_percent"] > 0
 
 
+def test_compute_risk_metrics_warns_for_short_tail_sample():
+    returns = pd.Series([0.01, -0.01] * 20)
+    with pytest.warns(RuntimeWarning, match="fewer than 100"):
+        compute_risk_metrics(returns)
+
+
 def test_sharpe_and_sortino_use_arithmetic_excess_returns():
     returns = pd.Series([0.02, -0.01, 0.03, 0.00, 0.01])
     annualization_factor = 5.0
@@ -129,12 +135,38 @@ def test_run_moving_average_crossover():
     assert "equity_curve" in res
 
 
+def test_moving_average_slippage_reduces_equity_and_rejects_invalid_cost():
+    prices = pd.Series(np.linspace(100, 150, 80), index=pd.date_range("2024-01-01", periods=80, freq="B"))
+    free = run_moving_average_crossover(prices, fast_window=5, slow_window=10)
+    charged = run_moving_average_crossover(prices, fast_window=5, slow_window=10, slippage_bps=25)
+    assert charged["ending_capital"] < free["ending_capital"]
+    with pytest.raises(ValueError, match="slippage_bps"):
+        run_moving_average_crossover(prices, fast_window=5, slow_window=10, slippage_bps=-1)
+
+
+def test_moving_average_slippage_charges_terminal_liquidation():
+    prices = pd.Series(np.linspace(100, 150, 80), index=pd.date_range("2024-01-01", periods=80, freq="B"))
+    free = run_moving_average_crossover(prices, fast_window=5, slow_window=10)
+    charged = run_moving_average_crossover(prices, fast_window=5, slow_window=10, slippage_bps=25)
+    assert charged["ending_capital"] < free["ending_capital"]
+
+
 def test_run_rsi_mean_reversion():
     df = _make_sample_prices()
     res = run_rsi_mean_reversion(df["AAPL"], rsi_window=14, oversold=35.0, overbought=65.0, initial_capital=10000.0)
     assert "total_return_percent" in res
     assert "win_rate_percent" in res
     assert "equity_curve" in res
+
+
+def test_rsi_slippage_reduces_equity():
+    prices = pd.Series(
+        100 + np.sin(np.linspace(0, 12 * np.pi, 120)) * 10,
+        index=pd.date_range("2024-01-01", periods=120, freq="B"),
+    )
+    free = run_rsi_mean_reversion(prices, rsi_window=14, oversold=40, overbought=60)
+    charged = run_rsi_mean_reversion(prices, rsi_window=14, oversold=40, overbought=60, slippage_bps=25)
+    assert charged["ending_capital"] < free["ending_capital"]
 
 
 def test_compute_factor_regressions():

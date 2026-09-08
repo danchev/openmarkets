@@ -95,6 +95,7 @@ class PortfolioRepository(Protocol):
         slow_window: int = 200,
         period: str = "5y",
         initial_capital: float = 10000.0,
+        slippage_bps: float = 0.0,
         session: Session | None = None,
     ) -> BacktestResult: ...
 
@@ -106,6 +107,7 @@ class PortfolioRepository(Protocol):
         overbought_threshold: float = 70.0,
         period: str = "2y",
         initial_capital: float = 10000.0,
+        slippage_bps: float = 0.0,
         session: Session | None = None,
     ) -> BacktestResult: ...
 
@@ -310,6 +312,7 @@ class QuantPortfolioRepository:
         slow_window: int = 200,
         period: str = "5y",
         initial_capital: float = 10000.0,
+        slippage_bps: float = 0.0,
         session: Session | None = None,
     ) -> BacktestResult:
         """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based backtest."""
@@ -322,6 +325,7 @@ class QuantPortfolioRepository:
             fast_window=fast_window,
             slow_window=slow_window,
             initial_capital=initial_capital,
+            slippage_bps=slippage_bps,
         )
 
         end_cap = raw["ending_capital"]
@@ -353,6 +357,7 @@ class QuantPortfolioRepository:
         overbought_threshold: float = 70.0,
         period: str = "2y",
         initial_capital: float = 10000.0,
+        slippage_bps: float = 0.0,
         session: Session | None = None,
     ) -> BacktestResult:
         """Execute RSI Mean-Reversion rule-based backtest."""
@@ -366,6 +371,7 @@ class QuantPortfolioRepository:
             oversold=oversold_threshold,
             overbought=overbought_threshold,
             initial_capital=initial_capital,
+            slippage_bps=slippage_bps,
         )
 
         end_cap = raw["ending_capital"]
