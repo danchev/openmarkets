@@ -113,7 +113,10 @@ class BacktestTrade(BaseModel):
     exit_date: str = Field(..., description="Position exit date")
     entry_price: float = Field(..., description="Execution entry price")
     exit_price: float = Field(..., description="Execution exit price")
-    return_percent: float = Field(..., description="Percentage trade return (%)")
+    return_percent: float = Field(..., description="Net percentage trade return after execution slippage (%)")
+    gross_return_percent: float | None = Field(
+        None, description="Price-only trade return before execution slippage (%)"
+    )
     profit_loss: float = Field(..., description="Dollar profit or loss")
 
 
@@ -140,7 +143,7 @@ class BacktestResult(BaseModel):
     cagr_percent: float = Field(..., description="Compound Annual Growth Rate (%)")
     buy_and_hold_return_percent: float = Field(..., description="Benchmark Buy & Hold return for comparison (%)")
     win_rate_percent: float = Field(..., description="Percentage of winning closed trades (%)")
-    profit_factor: float | None = Field(None, description="Gross profits / gross losses when at least one loss exists")
+    profit_factor: float | None = Field(None, description="Net profitable trade P/L divided by net losing trade P/L")
     total_trades: int = Field(..., description="Total round-trip trades executed")
     max_drawdown_percent: float = Field(..., description="Strategy maximum drawdown (%)")
     trades: list[BacktestTrade] = Field(default_factory=list, description="Sample of executed trades")

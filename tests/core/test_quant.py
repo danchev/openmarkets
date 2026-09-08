@@ -169,6 +169,20 @@ def test_rsi_slippage_reduces_equity():
     assert charged["ending_capital"] < free["ending_capital"]
 
 
+def test_trade_statistics_use_net_pnl_and_preserve_gross_return():
+    prices = pd.Series(
+        100 + np.sin(np.linspace(0, 12 * np.pi, 120)) * 10,
+        index=pd.date_range("2024-01-01", periods=120, freq="B"),
+    )
+    result = run_rsi_mean_reversion(prices, rsi_window=14, oversold=40, overbought=60, slippage_bps=1000)
+
+    assert result["trades"]
+    assert all(trade["gross_return_percent"] > 0 for trade in result["trades"])
+    assert all(trade["return_percent"] < 0 for trade in result["trades"])
+    assert result["win_rate_percent"] == 0.0
+    assert result["profit_factor"] == 0.0
+
+
 def test_compute_factor_regressions():
     df = _make_sample_prices()
     ret_a = df["AAPL"].pct_change().dropna()

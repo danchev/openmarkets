@@ -68,8 +68,13 @@ def _elapsed_years(index: pd.Index, annualization_factor: float = 252.0) -> floa
     return max((len(index) - 1) / annualization_factor, 1 / annualization_factor)
 
 
-def _closed_trade_records(prices: pd.Series, signal: pd.Series, equity: pd.Series) -> list[dict[str, Any]]:
-    """Create round-trip records, liquidating an open position at the final close."""
+def _closed_trade_records(
+    prices: pd.Series,
+    signal: pd.Series,
+    equity: pd.Series,
+    execution_costs: pd.Series,
+) -> list[dict[str, Any]]:
+    """Create net round-trip records, liquidating an open position at the final close."""
     trades: list[dict[str, Any]] = []
     entry_date: str | None = None
     entry_price = 0.0
@@ -83,33 +88,41 @@ def _closed_trade_records(prices: pd.Series, signal: pd.Series, equity: pd.Serie
         execution_date = str(prices.index[execution_offset]).split(" ")[0]
         execution_price = float(prices.iloc[execution_offset])
         execution_equity = float(equity.iloc[execution_offset])
+        execution_cost = float(execution_costs.iloc[execution_offset])
         if change == 1 and entry_date is None:
             entry_date = execution_date
             entry_price = execution_price
-            entry_equity = execution_equity
+            # Entry execution cost is already reflected in equity. Recover
+            # the capital immediately before entry for net round-trip P/L.
+            entry_equity = execution_equity / (1.0 - execution_cost)
         elif change == -1 and entry_date is not None:
+            net_pnl = execution_equity - entry_equity
             trades.append(
                 {
                     "entry_date": entry_date,
                     "exit_date": execution_date,
                     "entry_price": round(entry_price, 2),
                     "exit_price": round(execution_price, 2),
-                    "return_percent": round((execution_price / entry_price - 1) * 100, 2),
-                    "profit_loss": round(execution_equity - entry_equity, 2),
+                    "return_percent": round(net_pnl / entry_equity * 100, 2),
+                    "gross_return_percent": round((execution_price / entry_price - 1) * 100, 2),
+                    "profit_loss": round(net_pnl, 2),
                 }
             )
             entry_date = None
 
     if entry_date is not None:
         exit_price = float(prices.iloc[-1])
+        exit_equity = float(equity.iloc[-1])
+        net_pnl = exit_equity - entry_equity
         trades.append(
             {
                 "entry_date": entry_date,
                 "exit_date": str(prices.index[-1]).split(" ")[0],
                 "entry_price": round(entry_price, 2),
                 "exit_price": round(exit_price, 2),
-                "return_percent": round((exit_price / entry_price - 1) * 100, 2),
-                "profit_loss": round(float(equity.iloc[-1]) - entry_equity, 2),
+                "return_percent": round(net_pnl / entry_equity * 100, 2),
+                "gross_return_percent": round((exit_price / entry_price - 1) * 100, 2),
+                "profit_loss": round(net_pnl, 2),
             }
         )
     return trades
@@ -486,8 +499,8 @@ def run_moving_average_crossover(
         raise ValueError("slow_window must be greater than fast_window, and both must be positive")
     if not np.isfinite(initial_capital) or initial_capital <= 0:
         raise ValueError("initial_capital must be a finite positive number")
-    if not np.isfinite(slippage_bps) or slippage_bps < 0:
-        raise ValueError("slippage_bps must be finite and non-negative")
+    if not np.isfinite(slippage_bps) or not 0 <= slippage_bps < 10_000:
+        raise ValueError("slippage_bps must be finite, non-negative, and less than 10000")
     clean_p = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if (clean_p <= 0).any():
         raise ValueError("prices must be positive")
@@ -516,10 +529,10 @@ def run_moving_average_crossover(
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
 
-    trades = _closed_trade_records(clean_p, signal, equity)
+    trades = _closed_trade_records(clean_p, signal, equity, execution_cost)
 
-    winning_trades = [t for t in trades if t["return_percent"] > 0]
-    losing_trades = [t for t in trades if t["return_percent"] <= 0]
+    winning_trades = [t for t in trades if t["profit_loss"] > 0]
+    losing_trades = [t for t in trades if t["profit_loss"] <= 0]
     win_rate = (len(winning_trades) / len(trades) * 100) if trades else 0.0
 
     gross_profit = sum(t["profit_loss"] for t in winning_trades)
@@ -564,8 +577,8 @@ def run_rsi_mean_reversion(
         raise ValueError("RSI thresholds must satisfy 0 <= oversold < overbought <= 100")
     if not np.isfinite(initial_capital) or initial_capital <= 0:
         raise ValueError("initial_capital must be a finite positive number")
-    if not np.isfinite(slippage_bps) or slippage_bps < 0:
-        raise ValueError("slippage_bps must be finite and non-negative")
+    if not np.isfinite(slippage_bps) or not 0 <= slippage_bps < 10_000:
+        raise ValueError("slippage_bps must be finite, non-negative, and less than 10000")
     clean_p = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if (clean_p <= 0).any():
         raise ValueError("prices must be positive")
@@ -618,10 +631,10 @@ def run_rsi_mean_reversion(
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
 
-    trades = _closed_trade_records(clean_p, signal_series, equity)
+    trades = _closed_trade_records(clean_p, signal_series, equity, execution_cost)
 
-    winning_trades = [t for t in trades if t["return_percent"] > 0]
-    losing_trades = [t for t in trades if t["return_percent"] <= 0]
+    winning_trades = [t for t in trades if t["profit_loss"] > 0]
+    losing_trades = [t for t in trades if t["profit_loss"] <= 0]
     win_rate = (len(winning_trades) / len(trades) * 100) if trades else 0.0
 
     gross_profit = sum(t["profit_loss"] for t in winning_trades)
