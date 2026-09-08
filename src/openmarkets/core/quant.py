@@ -1,5 +1,6 @@
 """Core vectorized quantitative portfolio risk mathematics and strategy backtesting engines."""
 
+import warnings
 from typing import Any, cast
 
 import numpy as np
@@ -10,7 +11,18 @@ def _clean_prices(price_df: pd.DataFrame, *, minimum_observations: int = 3) -> p
     """Validate a price matrix and retain only complete, finite observations."""
     if not isinstance(price_df, pd.DataFrame) or price_df.columns.empty:
         raise ValueError("At least one asset price column is required")
-    clean_df = price_df.replace([np.inf, -np.inf], np.nan).dropna(how="all").ffill().dropna()
+    clean_df = price_df.replace([np.inf, -np.inf], np.nan).dropna(how="all").ffill()
+    incomplete_rows = clean_df.isna().any(axis=1)
+    dropped_rows = int(incomplete_rows.sum())
+    if dropped_rows:
+        warnings.warn(
+            f"Dropped {dropped_rows} of {len(clean_df)} price observations ({dropped_rows / len(clean_df):.1%}) "
+            "because one or more assets lacked an initial price; portfolio calculations use the remaining "
+            "common history.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    clean_df = clean_df.dropna()
     if len(clean_df) < minimum_observations:
         raise ValueError(f"At least {minimum_observations} complete price observations are required")
     if (clean_df <= 0).any().any():
@@ -45,13 +57,15 @@ def _project_to_simplex(values: np.ndarray) -> np.ndarray:
     return np.maximum(values - threshold, 0)
 
 
-def _elapsed_years(index: pd.Index) -> float:
+def _elapsed_years(index: pd.Index, annualization_factor: float = 252.0) -> float:
     """Calculate elapsed years from dates, falling back to trading observations."""
+    if not np.isfinite(annualization_factor) or annualization_factor <= 0:
+        raise ValueError("annualization_factor must be finite and positive")
     if isinstance(index, pd.DatetimeIndex) and len(index) > 1:
-        elapsed_days = (index[-1] - index[0]).total_seconds() / 86_400
+        elapsed_days = (index[-1].to_pydatetime() - index[0].to_pydatetime()).total_seconds() / 86_400
         if elapsed_days > 0:
             return elapsed_days / 365.25
-    return max((len(index) - 1) / 252.0, 1 / 252.0)
+    return max((len(index) - 1) / annualization_factor, 1 / annualization_factor)
 
 
 def _closed_trade_records(prices: pd.Series, signal: pd.Series, equity: pd.Series) -> list[dict[str, Any]]:
@@ -187,6 +201,7 @@ def compute_risk_metrics(
     returns: pd.Series,
     benchmark_returns: pd.Series | None = None,
     risk_free_rate: float = 0.045,
+    annualization_factor: float = 252.0,
 ) -> dict[str, Any]:
     """Compute comprehensive quantitative portfolio risk and performance metrics.
 
@@ -194,24 +209,32 @@ def compute_risk_metrics(
         returns: Portfolio daily returns Series.
         benchmark_returns: Benchmark daily returns Series (e.g. SPY).
         risk_free_rate: Annualized risk-free rate (defaults to 4.5%).
+        annualization_factor: Number of return observations per year.
 
     Returns:
         Dictionary of Sharpe, Sortino, Calmar, Volatility, VaR, CVaR, Beta, and Alpha.
     """
     if not np.isfinite(risk_free_rate):
         raise ValueError("risk_free_rate must be finite")
+    if not np.isfinite(annualization_factor) or annualization_factor <= 0:
+        raise ValueError("annualization_factor must be finite and positive")
     returns = _validate_returns(returns)
 
     cumulative_growth = float((1 + returns).prod())
-    ann_ret = cumulative_growth ** (252 / len(returns)) - 1
-    ann_vol = float(returns.std() * np.sqrt(252))
+    ann_ret = cumulative_growth ** (annualization_factor / len(returns)) - 1
+    ann_vol = float(returns.std() * np.sqrt(annualization_factor))
 
-    # Sharpe Ratio
-    sharpe = (ann_ret - risk_free_rate) / ann_vol if ann_vol > 0 else None
+    # Sharpe and Sortino use arithmetic excess returns. The annual risk-free
+    # rate is converted to the same per-observation basis as the return series.
+    periodic_risk_free = (1.0 + risk_free_rate) ** (1.0 / annualization_factor) - 1.0
+    excess_returns = returns - periodic_risk_free
+    excess_mean = float(excess_returns.mean())
+    excess_vol = float(excess_returns.std() * np.sqrt(annualization_factor))
+    sharpe = (excess_mean * annualization_factor / excess_vol) if excess_vol > 0 else None
 
-    # Sortino Ratio (downside risk deviation)
-    downside_std = float(np.sqrt((np.minimum(returns, 0) ** 2).mean()) * np.sqrt(252))
-    sortino = (ann_ret - risk_free_rate) / downside_std if downside_std > 0 else None
+    # Sortino downside deviation uses only negative excess returns.
+    downside_deviation = float(np.sqrt((np.minimum(excess_returns, 0) ** 2).mean()) * np.sqrt(annualization_factor))
+    sortino = (excess_mean * annualization_factor / downside_deviation) if downside_deviation > 0 else None
 
     # Max Drawdown & Calmar Ratio
     _, max_dd_pct, _, _ = compute_drawdown_curve(returns)
@@ -246,8 +269,10 @@ def compute_risk_metrics(
             b_var = b_ret.var()
             if np.isfinite(b_var) and b_var > np.finfo(float).eps:
                 beta = float(cov / b_var)
-                b_ann_ret = float((1 + b_ret).prod() ** (252 / len(b_ret)) - 1)
-                alpha = float(ann_ret - (risk_free_rate + beta * (b_ann_ret - risk_free_rate)))
+                b_ann_ret = float((1 + b_ret).prod() ** (annualization_factor / len(b_ret)) - 1)
+                # Alpha must compare returns over the same observations used to estimate beta.
+                aligned_ann_ret = float((1 + p_ret).prod() ** (annualization_factor / len(p_ret)) - 1)
+                alpha = float(aligned_ann_ret - (risk_free_rate + beta * (b_ann_ret - risk_free_rate)))
                 p_var = p_ret.var()
                 if np.isfinite(p_var) and p_var > np.finfo(float).eps:
                     corr = np.corrcoef(p_ret, b_ret)[0, 1]
@@ -273,14 +298,17 @@ def compute_risk_metrics(
 
 def compute_correlation_and_covariance(
     price_df: pd.DataFrame,
+    annualization_factor: float = 252.0,
 ) -> tuple[list[str], dict[str, dict[str, float]], dict[str, dict[str, float]]]:
     """Compute pairwise correlation matrix and annualized covariance matrix across asset returns."""
+    if not np.isfinite(annualization_factor) or annualization_factor <= 0:
+        raise ValueError("annualization_factor must be finite and positive")
     clean_df = _clean_prices(price_df)
     returns = clean_df.pct_change().dropna()
     assets = list(clean_df.columns)
 
     corr_df = returns.corr()
-    cov_df = returns.cov() * 252
+    cov_df = returns.cov() * annualization_factor
     if not np.isfinite(corr_df.to_numpy()).all() or not np.isfinite(cov_df.to_numpy()).all():
         raise ValueError("Correlation requires at least two assets with non-zero return variance")
 
@@ -297,20 +325,22 @@ def compute_correlation_and_covariance(
     return assets, corr_dict, cov_dict
 
 
-def compute_risk_parity_weights(price_df: pd.DataFrame) -> list[dict[str, Any]]:
+def compute_risk_parity_weights(price_df: pd.DataFrame, annualization_factor: float = 252.0) -> list[dict[str, Any]]:
     """Compute long-only equal-risk-contribution (risk parity) weights.
 
     The convex risk-budgeting system is solved with cyclic coordinate descent,
     avoiding a heavyweight optimization dependency while accounting for the full
     covariance matrix rather than using inverse volatility as a proxy.
     """
+    if not np.isfinite(annualization_factor) or annualization_factor <= 0:
+        raise ValueError("annualization_factor must be finite and positive")
     clean_df = _clean_prices(price_df)
     returns = clean_df.pct_change().dropna()
-    vols = returns.std() * np.sqrt(252)
+    vols = returns.std() * np.sqrt(annualization_factor)
 
     if not np.isfinite(vols.to_numpy()).all() or (vols <= 0).any():
         raise ValueError("Risk parity allocation requires positive finite asset volatility")
-    covariance = returns.cov().to_numpy() * 252
+    covariance = returns.cov().to_numpy() * annualization_factor
     if not np.isfinite(covariance).all():
         raise ValueError("Risk parity covariance matrix contains non-finite values")
 
@@ -350,14 +380,18 @@ def compute_risk_parity_weights(price_df: pd.DataFrame) -> list[dict[str, Any]]:
     return res
 
 
-def compute_minimum_variance_weights(price_df: pd.DataFrame) -> list[dict[str, Any]]:
+def compute_minimum_variance_weights(
+    price_df: pd.DataFrame, annualization_factor: float = 252.0
+) -> list[dict[str, Any]]:
     """Compute numerical Minimum Variance portfolio weights with simplex projection.
 
     Constrained to long-only non-negative weights.
     """
+    if not np.isfinite(annualization_factor) or annualization_factor <= 0:
+        raise ValueError("annualization_factor must be finite and positive")
     clean_df = _clean_prices(price_df)
     returns = clean_df.pct_change().dropna()
-    cov = returns.cov().values * 252
+    cov = returns.cov().values * annualization_factor
 
     if not np.isfinite(cov).all():
         raise ValueError("Covariance matrix contains non-finite values")
@@ -380,7 +414,7 @@ def compute_minimum_variance_weights(price_df: pd.DataFrame) -> list[dict[str, A
     else:
         raise ValueError("Minimum variance optimization did not converge")
 
-    vols = returns.std() * np.sqrt(252)
+    vols = returns.std() * np.sqrt(annualization_factor)
     contributions = _portfolio_risk_contributions(cov, norm_weights)
     res: list[dict[str, Any]] = []
     for i, ticker in enumerate(clean_df.columns):
@@ -450,10 +484,10 @@ def run_moving_average_crossover(
     strat_ret = cast(pd.Series, signal * asset_ret)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
-    bh_equity = initial_capital * (1 + asset_ret).cumprod()
 
     total_strat_ret = float((equity.iloc[-1] - initial_capital) / initial_capital)
-    total_bh_ret = float((bh_equity.iloc[-1] - initial_capital) / initial_capital)
+    comparison_returns = asset_ret.iloc[slow_window:]
+    total_bh_ret = float((1 + comparison_returns).prod() - 1)
 
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
@@ -512,8 +546,15 @@ def run_rsi_mean_reversion(
 
     # Calculate RSI
     delta = clean_p.diff()
-    gain = cast(pd.Series, (delta.where(delta > 0, 0)).rolling(window=rsi_window).mean())
-    loss = cast(pd.Series, (-delta.where(delta < 0, 0)).rolling(window=rsi_window).mean())
+    # Wilder's smoothing is an EMA with alpha=1/window, rather than an SMA.
+    gain = cast(
+        pd.Series,
+        delta.where(delta > 0, 0).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
+    )
+    loss = cast(
+        pd.Series,
+        (-delta.where(delta < 0, 0)).ewm(alpha=1 / rsi_window, adjust=False, min_periods=rsi_window).mean(),
+    )
     rs = gain / loss.replace(0, np.nan)
     rsi = cast(pd.Series, 100 - (100 / (1 + rs)))
     rsi = rsi.mask((loss == 0) & (gain > 0), 100.0)
@@ -539,10 +580,10 @@ def run_rsi_mean_reversion(
     strat_ret = cast(pd.Series, signal_series * asset_ret)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
-    bh_equity = initial_capital * (1 + asset_ret).cumprod()
 
     total_strat_ret = float((equity.iloc[-1] - initial_capital) / initial_capital)
-    total_bh_ret = float((bh_equity.iloc[-1] - initial_capital) / initial_capital)
+    comparison_returns = asset_ret.iloc[rsi_window + 1 :]
+    total_bh_ret = float((1 + comparison_returns).prod() - 1)
 
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
@@ -576,10 +617,16 @@ def run_rsi_mean_reversion(
     }
 
 
-def compute_factor_regressions(asset_returns: pd.Series, factor_returns_df: pd.DataFrame) -> list[dict[str, Any]]:
+def compute_factor_regressions(
+    asset_returns: pd.Series,
+    factor_returns_df: pd.DataFrame,
+    annualization_factor: float = 252.0,
+) -> list[dict[str, Any]]:
     """Compute multi-factor linear regression exposures (Beta, Alpha, t-statistic, R-squared)."""
     if not isinstance(factor_returns_df, pd.DataFrame) or factor_returns_df.columns.empty:
         raise ValueError("At least one factor return column is required")
+    if not np.isfinite(annualization_factor) or annualization_factor <= 0:
+        raise ValueError("annualization_factor must be finite and positive")
     aligned = pd.concat([asset_returns, factor_returns_df], axis=1).replace([np.inf, -np.inf], np.nan).dropna()
     if len(aligned) < 20:
         return []
@@ -595,7 +642,7 @@ def compute_factor_regressions(asset_returns: pd.Series, factor_returns_df: pd.D
     full_rank = np.linalg.matrix_rank(x_with_const) == parameter_count
 
     beta_coeffs, _, _, _ = np.linalg.lstsq(x_with_const, y, rcond=None)
-    alpha = float(beta_coeffs[0] * 252)
+    alpha = float(beta_coeffs[0] * annualization_factor)
 
     y_pred = x_with_const.dot(beta_coeffs)
     residuals = y - y_pred
@@ -605,8 +652,17 @@ def compute_factor_regressions(asset_returns: pd.Series, factor_returns_df: pd.D
 
     t_statistics = np.full_like(beta_coeffs, np.nan, dtype=float)
     if full_rank:
-        residual_variance = ss_res / (len(y) - parameter_count)
-        coefficient_covariance = residual_variance * np.linalg.inv(x_with_const.T @ x_with_const)
+        # Newey-West HAC covariance accounts for volatility clustering and short-lag
+        # autocorrelation common in financial return series.
+        bread = np.linalg.inv(x_with_const.T @ x_with_const)
+        scores = x_with_const * residuals[:, np.newaxis]
+        meat = scores.T @ scores
+        max_lag = min(len(y) - 1, max(1, int(4 * (len(y) / 100) ** (2 / 9))))
+        for lag in range(1, max_lag + 1):
+            weight = 1.0 - lag / (max_lag + 1)
+            autocovariance = scores[lag:].T @ scores[:-lag]
+            meat += weight * (autocovariance + autocovariance.T)
+        coefficient_covariance = bread @ meat @ bread
         standard_errors = np.sqrt(np.maximum(np.diag(coefficient_covariance), 0.0))
         t_statistics = np.divide(
             beta_coeffs,
