@@ -34,8 +34,8 @@ def _validate_returns(returns: pd.Series, *, minimum_observations: int = 2) -> p
     clean = returns.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if len(clean) < minimum_observations:
         raise ValueError(f"At least {minimum_observations} finite return observations are required")
-    if (clean <= -1).any():
-        raise ValueError("Returns must be greater than -100%")
+    if (clean < -1).any():
+        raise ValueError("Returns must be at least -100%")
     return clean
 
 
@@ -291,16 +291,18 @@ def compute_risk_metrics(
         if len(aligned) > 5:
             p_ret = aligned.iloc[:, 0]
             b_ret = aligned.iloc[:, 1]
-            if (b_ret <= -1).any():
-                raise ValueError("Benchmark returns must be greater than -100%")
+            if (b_ret < -1).any():
+                raise ValueError("Benchmark returns must be at least -100%")
             cov = p_ret.cov(b_ret)
             b_var = b_ret.var()
             if np.isfinite(b_var) and b_var > np.finfo(float).eps:
                 beta = float(cov / b_var)
-                b_ann_ret = float((1 + b_ret).prod() ** (annualization_factor / len(b_ret)) - 1)
-                # Alpha must compare returns over the same observations used to estimate beta.
-                aligned_ann_ret = float((1 + p_ret).prod() ** (annualization_factor / len(p_ret)) - 1)
-                alpha = float(aligned_ann_ret - (risk_free_rate + beta * (b_ann_ret - risk_free_rate)))
+                # Beta is estimated from arithmetic periodic returns, so CAPM
+                # alpha must use arithmetic annualized returns as well. Using
+                # geometric returns here would mix volatility drag into alpha.
+                b_ann_ret = float(b_ret.mean() * annualization_factor)
+                p_ann_ret = float(p_ret.mean() * annualization_factor)
+                alpha = float(p_ann_ret - (risk_free_rate + beta * (b_ann_ret - risk_free_rate)))
                 p_var = p_ret.var()
                 if np.isfinite(p_var) and p_var > np.finfo(float).eps:
                     corr = np.corrcoef(p_ret, b_ret)[0, 1]
@@ -706,6 +708,9 @@ def compute_factor_regressions(
             autocovariance = scores[lag:].T @ scores[:-lag]
             meat += weight * (autocovariance + autocovariance.T)
         coefficient_covariance = bread @ meat @ bread
+        # Small-sample correction for estimating k regression parameters from T
+        # observations. The parameter-count check above guarantees T > k.
+        coefficient_covariance *= len(y) / (len(y) - parameter_count)
         standard_errors = np.sqrt(np.maximum(np.diag(coefficient_covariance), 0.0))
         t_statistics = np.divide(
             beta_coeffs,

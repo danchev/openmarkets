@@ -214,6 +214,27 @@ def test_risk_metrics_use_geometric_annualization_and_consistent_beta():
     assert metrics["beta"] == pytest.approx(2.0, abs=0.001)
 
 
+def test_alpha_uses_arithmetic_annualized_returns_consistent_with_beta():
+    benchmark = pd.Series([0.01, -0.005, 0.012, -0.004, 0.008, 0.003] * 2)
+    asset = benchmark * 2
+    metrics = compute_risk_metrics(asset, benchmark_returns=benchmark, risk_free_rate=0.05)
+    beta = np.cov(asset, benchmark, ddof=1)[0, 1] / np.var(benchmark, ddof=1)
+    expected = asset.mean() * 252 - (0.05 + beta * (benchmark.mean() * 252 - 0.05))
+    assert metrics["alpha_percent"] == round(expected * 100, 2)
+
+
+def test_total_loss_return_is_accepted():
+    returns = pd.Series([-1.0, 0.01, -0.02, 0.03])
+    benchmark = pd.Series([0.01, -0.01, 0.02, -0.02])
+    metrics = compute_risk_metrics(returns, benchmark_returns=benchmark, risk_free_rate=0.0)
+    assert metrics["annualized_return_percent"] == -100.0
+
+
+def test_returns_below_total_loss_are_rejected():
+    with pytest.raises(ValueError, match="at least -100%"):
+        compute_risk_metrics(pd.Series([-1.01, 0.01]))
+
+
 def test_alpha_uses_portfolio_return_from_aligned_period():
     portfolio = pd.Series(
         [0.20, 0.20, 0.20, 0.01, 0.02, 0.03],
