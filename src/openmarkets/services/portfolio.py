@@ -238,7 +238,7 @@ class PortfolioService(ToolRegistrationMixin):
         period: Annotated[Period, Field(description="Backtest duration")] = "5y",
         initial_capital: Annotated[float, Field(gt=0, description="Starting cash capital in USD")] = 10000.0,
         slippage_bps: Annotated[
-            float, Field(ge=0, description="Execution slippage charged per entry or exit in basis points")
+            float, Field(ge=0, lt=10000, description="Execution slippage charged per entry or exit in basis points")
         ] = 0.0,
     ) -> BacktestResult:
         """Execute Moving Average Crossover (Golden Cross / Death Cross) rule-based strategy backtest.
@@ -284,7 +284,7 @@ class PortfolioService(ToolRegistrationMixin):
         period: Annotated[Period, Field(description="Backtest duration")] = "2y",
         initial_capital: Annotated[float, Field(gt=0, description="Starting cash capital in USD")] = 10000.0,
         slippage_bps: Annotated[
-            float, Field(ge=0, description="Execution slippage charged per entry or exit in basis points")
+            float, Field(ge=0, lt=10000, description="Execution slippage charged per entry or exit in basis points")
         ] = 0.0,
     ) -> BacktestResult:
         """Execute Relative Strength Index (RSI) Mean-Reversion strategy backtest.
