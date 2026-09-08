@@ -435,16 +435,27 @@ def compute_minimum_variance_weights(
     largest_eigenvalue = float(np.linalg.eigvalsh(cov).max())
     if not np.isfinite(largest_eigenvalue) or largest_eigenvalue <= 0:
         raise ValueError("Covariance matrix must have positive maximum eigenvalue")
-    step_size = 1.0 / (2.0 * largest_eigenvalue)
+    # Scale to a unit spectral norm: the gradient has Lipschitz constant 2.
+    # FISTA acceleration helps with highly correlated assets without changing
+    # the objective by adding a covariance ridge.
+    scaled_cov = cov / largest_eigenvalue
     norm_weights = np.ones(num_assets) / num_assets
+    extrapolated = norm_weights.copy()
+    momentum = 1.0
     for _ in range(10_000):
-        candidate = _project_to_simplex(norm_weights - step_size * (2.0 * cov @ norm_weights))
-        change = np.linalg.norm(candidate - norm_weights, ord=1)
-        scale = max(1.0, np.linalg.norm(norm_weights, ord=1))
-        if change <= 1e-8 * scale:
+        candidate = _project_to_simplex(extrapolated - scaled_cov @ extrapolated)
+        gradient = 2.0 * scaled_cov @ candidate
+        # Convexity bounds objective suboptimality by the simplex dual gap.
+        # Small changes in weights alone can falsely indicate convergence.
+        # In original variance units, this tolerance is 1e-10 * lambda_max.
+        dual_gap = float(gradient @ candidate - gradient.min())
+        if dual_gap <= 1e-10:
             norm_weights = candidate
             break
+        next_momentum = (1.0 + np.sqrt(1.0 + 4.0 * momentum**2)) / 2.0
+        extrapolated = candidate + ((momentum - 1.0) / next_momentum) * (candidate - norm_weights)
         norm_weights = candidate
+        momentum = next_momentum
     else:
         raise ValueError("Minimum variance optimization did not converge")
 

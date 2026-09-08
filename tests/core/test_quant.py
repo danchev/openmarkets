@@ -390,3 +390,48 @@ def test_terminal_entry_and_exit_compound_costs_without_negative_equity():
     assert result["ending_capital"] == 625.0  # 10000 * 0.25 * 0.25
     assert result["trades"][0]["profit_loss"] == -9375.0
     assert result["trades"][0]["return_percent"] == -93.75
+
+
+def test_minimum_variance_ill_conditioned_matches_exhaustive_support_oracle():
+    rng = np.random.default_rng(42)
+    returns = rng.normal(0, 0.01, (252, 1)) + rng.normal(0, 0.00003, (252, 5))
+    prices = pd.DataFrame(np.vstack([np.ones(5), np.cumprod(1 + returns, axis=0)]))
+    cov = np.cov(returns.T)
+    # Independent small-problem oracle: solve every possible active support.
+    best_variance = float("inf")
+    for mask in range(1, 1 << 5):
+        support = [i for i in range(5) if mask & (1 << i)]
+        sub_cov = cov[np.ix_(support, support)]
+        weights = np.linalg.solve(sub_cov, np.ones(len(support)))
+        weights /= weights.sum()
+        if (weights >= 0).all():
+            best_variance = min(best_variance, float(weights @ sub_cov @ weights))
+    allocations = compute_minimum_variance_weights(prices)
+    actual = np.array([allocation["weight_percent"] / 100 for allocation in allocations])
+    assert (actual >= 0).all()
+    assert actual.sum() == pytest.approx(1, abs=0.0003)
+    actual /= actual.sum()  # Public weights are rounded to 0.01 percentage points.
+    assert float(actual @ cov @ actual) == pytest.approx(best_variance, rel=1e-7)
+
+
+def test_minimum_variance_singular_covariance_with_fewer_returns_than_assets():
+    returns = np.array([[-0.01], [0.01], [0.02]]) * np.array([1, 2, 3, 4])
+    prices = pd.DataFrame(np.vstack([np.ones(4), np.cumprod(1 + returns, axis=0)]))
+    allocations = compute_minimum_variance_weights(prices)
+    assert [allocation["weight_percent"] for allocation in allocations] == [100.0, 0.0, 0.0, 0.0]
+
+
+def test_minimum_variance_duplicate_assets():
+    prices = pd.DataFrame({"A": [100, 110, 105, 120], "B": [100, 110, 105, 120]})
+    allocations = compute_minimum_variance_weights(prices)
+    assert [allocation["weight_percent"] for allocation in allocations] == [50.0, 50.0]
+
+
+def test_minimum_variance_correlated_assets_have_analytic_interior_solution():
+    # Orthogonal common and residual returns: 80/20 cancels residual risk.
+    common = np.array([1, 1, -1, -1]) * 0.01
+    residual = np.array([1, -1, 1, -1]) * 0.00001
+    returns = np.column_stack([common + residual, common - 4 * residual])
+    prices = pd.DataFrame(np.vstack([np.ones(2), np.cumprod(1 + returns, axis=0)]))
+    allocations = compute_minimum_variance_weights(prices)
+    assert [allocation["weight_percent"] for allocation in allocations] == pytest.approx([80.0, 20.0], abs=0.01)
