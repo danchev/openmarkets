@@ -82,9 +82,7 @@ def _closed_trade_records(
     position_changes = signal.diff().fillna(signal)
 
     for offset, (_, change) in enumerate(position_changes.items()):
-        if offset == 0:
-            continue
-        execution_offset = offset - 1
+        execution_offset = offset
         execution_date = str(prices.index[execution_offset]).split(" ")[0]
         execution_price = float(prices.iloc[execution_offset])
         execution_equity = float(equity.iloc[execution_offset])
@@ -130,9 +128,9 @@ def _closed_trade_records(
 
 def _execution_costs(raw_signal: pd.Series, slippage_bps: float) -> pd.Series:
     """Return execution costs aligned to raw signal transition dates."""
-    turnover = raw_signal.diff().abs().fillna(raw_signal)
+    turnover = raw_signal.diff().abs().fillna(raw_signal.abs())
     # Open positions are liquidated at the final close for trade reporting.
-    turnover.iloc[-1] += raw_signal.iloc[-1]
+    turnover.iloc[-1] += abs(raw_signal.iloc[-1])
     return turnover * (slippage_bps / 10_000.0)
 
 
@@ -437,7 +435,9 @@ def compute_minimum_variance_weights(
     norm_weights = np.ones(num_assets) / num_assets
     for _ in range(10_000):
         candidate = _project_to_simplex(norm_weights - step_size * (2.0 * cov @ norm_weights))
-        if np.linalg.norm(candidate - norm_weights, ord=1) < 1e-10:
+        change = np.linalg.norm(candidate - norm_weights, ord=1)
+        scale = max(1.0, np.linalg.norm(norm_weights, ord=1))
+        if change <= 1e-8 * scale:
             norm_weights = candidate
             break
         norm_weights = candidate
@@ -512,14 +512,14 @@ def run_moving_average_crossover(
     fast_ma = clean_p.rolling(window=fast_window).mean()
     slow_ma = clean_p.rolling(window=slow_window).mean()
 
-    # Position signal: 1 = In Market, 0 = In Cash
+    # Signals use close t. Execute them at the next close, then earn the
+    # following close-to-close return. This prevents using close t to trade at
+    # close t while retaining a close-only data source.
     raw_signal = cast(pd.Series, (fast_ma > slow_ma).astype(int))
-    # A signal observed at close t is tradable at close t. The shifted
-    # position earns the close-t-to-close-(t+1) return, while execution costs
-    # are charged on the date of the position change.
-    signal = cast(pd.Series, raw_signal.shift(1).fillna(0))
+    execution_signal = cast(pd.Series, raw_signal.shift(1).fillna(0))
+    signal = cast(pd.Series, execution_signal.shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
-    execution_cost = _execution_costs(raw_signal, slippage_bps)
+    execution_cost = _execution_costs(execution_signal, slippage_bps)
     strat_ret = cast(pd.Series, signal * asset_ret - execution_cost)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
@@ -531,7 +531,7 @@ def run_moving_average_crossover(
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
 
-    trades = _closed_trade_records(clean_p, signal, equity, execution_cost)
+    trades = _closed_trade_records(clean_p, execution_signal, equity, execution_cost)
 
     winning_trades = [t for t in trades if t["profit_loss"] > 0]
     losing_trades = [t for t in trades if t["profit_loss"] <= 0]
@@ -619,9 +619,10 @@ def run_rsi_mean_reversion(
             signals.append(1 if in_pos else 0)
 
     raw_signal = cast(pd.Series, pd.Series(signals, index=clean_p.index))
-    signal_series = cast(pd.Series, raw_signal.shift(1).fillna(0))
+    execution_signal = cast(pd.Series, raw_signal.shift(1).fillna(0))
+    signal_series = cast(pd.Series, execution_signal.shift(1).fillna(0))
     asset_ret = clean_p.pct_change().fillna(0)
-    execution_cost = _execution_costs(raw_signal, slippage_bps)
+    execution_cost = _execution_costs(execution_signal, slippage_bps)
     strat_ret = cast(pd.Series, signal_series * asset_ret - execution_cost)
 
     equity = initial_capital * (1 + strat_ret).cumprod()
@@ -633,7 +634,7 @@ def run_rsi_mean_reversion(
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
 
-    trades = _closed_trade_records(clean_p, signal_series, equity, execution_cost)
+    trades = _closed_trade_records(clean_p, execution_signal, equity, execution_cost)
 
     winning_trades = [t for t in trades if t["profit_loss"] > 0]
     losing_trades = [t for t in trades if t["profit_loss"] <= 0]

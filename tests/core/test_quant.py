@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from openmarkets.core.quant import (
+    _execution_costs,
     compute_correlation_and_covariance,
     compute_drawdown_curve,
     compute_factor_regressions,
@@ -181,6 +182,12 @@ def test_trade_statistics_use_net_pnl_and_preserve_gross_return():
     assert all(trade["return_percent"] < 0 for trade in result["trades"])
     assert result["win_rate_percent"] == 0.0
     assert result["profit_factor"] == 0.0
+
+
+def test_execution_costs_use_absolute_signed_turnover():
+    signal = pd.Series([-1.0, -1.0, -1.0])
+    costs = _execution_costs(signal, 100.0)
+    assert costs.tolist() == pytest.approx([0.01, 0.0, 0.01])
 
 
 def test_compute_factor_regressions():
