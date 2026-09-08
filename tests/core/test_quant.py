@@ -392,6 +392,11 @@ def test_terminal_entry_and_exit_compound_costs_without_negative_equity():
     assert result["trades"][0]["return_percent"] == -93.75
 
 
+def test_portfolio_returns_keep_daily_target_weights():
+    returns, _ = compute_portfolio_returns(pd.DataFrame({"A": [100, 200, 100], "B": [100, 100, 100]}))
+    assert returns.tolist() == pytest.approx([0.5, -0.25])
+
+
 def test_minimum_variance_ill_conditioned_matches_exhaustive_support_oracle():
     rng = np.random.default_rng(42)
     returns = rng.normal(0, 0.01, (252, 1)) + rng.normal(0, 0.00003, (252, 5))

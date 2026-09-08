@@ -153,6 +153,9 @@ def compute_portfolio_returns(
 ) -> tuple[pd.Series, list[float]]:
     """Compute weighted portfolio daily return series from historical price DataFrame.
 
+    Assumes frictionless daily rebalancing to constant target weights over the
+    assets' common history. Weights do not drift as in a buy-and-hold portfolio.
+
     Args:
         price_df: DataFrame of asset close prices indexed by timestamp/date.
         weights: Optional list of portfolio weights summing to 1.0. Defaults to equal-weight.

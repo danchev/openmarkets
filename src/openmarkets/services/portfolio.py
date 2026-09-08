@@ -75,6 +75,9 @@ class PortfolioService(ToolRegistrationMixin):
         Max Drawdown, 1-Day Historical Value-at-Risk (VaR 95% & 99%), Expected Shortfall (CVaR 95% & 99%),
         Beta, and Jensen's Alpha against a benchmark.
 
+        Assumes frictionless daily rebalancing to the supplied target weights,
+        using the assets' common price history.
+
         Args:
             tickers: Asset ticker symbols.
             weights: Portfolio weights.
