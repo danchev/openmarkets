@@ -139,8 +139,9 @@ class PortfolioService(ToolRegistrationMixin):
     ) -> PortfolioAllocationResult:
         """Calculate equal-risk-contribution risk parity allocation weights.
 
-        Allocates capital inversely proportional to historical volatility so each asset
+        Solves for equal contributions using the full sample covariance matrix and
         reports each asset's actual covariance-based contribution to portfolio risk.
+        Requires positive asset volatility and numerically attributable portfolio risk.
 
         Args:
             tickers: Asset symbols to allocate.
@@ -164,7 +165,7 @@ class PortfolioService(ToolRegistrationMixin):
         """Calculate Markowitz numerical Minimum Variance portfolio allocation weights.
 
         Solves for long-only asset weights that minimize overall portfolio variance using the empirical
-        covariance matrix.
+        covariance matrix. Relative risk contributions are null at numerically zero portfolio variance.
 
         Args:
             tickers: Asset symbols.

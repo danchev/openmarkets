@@ -10,7 +10,9 @@ import pandas as pd
 import pytest
 
 from openmarkets.core.quant import (
+    compute_minimum_variance_weights,
     compute_risk_metrics,
+    compute_risk_parity_weights,
 )
 
 pytestmark = pytest.mark.filterwarnings("ignore:VaR and CVaR are being estimated:RuntimeWarning")
@@ -27,6 +29,20 @@ def test_sharpe_and_full_sample_downside_moment():
     metrics = compute_risk_metrics(pd.Series([-0.01, 0.01, 0.01, 0.03]), risk_free_rate=0, annualization_factor=1)
     assert metrics["sharpe_ratio"] == round(0.01 / np.sqrt(0.0008 / 3), 3)
     assert metrics["sortino_ratio"] == 2.0
+
+
+def test_diagonal_covariance_erc_has_inverse_volatility_solution():
+    # Orthogonal, zero-mean returns with volatility ratio 1:2:4.
+    returns = 0.01 * np.array([[1, 2, 4], [1, -2, -4], [-1, 2, -4], [-1, -2, 4]])
+    result = compute_risk_parity_weights(_prices(returns))
+    assert [row["weight_percent"] for row in result] == pytest.approx([57.14, 28.57, 14.29], abs=0.01)
+    assert [row["risk_contribution_percent"] for row in result] == pytest.approx([100 / 3] * 3, abs=0.01)
+
+
+def test_diagonal_covariance_minimum_variance_has_inverse_variance_solution():
+    returns = 0.01 * np.array([[1, 2], [1, -2], [-1, 2], [-1, -2]])
+    result = compute_minimum_variance_weights(_prices(returns))
+    assert [row["weight_percent"] for row in result] == pytest.approx([80, 20], abs=0.01)
 
 
 def test_empirical_expected_shortfall_uses_exact_tail_mass_with_ties():
@@ -55,3 +71,9 @@ def test_calmar_retains_small_nonzero_drawdown():
     assert compute_risk_metrics(returns, risk_free_rate=0)["calmar_ratio"] == pytest.approx(
         expected / 0.00001, abs=0.001
     )
+
+
+def test_minimum_variance_accepts_zero_variance_optimum():
+    prices = pd.DataFrame({"RISKY": [100, 110, 99], "CASH": [100, 100, 100]})
+    result = compute_minimum_variance_weights(prices)
+    assert [row["weight_percent"] for row in result] == [0.0, 100.0]

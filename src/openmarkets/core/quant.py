@@ -49,10 +49,16 @@ def _validate_returns(returns: pd.Series, *, minimum_observations: int = 2) -> p
     return clean
 
 
-def _portfolio_risk_contributions(covariance: np.ndarray, weights: np.ndarray) -> np.ndarray:
+def _portfolio_risk_contributions(covariance: np.ndarray, weights: np.ndarray) -> np.ndarray | None:
+    """Return relative contributions, or None for numerically zero variance."""
     portfolio_variance = float(weights @ covariance @ weights)
-    if not np.isfinite(portfolio_variance) or portfolio_variance <= 0:
-        raise ValueError("Portfolio variance must be finite and positive")
+    # A scale-relative roundoff bound avoids treating low-volatility assets as
+    # zero risk merely because their variance is small in absolute units.
+    tolerance = 8 * np.finfo(float).eps * len(weights) * float(np.max(np.abs(covariance)))
+    if not np.isfinite(portfolio_variance) or portfolio_variance < -tolerance:
+        raise ValueError("Portfolio variance must be finite and non-negative")
+    if portfolio_variance <= tolerance:
+        return None
     return weights * (covariance @ weights) / portfolio_variance * 100
 
 
@@ -443,6 +449,8 @@ def compute_risk_parity_weights(price_df: pd.DataFrame, annualization_factor: fl
 
     weights = solution / solution.sum()
     contributions = _portfolio_risk_contributions(covariance, weights)
+    if contributions is None:
+        raise ValueError("Risk parity requires positive, numerically attributable portfolio variance")
     res: list[dict[str, Any]] = []
     for index, ticker in enumerate(clean_df.columns):
         w = float(weights[index])
@@ -479,12 +487,14 @@ def compute_minimum_variance_weights(
     # define this convex objective; adding one would solve a different problem.
     num_assets = cov.shape[0]
     largest_eigenvalue = float(np.linalg.eigvalsh(cov).max())
-    if not np.isfinite(largest_eigenvalue) or largest_eigenvalue <= 0:
-        raise ValueError("Covariance matrix must have positive maximum eigenvalue")
+    if not np.isfinite(largest_eigenvalue) or largest_eigenvalue < 0:
+        raise ValueError("Covariance matrix must have non-negative maximum eigenvalue")
     # Scale to a unit spectral norm: the gradient has Lipschitz constant 2.
     # FISTA acceleration helps with highly correlated assets without changing
     # the objective by adding a covariance ridge.
-    scaled_cov = cov / largest_eigenvalue
+    # All-zero covariance: every feasible portfolio is optimal. The equal-weight
+    # initialization below provides a deterministic tie-break without a ridge.
+    scaled_cov = cov / largest_eigenvalue if largest_eigenvalue > 0 else cov
     norm_weights = np.ones(num_assets) / num_assets
     extrapolated = norm_weights.copy()
     momentum = 1.0
@@ -516,7 +526,7 @@ def compute_minimum_variance_weights(
                 "ticker": ticker,
                 "weight_percent": round(w * 100, 2),
                 "annualized_volatility_percent": round(v * 100, 2),
-                "risk_contribution_percent": round(float(contributions[i]), 2),
+                "risk_contribution_percent": round(float(contributions[i]), 2) if contributions is not None else None,
             }
         )
     return res

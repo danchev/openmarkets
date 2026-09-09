@@ -60,7 +60,9 @@ class AssetAllocationWeight(BaseModel):
     ticker: str = Field(..., description="Asset ticker symbol")
     weight_percent: float = Field(..., description="Target portfolio allocation weight (%)")
     annualized_volatility_percent: float = Field(..., description="Asset historical annualized volatility (%)")
-    risk_contribution_percent: float = Field(..., description="Effective risk contribution (%)")
+    risk_contribution_percent: float | None = Field(
+        ..., description="Relative covariance-based risk contribution (%); null for numerically zero portfolio variance"
+    )
 
 
 class PortfolioAllocationResult(BaseModel):
