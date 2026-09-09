@@ -33,6 +33,15 @@ def test_expected_shortfall_matches_rockafellar_uryasev_loss_optimization(count,
     assert actual[field] == pytest.approx(round(-loss_es * 100, 2), abs=1e-10)
 
 
+@pytest.mark.parametrize("value", [-1.0, -0.01, 0.0, 0.01])
+def test_constant_returns_preserve_signed_tail_risk(value):
+    result = compute_risk_metrics(pd.Series([value] * 100), risk_free_rate=0)
+    assert result["annualized_volatility_percent"] == 0.0
+    assert result["sharpe_ratio"] is None
+    for field in ["var_95_percent", "var_99_percent", "cvar_95_percent", "cvar_99_percent"]:
+        assert result[field] == value * 100
+
+
 def test_expected_shortfall_coherence_in_loss_convention():
     rng = np.random.default_rng(531)
     x = rng.uniform(-0.1, 0.1, 137)
@@ -47,6 +56,41 @@ def test_expected_shortfall_coherence_in_loss_convention():
     assert risk(2 * x) == pytest.approx(2 * risk(x), abs=0.00015)
     assert risk(x + 0.01) == pytest.approx(risk(x) - 0.01, abs=0.0001)
     assert np.all(risk(x + np.abs(y)) <= risk(x) + 0.0001)
+
+
+@pytest.mark.parametrize("risk_free", [-0.95, -0.05, 0, 0.045, 0.1])
+@pytest.mark.parametrize("periods", [12, 252, 365])
+@pytest.mark.parametrize("beta", [-0.5, 0, 1, 2])
+def test_jensen_zero_excess_intercept_across_rates_frequencies_and_betas(risk_free, periods, beta):
+    benchmark = pd.Series([-0.01, 0.02, 0.005, -0.005] * 30)
+    periodic_rf = (1 + risk_free) ** (1 / periods) - 1
+    asset = periodic_rf + beta * (benchmark - periodic_rf)
+    result = compute_risk_metrics(asset, benchmark, risk_free, periods)
+    assert result["alpha_percent"] == 0.0
+    assert result["beta"] == beta
+
+
+@pytest.mark.parametrize("rate", [-1, -1.01, float("nan"), float("inf"), -float("inf")])
+def test_invalid_effective_risk_free_domain_fails_explicitly(rate):
+    with pytest.raises(ValueError, match="risk_free_rate"):
+        compute_risk_metrics(pd.Series([-0.01, 0.02]), risk_free_rate=rate)
+
+
+@pytest.mark.parametrize("periods", [0, -1, float("nan"), float("inf")])
+def test_invalid_annualization_fails_explicitly(periods):
+    with pytest.raises(ValueError, match="annualization_factor"):
+        compute_risk_metrics(pd.Series([-0.01, 0.02]), annualization_factor=periods)
+
+
+def test_alpha_uses_only_common_observations_with_nonzero_intercept():
+    dates = pd.date_range("2024-01-01", periods=122, freq="B")
+    benchmark = pd.Series([-0.01, 0.01] * 60, index=dates[2:])
+    periodic_rf = 1.05 ** (1 / 252) - 1
+    common_asset = periodic_rf + 1.5 * (benchmark - periodic_rf) + 0.0001
+    asset = pd.concat([pd.Series([0.9, 0.8], index=dates[:2]), common_asset])
+    result = compute_risk_metrics(asset, benchmark, risk_free_rate=0.05)
+    assert result["beta"] == 1.5
+    assert result["alpha_percent"] == 2.52
 
 
 def test_tail_sample_size_is_after_nonfinite_cleaning():

@@ -66,7 +66,10 @@ class PortfolioService(ToolRegistrationMixin):
         ] = "SPY",
         period: Annotated[Period, Field(description="Historical lookback period")] = "1y",
         risk_free_rate: Annotated[
-            float, Field(allow_inf_nan=False, description="Annualized risk-free interest rate (e.g. 0.045 for 4.5%)")
+            float,
+            Field(
+                gt=-1, allow_inf_nan=False, description="Effective annual risk-free interest rate (e.g. 0.045 for 4.5%)"
+            ),
         ] = 0.045,
     ) -> PortfolioRiskMetrics:
         """Calculate comprehensive quantitative risk and performance metrics for a multi-asset portfolio.
@@ -76,7 +79,10 @@ class PortfolioService(ToolRegistrationMixin):
         Beta, and Jensen's Alpha against a benchmark.
 
         Assumes frictionless daily rebalancing to the supplied target weights,
-        using the assets' common price history.
+        using the assets' common price history and 252 return observations per year.
+        VaR is linearly interpolated; ES uses exact empirical tail probability mass.
+        Both report signed returns (losses negative). Annualized Sharpe and volatility
+        assume uncorrelated period returns; the effective risk-free rate is constant.
 
         Args:
             tickers: Asset ticker symbols.

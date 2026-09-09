@@ -260,14 +260,19 @@ def compute_risk_metrics(
     Args:
         returns: Portfolio daily returns Series.
         benchmark_returns: Benchmark daily returns Series (e.g. SPY).
-        risk_free_rate: Annualized risk-free rate (defaults to 4.5%).
-        annualization_factor: Number of return observations per year.
+        risk_free_rate: Effective annual risk-free rate, greater than -100%.
+        annualization_factor: Number of equally spaced return observations per year.
+
+    VaR uses linearly interpolated return percentiles; ES integrates the
+    empirical return quantile over exactly 5%/1% probability mass. Both use
+    signed returns, so losses are negative. Square-root volatility/Sharpe
+    scaling assumes uncorrelated period returns; cash target returns are constant.
 
     Returns:
         Dictionary of Sharpe, Sortino, Calmar, Volatility, VaR, CVaR, Beta, and Alpha.
     """
-    if not np.isfinite(risk_free_rate):
-        raise ValueError("risk_free_rate must be finite")
+    if not np.isfinite(risk_free_rate) or risk_free_rate <= -1:
+        raise ValueError("risk_free_rate must be finite and greater than -1")
     if not np.isfinite(annualization_factor) or annualization_factor <= 0:
         raise ValueError("annualization_factor must be finite and positive")
     returns = _validate_returns(returns)
@@ -281,17 +286,20 @@ def compute_risk_metrics(
 
     cumulative_growth = float((1 + returns).prod())
     ann_ret = cumulative_growth ** (annualization_factor / len(returns)) - 1
-    ann_vol = float(returns.std() * np.sqrt(annualization_factor))
+    # Subtracting a rounded sample mean can leave spurious ~epsilon variance
+    # even for an exactly constant series. Such a series has undefined Sharpe.
+    periodic_vol = 0.0 if returns.nunique() == 1 else float(cast(float, returns.std()))
+    ann_vol = float(periodic_vol * np.sqrt(annualization_factor))
 
     # Sharpe and Sortino use arithmetic excess returns. The annual risk-free
     # rate is converted to the same per-observation basis as the return series.
-    periodic_risk_free = (1.0 + risk_free_rate) ** (1.0 / annualization_factor) - 1.0
+    periodic_risk_free = float(np.expm1(np.log1p(risk_free_rate) / annualization_factor))
     excess_returns = returns - periodic_risk_free
     excess_mean = float(excess_returns.mean())
-    excess_vol = float(excess_returns.std() * np.sqrt(annualization_factor))
+    excess_vol = ann_vol  # Subtracting a constant risk-free return preserves variance.
     sharpe = (excess_mean * annualization_factor / excess_vol) if excess_vol > 0 else None
 
-    # Sortino downside deviation uses only negative excess returns.
+    # Full-sample lower partial moment: above-target observations contribute zero.
     downside_deviation = float(np.sqrt((np.minimum(excess_returns, 0) ** 2).mean()) * np.sqrt(annualization_factor))
     sortino = (excess_mean * annualization_factor / downside_deviation) if downside_deviation > 0 else None
 
@@ -331,9 +339,10 @@ def compute_risk_metrics(
                 # Beta is estimated from arithmetic periodic returns, so CAPM
                 # alpha must use arithmetic annualized returns as well. Using
                 # geometric returns here would mix volatility drag into alpha.
-                b_ann_ret = float(b_ret.mean() * annualization_factor)
-                p_ann_ret = float(p_ret.mean() * annualization_factor)
-                alpha = float(p_ann_ret - (risk_free_rate + beta * (b_ann_ret - risk_free_rate)))
+                alpha = float(
+                    ((p_ret - periodic_risk_free).mean() - beta * (b_ret - periodic_risk_free).mean())
+                    * annualization_factor
+                )
                 p_var = p_ret.var()
                 if np.isfinite(p_var) and p_var > np.finfo(float).eps:
                     corr = np.corrcoef(p_ret, b_ret)[0, 1]

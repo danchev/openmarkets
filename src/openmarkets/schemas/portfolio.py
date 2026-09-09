@@ -33,7 +33,9 @@ class PortfolioRiskMetrics(BaseModel):
         description="Mean daily signed return over exactly the worst 1% empirical probability mass (%); losses are negative",
     )
     beta: float | None = Field(None, description="Sensitivity / Beta relative to benchmark when estimable")
-    alpha_percent: float | None = Field(None, description="Annualized Jensen's Alpha when estimable (%)")
+    alpha_percent: float | None = Field(
+        None, description="Arithmetic annualization of the periodic excess-return regression intercept (%)"
+    )
     r_squared: float | None = Field(None, description="R-Squared correlation coefficient when estimable")
 
 

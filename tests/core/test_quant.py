@@ -227,7 +227,8 @@ def test_alpha_uses_arithmetic_annualized_returns_consistent_with_beta():
     asset = benchmark * 2
     metrics = compute_risk_metrics(asset, benchmark_returns=benchmark, risk_free_rate=0.05)
     beta = np.cov(asset, benchmark, ddof=1)[0, 1] / np.var(benchmark, ddof=1)
-    expected = asset.mean() * 252 - (0.05 + beta * (benchmark.mean() * 252 - 0.05))
+    periodic_rf = 1.05 ** (1 / 252) - 1
+    expected = 252 * ((asset - periodic_rf).mean() - beta * (benchmark - periodic_rf).mean())
     assert metrics["alpha_percent"] == round(expected * 100, 2)
 
 
