@@ -53,9 +53,11 @@ The plugin starts `openmarkets@latest` with `uvx` and registers all MCP tools au
 
 ### Usage with Claude Desktop
 
-Desktop Extension packaging and release availability are maintained in [openmarkets-mcpb](https://github.com/danchev/openmarkets-mcpb).
+Download and open the Desktop Extension for one-click installation:
 
-Add Open Markets to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+[![Install in Claude Desktop](https://img.shields.io/badge/Claude_Desktop-Download_MCPB-D97757?style=flat-square&logo=claude&logoColor=white)](https://github.com/danchev/openmarkets-mcpb/releases/latest/download/openmarkets.mcpb)
+
+Alternatively, add Open Markets to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {
