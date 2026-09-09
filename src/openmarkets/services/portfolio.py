@@ -255,6 +255,9 @@ class PortfolioService(ToolRegistrationMixin):
 
         Enters long position when fast MA crosses above slow MA; exits to cash when fast MA crosses below slow MA.
         Calculates cumulative return, CAGR, benchmark buy & hold comparison, win rate, profit factor, and equity curve.
+        Strategy and benchmark share the full input-history evaluation period. Warmup is spent in zero-yield cash.
+        Signals execute at the next close; costs are proportional equity haircuts per entry/exit.
+        The buy-and-hold benchmark is gross of costs.
 
         Args:
             ticker: Asset ticker.
@@ -299,8 +302,10 @@ class PortfolioService(ToolRegistrationMixin):
     ) -> BacktestResult:
         """Execute Relative Strength Index (RSI) Mean-Reversion strategy backtest.
 
-        Enters long when RSI drops below oversold threshold; exits to cash when RSI reaches overbought threshold.
+        Enters long when RSI drops below oversold threshold; exits to cash when RSI exceeds overbought threshold.
         Evaluates trade win rate, profit factor, max drawdown, and equity progression.
+        Strategy and gross buy-and-hold share the full input history, including zero-yield cash during warmup.
+        Signals execute at the next close; costs are proportional equity haircuts per entry/exit.
 
         Args:
             ticker: Asset ticker.

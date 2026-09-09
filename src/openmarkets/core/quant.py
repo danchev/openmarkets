@@ -78,7 +78,8 @@ def _elapsed_years(index: pd.Index, annualization_factor: float = 252.0) -> floa
     if not np.isfinite(annualization_factor) or annualization_factor <= 0:
         raise ValueError("annualization_factor must be finite and positive")
     if isinstance(index, pd.DatetimeIndex) and len(index) > 1:
-        elapsed_days = (index[-1].to_pydatetime() - index[0].to_pydatetime()).total_seconds() / 86_400
+        first, last = cast(pd.Timestamp, index[0]), cast(pd.Timestamp, index[-1])
+        elapsed_days = (last.to_pydatetime() - first.to_pydatetime()).total_seconds() / 86_400
         if elapsed_days > 0:
             return elapsed_days / 365.25
     return max((len(index) - 1) / annualization_factor, 1 / annualization_factor)
@@ -162,6 +163,16 @@ def _sample_equity_curve(equity: pd.Series) -> list[dict[str, Any]]:
         {"date": str(timestamp).split(" ")[0], "equity": round(float(cast(float, value)), 2)}
         for timestamp, value in sampled.items()
     ]
+
+
+def _backtest_evaluation(prices: pd.Series, warmup_observations: int) -> dict[str, Any]:
+    """Describe the full-history evaluation shared by strategy and benchmark."""
+    return {
+        "evaluation_start": str(prices.index[0]).split(" ")[0],
+        "evaluation_end": str(prices.index[-1]).split(" ")[0],
+        "warmup_observations": warmup_observations,
+        "buy_and_hold_return_percent": round(float(prices.iloc[-1] / prices.iloc[0] - 1) * 100, 2),
+    }
 
 
 def compute_portfolio_returns(
@@ -570,6 +581,8 @@ def run_moving_average_crossover(
     Buys when fast MA crosses above slow MA; exits to cash when fast MA crosses below slow MA.
     Signals execute at the next observation's close. ``slippage_bps`` is a
     proportional cost on equity at that close, charged per entry or exit.
+    Strategy and gross buy-and-hold use the full input history; the strategy
+    earns zero on cash during warmup and while out of position.
     """
     if fast_window < 1 or slow_window <= fast_window:
         raise ValueError("slow_window must be greater than fast_window, and both must be positive")
@@ -600,8 +613,6 @@ def run_moving_average_crossover(
     equity = initial_capital * (1 + strat_ret).cumprod()
 
     total_strat_ret = float((equity.iloc[-1] - initial_capital) / initial_capital)
-    comparison_returns = asset_ret.iloc[slow_window:]
-    total_bh_ret = float((1 + comparison_returns).prod() - 1)
 
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
@@ -625,7 +636,7 @@ def run_moving_average_crossover(
         "ending_capital": round(float(equity.iloc[-1]), 2),
         "total_return_percent": round(total_strat_ret * 100, 2),
         "cagr_percent": round(cagr * 100, 2),
-        "buy_and_hold_return_percent": round(total_bh_ret * 100, 2),
+        **_backtest_evaluation(clean_p, slow_window),
         "win_rate_percent": round(win_rate, 2),
         "profit_factor": round(profit_factor, 2) if profit_factor is not None else None,
         "total_trades": len(trades),
@@ -665,6 +676,8 @@ def run_rsi_mean_reversion(
     Buys when RSI < oversold threshold; exits to cash when RSI > overbought threshold.
     Signals execute at the next observation's close. ``slippage_bps`` is a
     proportional cost on equity at that close, charged per entry or exit.
+    Strategy and gross buy-and-hold use the full input history; the strategy
+    earns zero on cash during warmup and while out of position.
     """
     if rsi_window < 2:
         raise ValueError("rsi_window must be at least 2")
@@ -708,8 +721,6 @@ def run_rsi_mean_reversion(
     equity = initial_capital * (1 + strat_ret).cumprod()
 
     total_strat_ret = float((equity.iloc[-1] - initial_capital) / initial_capital)
-    comparison_returns = asset_ret.iloc[rsi_window + 1 :]
-    total_bh_ret = float((1 + comparison_returns).prod() - 1)
 
     years = _elapsed_years(clean_p.index)
     cagr = float((equity.iloc[-1] / initial_capital) ** (1.0 / years) - 1.0)
@@ -733,7 +744,7 @@ def run_rsi_mean_reversion(
         "ending_capital": round(float(equity.iloc[-1]), 2),
         "total_return_percent": round(total_strat_ret * 100, 2),
         "cagr_percent": round(cagr * 100, 2),
-        "buy_and_hold_return_percent": round(total_bh_ret * 100, 2),
+        **_backtest_evaluation(clean_p, rsi_window + 1),
         "win_rate_percent": round(win_rate, 2),
         "profit_factor": round(profit_factor, 2) if profit_factor is not None else None,
         "total_trades": len(trades),

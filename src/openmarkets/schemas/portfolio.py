@@ -151,11 +151,21 @@ class BacktestResult(BaseModel):
     ticker: str = Field(..., description="Tested asset ticker")
     strategy_name: str = Field(..., description="Strategy name and parameters")
     period: str = Field("5y", description="Backtest lookback period")
+    evaluation_start: str = Field(..., description="First observation of the shared strategy and benchmark evaluation")
+    evaluation_end: str = Field(..., description="Last observation of the shared strategy and benchmark evaluation")
+    warmup_observations: int = Field(
+        ...,
+        ge=0,
+        description="Initial price observations before the first possible execution; strategy holds zero-yield cash",
+    )
     initial_capital: float = Field(10000.0, description="Starting cash capital")
     ending_capital: float = Field(..., description="Final equity capital")
     total_return_percent: float = Field(..., description="Cumulative strategy return (%)")
     cagr_percent: float = Field(..., description="Compound Annual Growth Rate (%)")
-    buy_and_hold_return_percent: float = Field(..., description="Benchmark Buy & Hold return for comparison (%)")
+    buy_and_hold_return_percent: float = Field(
+        ...,
+        description="Gross buy-and-hold return over the full shared evaluation period, including strategy warmup (%)",
+    )
     win_rate_percent: float = Field(..., description="Percentage of winning closed trades (%)")
     profit_factor: float | None = Field(None, description="Net profitable trade P/L divided by net losing trade P/L")
     total_trades: int = Field(..., description="Total round-trip trades executed")
