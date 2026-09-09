@@ -56,12 +56,22 @@ def test_settings_env_prefix_and_profile(monkeypatch):
 
 def test_cli_uses_documented_kebab_case_implicit_boolean_flags():
     settings = config.get_settings(
-        ("--transport", "http", "--http-auth-enabled", "--http-auth-secret", "secret", "--http-stateless")
+        (
+            "--transport",
+            "http",
+            "--http-auth-enabled",
+            "--http-auth-secret",
+            "secret",
+            "--http-stateless",
+            "--openai-apps-challenge-token",
+            "verification-token",
+        )
     )
     assert settings.transport == "http"
     assert settings.http_auth_enabled is True
     assert settings.http_auth_secret == "secret"
     assert settings.http_stateless is True
+    assert settings.openai_apps_challenge_token == "verification-token"
 
 
 def test_cli_rejects_unknown_arguments():

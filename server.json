@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.danchev/openmarkets",
+  "title": "Open Markets",
+  "description": "Financial market data, SEC filings, macroeconomic telemetry, and portfolio analytics through MCP.",
+  "repository": {
+    "url": "https://github.com/danchev/openmarkets",
+    "source": "github"
+  },
+  "version": "0.1.0b1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "openmarkets",
+      "version": "0.1.0b1",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

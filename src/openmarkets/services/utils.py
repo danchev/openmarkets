@@ -12,10 +12,21 @@ server. Marking methods explicitly makes the public surface reviewable.
 import inspect
 from typing import Any, Callable, Protocol, TypeVar
 
+from mcp.types import ToolAnnotations
+
 ToolDecorator = TypeVar("ToolDecorator", bound=Callable[..., Any])
 
 #: Attribute set on a function by :func:`tool` to mark it for publication.
 _TOOL_MARKER = "__openmarkets_tool__"
+
+# Every published Open Markets tool reads public provider data or performs a
+# deterministic calculation over that data. None writes to an upstream system.
+READ_ONLY_TOOL_ANNOTATIONS = ToolAnnotations(
+    read_only_hint=True,
+    destructive_hint=False,
+    idempotent_hint=True,
+    open_world_hint=True,
+)
 
 
 def tool(method: ToolDecorator) -> ToolDecorator:
@@ -50,7 +61,7 @@ class ToolRegistrar(Protocol):
     a function as a tool handler.
     """
 
-    def tool(self) -> Callable[[ToolDecorator], ToolDecorator]: ...
+    def tool(self, *, annotations: ToolAnnotations | None = None) -> Callable[[ToolDecorator], ToolDecorator]: ...
 
 
 class ToolRegistrationMixin:
@@ -71,7 +82,7 @@ class ToolRegistrationMixin:
             if not inspect.ismethod(method) or method.__self__ is not self:
                 continue
 
-            tool_registrar.tool()(method)
+            tool_registrar.tool(annotations=READ_ONLY_TOOL_ANNOTATIONS)(method)
 
     def tool_names(self) -> list[str]:
         """Return the names of the methods this service publishes.

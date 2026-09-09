@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "openmarkets": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "openmarkets@latest"
+      ]
+    }
+  }
+}

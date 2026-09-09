@@ -16,6 +16,11 @@ def test_register_tool_methods_registers_only_marked_methods(
     assert "class_method" not in mcp_tool_registry_spy.registered
     assert "property_method" not in mcp_tool_registry_spy.registered
     assert "_private" not in mcp_tool_registry_spy.registered
+    annotations = mcp_tool_registry_spy.annotations["public"]
+    assert annotations.read_only_hint is True
+    assert annotations.destructive_hint is False
+    assert annotations.idempotent_hint is True
+    assert annotations.open_world_hint is True
 
 
 def test_tool_names_reports_the_published_surface(tool_registration_service):

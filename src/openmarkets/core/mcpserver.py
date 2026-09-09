@@ -48,7 +48,13 @@ from openmarkets.services import (
 
 logger = logging.getLogger(__name__)
 
-INSTRUCTIONS = "This server allows for the integration of various market data tools."
+INSTRUCTIONS = (
+    "Use Open Markets for public financial research and quantitative analysis. "
+    "Resolve ticker and date inputs before requesting detailed datasets. Prefer curated or summary tools first, "
+    "then fetch full statements, histories, filings, or option chains only when needed. Treat provider absence as "
+    "missing data rather than zero. Cite returned source URLs when available and state timestamps, currencies, "
+    "periods, and material data limitations. Do not present outputs as personalized investment advice."
+)
 _TOOLS_LIST_CACHE_HINT = CacheHint(ttl_ms=60_000, scope="public")
 
 # Collection of all services to be registered
@@ -151,6 +157,14 @@ async def _metrics_endpoint(request: Request) -> Response:
     return PlainTextResponse(content, media_type="text/plain; version=0.0.4")
 
 
+async def _openai_apps_challenge_endpoint(request: Request) -> Response:
+    """Return the exact token used to verify control of the MCP host."""
+    token = getattr(request.app.state, "openai_apps_challenge_token", "")
+    if not isinstance(token, str) or not token:
+        return PlainTextResponse("Not configured", status_code=404)
+    return PlainTextResponse(token)
+
+
 class BearerAuthMiddleware(BaseHTTPMiddleware):
     """Middleware enforcing Bearer token authentication on HTTP endpoints."""
 
@@ -159,8 +173,8 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
         self.secret = secret
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        # Exclude CORS preflight (OPTIONS), health check (/health), and metrics (/metrics)
-        if request.method == "OPTIONS" or request.url.path in ("/health", "/metrics"):
+        public_paths = ("/health", "/metrics", "/.well-known/openai-apps-challenge")
+        if request.method == "OPTIONS" or request.url.path in public_paths:
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
@@ -189,6 +203,7 @@ class CORSMCPServer(MCPServer):
         allow_origins: list[str] | None = None,
         auth_enabled: bool = False,
         auth_secret: str = "",
+        openai_apps_challenge_token: str = "",
         **kwargs: Any,
     ) -> None:
         """Initialise the server.
@@ -199,12 +214,14 @@ class CORSMCPServer(MCPServer):
                 Defaults to ``["*"]`` when not supplied.
             auth_enabled: Whether HTTP Bearer authentication is enforced.
             auth_secret: Shared secret for Bearer token validation.
+            openai_apps_challenge_token: Exact OpenAI domain-verification token.
             **kwargs: Keyword arguments forwarded to ``MCPServer``.
         """
         super().__init__(*args, **kwargs)
         self._allow_origins = allow_origins if allow_origins is not None else ["*"]
         self._auth_enabled = auth_enabled
         self._auth_secret = auth_secret
+        self._openai_apps_challenge_token = openai_apps_challenge_token
 
     def streamable_http_app(self, **kwargs: Any) -> Starlette:
         """Return the StreamableHTTP application with auth, CORS, and metrics."""
@@ -223,10 +240,18 @@ class CORSMCPServer(MCPServer):
         return application
 
     def _add_observability_routes(self, application: Starlette) -> None:
-        """Add /health and /metrics observability routes."""
+        """Add public operational and domain-verification routes."""
         if hasattr(application, "routes"):
+            application.state.openai_apps_challenge_token = self._openai_apps_challenge_token
             application.routes.append(Route("/health", _health_endpoint, methods=["GET"]))
             application.routes.append(Route("/metrics", _metrics_endpoint, methods=["GET"]))
+            application.routes.append(
+                Route(
+                    "/.well-known/openai-apps-challenge",
+                    _openai_apps_challenge_endpoint,
+                    methods=["GET"],
+                )
+            )
 
     def _add_auth_middleware(self, application: Starlette) -> None:
         """Add Bearer auth middleware if enabled."""
@@ -334,6 +359,9 @@ def _create_server(configuration: Settings) -> MCPServer:
     request_state_security = (
         RequestStateSecurity(keys=request_state_keys, audience=configuration.name) if request_state_keys else None
     )
+    challenge_token = getattr(configuration, "openai_apps_challenge_token", "")
+    if not isinstance(challenge_token, str):
+        challenge_token = ""
     return CORSMCPServer(
         name=configuration.name,
         version=__version__,
@@ -344,6 +372,7 @@ def _create_server(configuration: Settings) -> MCPServer:
         allow_origins=_parse_allowed_origins(configuration.cors_allow_origins),
         auth_enabled=configuration.http_auth_enabled,
         auth_secret=configuration.http_auth_secret,
+        openai_apps_challenge_token=challenge_token,
     )
 
 

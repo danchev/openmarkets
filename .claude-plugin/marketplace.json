@@ -1,0 +1,15 @@
+{
+  "name": "openmarkets",
+  "description": "Claude Code plugins for Open Markets financial intelligence.",
+  "owner": {
+    "name": "danchev"
+  },
+  "plugins": [
+    {
+      "name": "openmarkets",
+      "description": "Financial market data, SEC filings, macroeconomic telemetry, and portfolio analytics through MCP.",
+      "version": "0.1.0",
+      "source": "./plugins/openmarkets"
+    }
+  ]
+}

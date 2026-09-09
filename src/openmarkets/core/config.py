@@ -90,6 +90,10 @@ class Settings(BaseSettings):
             "modern 2026 clients are sessionless regardless."
         ),
     )
+    openai_apps_challenge_token: str = Field(
+        "",
+        description="Exact OpenAI plugin domain-verification token served from the well-known endpoint.",
+    )
     request_state_keys: str = Field(
         "",
         description=(

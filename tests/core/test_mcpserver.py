@@ -29,6 +29,12 @@ _SERVICE_NAMES = [
 ]
 
 
+def test_server_instructions_are_concise_and_research_specific():
+    assert len(mcpserver.INSTRUCTIONS) <= 512
+    assert "missing data rather than zero" in mcpserver.INSTRUCTIONS
+    assert "personalized investment advice" in mcpserver.INSTRUCTIONS
+
+
 def _stub_all_services(monkeypatch, *, failing: str | None = None) -> None:
     """Replace every service's register_tool_methods with a mock.
 
@@ -372,3 +378,24 @@ def test_cors_mcpserver_streamable_http_routes():
     assert resp_metrics.status_code == 200
     assert "openmarkets_uptime_seconds" in resp_metrics.text
     assert "openmarkets_cache_entries" in resp_metrics.text
+
+    challenge = client.get("/.well-known/openai-apps-challenge")
+    assert challenge.status_code == 404
+
+
+def test_openai_apps_challenge_returns_exact_token_without_authentication():
+    from starlette.testclient import TestClient
+
+    token = "openai-verification-token"
+    mcp = mcpserver.CORSMCPServer(
+        auth_enabled=True,
+        auth_secret="mcp-secret",
+        openai_apps_challenge_token=token,
+    )
+    client = TestClient(mcp.streamable_http_app())
+
+    response = client.get("/.well-known/openai-apps-challenge")
+
+    assert response.status_code == 200
+    assert response.text == token
+    assert response.headers["content-type"].startswith("text/plain")

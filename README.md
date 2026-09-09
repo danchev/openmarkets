@@ -9,6 +9,8 @@
 
 A production-grade **Model Context Protocol (MCP) server** for agentic financial data retrieval and algorithmic market analysis. Open Markets connects LLM agents directly to real-time and historical financial intelligence across equities, fixed income, commodities, currencies, derivatives, funds, crypto, macroeconomic telemetry, SEC EDGAR regulatory disclosures, and quantitative portfolio risk analytics.
 
+<!-- mcp-name: io.github.danchev/openmarkets -->
+
 ---
 
 ## 🌟 Multi-Provider Architecture
@@ -49,13 +51,28 @@ opt-in and requires a current uv release:
 UV_MALWARE_CHECK=1 uv --preview-features malware-check sync --locked --all-groups --all-extras
 ```
 
+### Usage with Claude Code
+
+Install the Open Markets plugin from this repository:
+
+```bash
+claude plugin marketplace add danchev/openmarkets
+claude plugin install openmarkets@openmarkets
+```
+
+The plugin starts `openmarkets@latest` with `uvx` and registers all MCP tools automatically.
+
 ### Usage with Cursor
 
 [![Install MCP Server](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/en-US/install-mcp?name=openmarkets&config=eyJjb21tYW5kIjoidXZ4IG9wZW5tYXJrZXRzQGxhdGVzdCJ9)
 
 ### Usage with Claude Desktop
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+Download and open the Desktop Extension for one-click installation:
+
+[![Install in Claude Desktop](https://img.shields.io/badge/Claude_Desktop-Download_MCPB-D97757?style=flat-square&logo=claude&logoColor=white)](https://github.com/danchev/openmarkets-mcpb/releases/latest/download/openmarkets.mcpb)
+
+Alternatively, add Open Markets to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {

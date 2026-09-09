@@ -1,0 +1,16 @@
+{
+  "name": "openmarkets",
+  "description": "Financial market data, SEC filings, macroeconomic telemetry, and portfolio analytics through MCP.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Danchev"
+  },
+  "homepage": "https://danchev.github.io/openmarkets/",
+  "repository": "https://github.com/danchev/openmarkets",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "finance",
+    "markets",
+    "mcp"
+  ]
+}

@@ -89,10 +89,12 @@ class McpToolRegistrySpy:
 
     def __init__(self) -> None:
         self.registered: list[str] = []
+        self.annotations = {}
 
-    def tool(self):
+    def tool(self, *, annotations=None):
         def decorator(func):
             self.registered.append(func.__name__)
+            self.annotations[func.__name__] = annotations
             return func
 
         return decorator
