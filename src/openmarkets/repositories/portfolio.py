@@ -407,7 +407,7 @@ class QuantPortfolioRepository:
         period: str = "2y",
         session: Session | None = None,
     ) -> FactorExposuresResult:
-        """Calculate multi-factor linear regression exposures against benchmark market factors."""
+        """Regress raw asset returns on ETF returns; report a descriptive raw-return intercept."""
         sym = ticker.strip().upper()
         factors = [factor for factor in ["SPY", "QQQ", "IWM", "TLT", "GLD"] if factor != sym]
         if not factors:

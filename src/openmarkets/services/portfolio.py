@@ -339,10 +339,12 @@ class PortfolioService(ToolRegistrationMixin):
         ticker: Annotated[str, Field(description="Asset ticker symbol to analyze (e.g. 'AAPL', 'NVDA', 'ARKK')")],
         period: Annotated[Period, Field(description="Regression lookback period")] = "2y",
     ) -> FactorExposuresResult:
-        """Calculate multi-factor linear regression exposures against benchmark macro market drivers.
+        """Calculate descriptive raw-return regression exposures against benchmark ETFs.
 
         Regresses asset returns against Market (SPY), Tech Growth (QQQ), Small-Cap (IWM), Treasuries (TLT),
-        and Gold (GLD) to estimate systematic factor loadings, Jensen's Alpha, and R-squared.
+        and Gold (GLD) to estimate ETF loadings, an annualized raw-return intercept, and R-squared.
+        The intercept is not Jensen's Alpha, and the ETF returns are not Fama–French long-short factors.
+        T-statistics use Newey–West standard errors; they do not establish causation or predictive value.
 
         Args:
             ticker: Asset ticker.

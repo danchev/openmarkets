@@ -180,13 +180,15 @@ class FactorExposureEntry(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     factor: str = Field(..., description="Macro/Market Factor name (e.g. Market SPY, Tech QQQ, SmallCap IWM)")
-    exposure_beta: float = Field(..., description="Factor Beta coefficient or Alpha")
+    exposure_beta: float = Field(
+        ..., description="Descriptive ETF loading, annualized raw-return intercept, or R-squared"
+    )
     unit: str = Field("Beta", description="Unit type (Beta, %, R2)")
     t_statistic: float | None = Field(None, description="Coefficient t-statistic, when defined")
 
 
 class FactorExposuresResult(BaseModel):
-    """Multi-factor regression exposures analyzing systematic market drivers."""
+    """Descriptive raw-return ETF regression; its intercept is not Jensen alpha."""
 
     model_config = ConfigDict(populate_by_name=True)
 
