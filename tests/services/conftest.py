@@ -90,11 +90,15 @@ class McpToolRegistrySpy:
     def __init__(self) -> None:
         self.registered: list[str] = []
         self.annotations = {}
+        self.titles = {}
+        self.descriptions = {}
 
-    def tool(self, *, annotations=None):
+    def tool(self, *, title=None, description=None, annotations=None):
         def decorator(func):
             self.registered.append(func.__name__)
             self.annotations[func.__name__] = annotations
+            self.titles[func.__name__] = title
+            self.descriptions[func.__name__] = description
             return func
 
         return decorator
@@ -103,6 +107,11 @@ class McpToolRegistrySpy:
 class ToolRegistrationService(ToolRegistrationMixin):
     @tool
     def public(self) -> str:
+        """Return a public result.
+
+        Returns:
+            The result.
+        """
         return "ok"
 
     def undecorated(self) -> str:

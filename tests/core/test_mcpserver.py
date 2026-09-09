@@ -216,6 +216,27 @@ def test_published_tool_surface_is_explicit():
         )
 
 
+@pytest.mark.asyncio
+async def test_published_tools_have_directory_quality_metadata():
+    """Keep every tool within Anthropic's directory metadata constraints."""
+    tools = await mcpserver.create_mcp(mcpserver.Settings()).list_tools()
+
+    assert len(tools) == 127
+    for published_tool in tools:
+        assert len(published_tool.name) <= 64
+        assert published_tool.title
+        assert published_tool.description
+        assert len(published_tool.description) <= 500
+        assert published_tool.description.startswith("Use this tool to ")
+        assert "Args:" not in published_tool.description
+        assert "Returns:" not in published_tool.description
+        assert published_tool.input_schema["additionalProperties"] is False
+        assert published_tool.annotations is not None
+        assert published_tool.annotations.title == published_tool.title
+        assert published_tool.annotations.read_only_hint is True
+        assert published_tool.annotations.destructive_hint is False
+
+
 def test_readme_tool_catalog_matches_published_surface():
     """Keep the public tool catalog aligned with runtime registration.
 
@@ -290,6 +311,9 @@ async def test_tools_reject_unknown_arguments_and_advertise_strict_schema():
     server = mcpserver.create_mcp(mcpserver.Settings(profile="crypto"))
     schemas = await server.list_tools()
     tool_schema = next(tool for tool in schemas if tool.name == "get_crypto_info")
+    assert tool_schema.title == "Get Crypto Info"
+    assert tool_schema.annotations is not None
+    assert tool_schema.annotations.title == "Get Crypto Info"
     assert tool_schema.input_schema["additionalProperties"] is False
 
     with pytest.raises(Exception, match="Extra inputs are not permitted"):
