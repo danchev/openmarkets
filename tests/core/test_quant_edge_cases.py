@@ -6,8 +6,10 @@ import pytest
 
 from openmarkets.core.quant import (
     compute_drawdown_curve,
+    compute_minimum_variance_weights,
     compute_portfolio_returns,
     compute_risk_metrics,
+    compute_risk_parity_weights,
     run_moving_average_crossover,
     run_rsi_mean_reversion,
 )
@@ -112,6 +114,32 @@ def test_total_loss_and_no_drawdown_calmar_boundaries():
     assert total_loss["max_drawdown_percent"] == -100.0
     gains = compute_risk_metrics(pd.Series([0.001, 0.002, 0.001]), risk_free_rate=0)
     assert gains["calmar_ratio"] is None
+
+
+@pytest.mark.parametrize("assets", [1, 2, 4])
+def test_all_zero_covariance_uses_equal_weights_and_undefined_attribution(assets):
+    result = compute_minimum_variance_weights(pd.DataFrame(np.full((5, assets), 100.0)))
+    assert [row["weight_percent"] for row in result] == [100 / assets] * assets
+    assert all(row["risk_contribution_percent"] is None for row in result)
+
+
+def test_perfectly_hedged_minimum_variance_has_undefined_attribution():
+    a = np.array([0.01, -0.01, 0.02, -0.02])
+    result = compute_minimum_variance_weights(_prices(np.column_stack([a, -a])))
+    assert [row["weight_percent"] for row in result] == [50.0, 50.0]
+    assert all(row["risk_contribution_percent"] is None for row in result)
+
+
+def test_small_absolute_variance_is_not_automatically_zero_risk():
+    returns = 1e-8 * np.array([[1, 2], [1, -2], [-1, 2], [-1, -2]])
+    result = compute_minimum_variance_weights(_prices(returns))
+    assert [row["weight_percent"] for row in result] == pytest.approx([80.0, 20.0], abs=0.01)
+    assert sum(row["risk_contribution_percent"] for row in result) == pytest.approx(100, abs=0.01)
+
+
+def test_risk_parity_still_rejects_zero_volatility_assets():
+    with pytest.raises(ValueError, match="positive finite asset volatility"):
+        compute_risk_parity_weights(pd.DataFrame({"A": [100, 110, 105], "CASH": [100, 100, 100]}))
 
 
 @pytest.mark.parametrize("bad_index", [[0, 0, 1], [2, 1, 0]])
