@@ -12,6 +12,7 @@ site_author: "Danchev"
 nav:
   - Home: index.md
   - API Reference: api.md
+  - Development: development.md
 
 theme:
   name: "material"
