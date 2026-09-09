@@ -7,10 +7,19 @@ import numpy as np
 import pandas as pd
 
 
+def _validate_observation_index(index: pd.Index) -> None:
+    """Require an unambiguous chronological observation sequence."""
+    if not index.is_unique or not index.is_monotonic_increasing:
+        raise ValueError("Observation index must be unique and increasing")
+
+
 def _clean_prices(price_df: pd.DataFrame, *, minimum_observations: int = 3) -> pd.DataFrame:
     """Validate a price matrix and retain only complete, finite observations."""
     if not isinstance(price_df, pd.DataFrame) or price_df.columns.empty:
         raise ValueError("At least one asset price column is required")
+    _validate_observation_index(price_df.index)
+    if not price_df.columns.is_unique:
+        raise ValueError("Asset price columns must be unique")
     clean_df = price_df.replace([np.inf, -np.inf], np.nan).dropna(how="all").ffill()
     incomplete_rows = clean_df.isna().any(axis=1)
     dropped_rows = int(incomplete_rows.sum())
@@ -31,6 +40,7 @@ def _clean_prices(price_df: pd.DataFrame, *, minimum_observations: int = 3) -> p
 
 
 def _validate_returns(returns: pd.Series, *, minimum_observations: int = 2) -> pd.Series:
+    _validate_observation_index(returns.index)
     clean = returns.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if len(clean) < minimum_observations:
         raise ValueError(f"At least {minimum_observations} finite return observations are required")
@@ -188,6 +198,7 @@ def compute_drawdown_curve(returns: pd.Series) -> tuple[list[dict[str, Any]], fl
     """Compute underwater drawdown timeseries, max drawdown, and peak/trough dates."""
     if returns.empty:
         return [], 0.0, None, None
+    returns = _validate_returns(returns, minimum_observations=1)
 
     cum_ret = (1 + returns).cumprod()
     # Initial capital is the first high-water mark. Without this floor, a loss
@@ -291,6 +302,7 @@ def compute_risk_metrics(
     r_squared = None
 
     if benchmark_returns is not None and not benchmark_returns.empty:
+        _validate_observation_index(benchmark_returns.index)
         clean_benchmark = benchmark_returns.replace([np.inf, -np.inf], np.nan)
         aligned = pd.concat([returns, clean_benchmark], axis=1).dropna()
         if len(aligned) > 5:
@@ -485,6 +497,8 @@ def compute_rolling_beta(
     """Compute rolling window Beta timeseries of an asset against a benchmark."""
     if window < 2:
         raise ValueError("window must be at least 2")
+    _validate_observation_index(asset_returns.index)
+    _validate_observation_index(benchmark_returns.index)
     aligned = pd.concat([asset_returns, benchmark_returns], axis=1).dropna()
     if len(aligned) < window:
         return []
@@ -522,6 +536,7 @@ def run_moving_average_crossover(
         raise ValueError("initial_capital must be a finite positive number")
     if not np.isfinite(slippage_bps) or not 0 <= slippage_bps < 10_000:
         raise ValueError("slippage_bps must be finite, non-negative, and less than 10000")
+    _validate_observation_index(prices.index)
     clean_p = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if (clean_p <= 0).any():
         raise ValueError("prices must be positive")
@@ -618,6 +633,7 @@ def run_rsi_mean_reversion(
         raise ValueError("initial_capital must be a finite positive number")
     if not np.isfinite(slippage_bps) or not 0 <= slippage_bps < 10_000:
         raise ValueError("slippage_bps must be finite, non-negative, and less than 10000")
+    _validate_observation_index(prices.index)
     clean_p = prices.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     if (clean_p <= 0).any():
         raise ValueError("prices must be positive")
@@ -696,6 +712,10 @@ def compute_factor_regressions(
         raise ValueError("At least one factor return column is required")
     if not np.isfinite(annualization_factor) or annualization_factor <= 0:
         raise ValueError("annualization_factor must be finite and positive")
+    _validate_observation_index(asset_returns.index)
+    _validate_observation_index(factor_returns_df.index)
+    if not factor_returns_df.columns.is_unique:
+        raise ValueError("Factor return columns must be unique")
     aligned = pd.concat([asset_returns, factor_returns_df], axis=1).replace([np.inf, -np.inf], np.nan).dropna()
     if len(aligned) < 20:
         return []
