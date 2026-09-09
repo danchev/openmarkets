@@ -194,18 +194,23 @@ def compute_portfolio_returns(
     return port_returns, norm_weights
 
 
-def compute_drawdown_curve(returns: pd.Series) -> tuple[list[dict[str, Any]], float, str | None, str | None]:
-    """Compute underwater drawdown timeseries, max drawdown, and peak/trough dates."""
-    if returns.empty:
-        return [], 0.0, None, None
-    returns = _validate_returns(returns, minimum_observations=1)
-
+def _drawdown_components(returns: pd.Series) -> tuple[pd.Series, pd.Series, pd.Series]:
+    """Return wealth, high-water marks and drawdowns without display rounding."""
     cum_ret = (1 + returns).cumprod()
     # Initial capital is the first high-water mark. Without this floor, a loss
     # in the first return observation is treated as the starting peak and is
     # omitted from both drawdown and Calmar ratio calculations.
     high_water = cum_ret.cummax().clip(lower=1.0)
     dd_series = (cum_ret - high_water) / high_water
+    return cum_ret, high_water, dd_series
+
+
+def compute_drawdown_curve(returns: pd.Series) -> tuple[list[dict[str, Any]], float, str | None, str | None]:
+    """Compute underwater drawdown timeseries, max drawdown, and peak/trough dates."""
+    if returns.empty:
+        return [], 0.0, None, None
+    returns = _validate_returns(returns, minimum_observations=1)
+    cum_ret, high_water, dd_series = _drawdown_components(returns)
 
     max_dd = float(dd_series.min())
 
@@ -216,7 +221,9 @@ def compute_drawdown_curve(returns: pd.Series) -> tuple[list[dict[str, Any]], fl
     if trough_index is not None:
         sub_cum = cum_ret.loc[:trough_index]
         peak_value = float(high_water.loc[trough_index])
-        prior_peaks = sub_cum[np.isclose(sub_cum, peak_value)]
+        # The running maximum is an actual wealth observation. A loose
+        # isclose tolerance can incorrectly label a small-loss trough a peak.
+        prior_peaks = sub_cum[sub_cum == peak_value]
         if not prior_peaks.empty:
             peak_date = str(prior_peaks.index[-1]).split(" ")[0]
 
@@ -304,8 +311,9 @@ def compute_risk_metrics(
     sortino = (excess_mean * annualization_factor / downside_deviation) if downside_deviation > 0 else None
 
     # Max Drawdown & Calmar Ratio
-    _, max_dd_pct, _, _ = compute_drawdown_curve(returns)
-    abs_dd = abs(max_dd_pct) / 100.0
+    _, _, drawdowns = _drawdown_components(returns)
+    abs_dd = abs(float(drawdowns.min()))
+    max_dd_pct = round(-abs_dd * 100, 2)
     calmar = (ann_ret / abs_dd) if abs_dd > 0 else None
 
     # Value-at-Risk (Historical VaR)

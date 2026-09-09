@@ -99,6 +99,21 @@ def test_tail_sample_size_is_after_nonfinite_cleaning():
     assert result["cvar_95_percent"] == -8.0
 
 
+def test_tiny_drawdown_does_not_label_the_trough_as_a_peak():
+    dates = pd.date_range("2024-01-01", periods=3)
+    _, _, peak, trough = compute_drawdown_curve(pd.Series([0.01, -0.000001, 0], index=dates))
+    assert peak == "2024-01-01"
+    assert trough == "2024-01-02"
+
+
+def test_total_loss_and_no_drawdown_calmar_boundaries():
+    total_loss = compute_risk_metrics(pd.Series([-1.0, 0.01, 0.02]), risk_free_rate=0)
+    assert total_loss["calmar_ratio"] == -1.0
+    assert total_loss["max_drawdown_percent"] == -100.0
+    gains = compute_risk_metrics(pd.Series([0.001, 0.002, 0.001]), risk_free_rate=0)
+    assert gains["calmar_ratio"] is None
+
+
 @pytest.mark.parametrize("bad_index", [[0, 0, 1], [2, 1, 0]])
 def test_ambiguous_observation_order_is_rejected(bad_index):
     returns = pd.Series([0.01, -0.01, 0.02], index=bad_index)

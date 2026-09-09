@@ -47,3 +47,11 @@ def test_zero_intercept_excess_return_model_has_zero_jensen_alpha():
     # asset - rf = 2 * (benchmark - rf), so the regression intercept is zero.
     asset = 2 * benchmark - daily_rf
     assert compute_risk_metrics(asset, benchmark, risk_free_rate=0.1)["alpha_percent"] == 0.0
+
+
+def test_calmar_retains_small_nonzero_drawdown():
+    returns = pd.Series([-0.00001] + [0.0001] * 99)
+    expected = ((1 - 0.00001) * (1 + 0.0001) ** 99) ** (252 / 100) - 1
+    assert compute_risk_metrics(returns, risk_free_rate=0)["calmar_ratio"] == pytest.approx(
+        expected / 0.00001, abs=0.001
+    )
