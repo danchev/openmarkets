@@ -234,6 +234,21 @@ def compute_drawdown_curve(returns: pd.Series) -> tuple[list[dict[str, Any]], fl
     return points, round(max_dd * 100, 2), peak_date, trough_date
 
 
+def _empirical_expected_shortfall(sorted_returns: np.ndarray, tail_probability: float) -> float:
+    """Integrate the empirical lower quantile; inputs are sorted finite returns.
+
+    Signed return convention (negative for losses). Acerbi–Tasche (2002),
+    Definition 2.6 / equation (3.3): https://arxiv.org/abs/cond-mat/0104295.
+    """
+    tail_mass = len(sorted_returns) * tail_probability
+    whole = int(np.floor(tail_mass))
+    fractional = tail_mass - whole
+    tail_sum = float(sorted_returns[:whole].sum())
+    if fractional > 0:
+        tail_sum += fractional * float(sorted_returns[whole])
+    return tail_sum / tail_mass
+
+
 def compute_risk_metrics(
     returns: pd.Series,
     benchmark_returns: pd.Series | None = None,
@@ -289,12 +304,11 @@ def compute_risk_metrics(
     var_95 = float(np.percentile(returns, 5))
     var_99 = float(np.percentile(returns, 1))
 
-    # Conditional VaR (Expected Shortfall)
-    tail_95 = returns[returns <= var_95]
-    cvar_95 = float(tail_95.mean()) if len(tail_95) > 0 else var_95
-
-    tail_99 = returns[returns <= var_99]
-    cvar_99 = float(tail_99.mean()) if len(tail_99) > 0 else var_99
+    # Exact empirical ES includes only the required probability mass at ties
+    # and a fractional boundary observation when n * tail_probability is not integer.
+    sorted_returns = np.sort(returns.to_numpy())
+    cvar_95 = _empirical_expected_shortfall(sorted_returns, 0.05)
+    cvar_99 = _empirical_expected_shortfall(sorted_returns, 0.01)
 
     # Beta and Alpha vs Benchmark
     beta = None

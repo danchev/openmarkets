@@ -18,10 +18,20 @@ class PortfolioRiskMetrics(BaseModel):
     sortino_ratio: float | None = Field(None, description="Sortino ratio when downside deviation is non-zero")
     calmar_ratio: float | None = Field(None, description="Calmar ratio when maximum drawdown is non-zero")
     max_drawdown_percent: float = Field(..., description="Maximum peak-to-trough decline (%)")
-    var_95_percent: float = Field(..., description="1-Day Historical Value-at-Risk at 95% confidence (%)")
-    var_99_percent: float = Field(..., description="1-Day Historical Value-at-Risk at 99% confidence (%)")
-    cvar_95_percent: float = Field(..., description="1-Day Expected Shortfall / Conditional VaR at 95% confidence (%)")
-    cvar_99_percent: float = Field(..., description="1-Day Expected Shortfall / Conditional VaR at 99% confidence (%)")
+    var_95_percent: float = Field(
+        ..., description="Daily signed return at the linearly interpolated 5th percentile (%); losses are negative"
+    )
+    var_99_percent: float = Field(
+        ..., description="Daily signed return at the linearly interpolated 1st percentile (%); losses are negative"
+    )
+    cvar_95_percent: float = Field(
+        ...,
+        description="Mean daily signed return over exactly the worst 5% empirical probability mass (%); losses are negative",
+    )
+    cvar_99_percent: float = Field(
+        ...,
+        description="Mean daily signed return over exactly the worst 1% empirical probability mass (%); losses are negative",
+    )
     beta: float | None = Field(None, description="Sensitivity / Beta relative to benchmark when estimable")
     alpha_percent: float | None = Field(None, description="Annualized Jensen's Alpha when estimable (%)")
     r_squared: float | None = Field(None, description="R-Squared correlation coefficient when estimable")
