@@ -155,3 +155,34 @@ def test_ambiguous_observation_order_is_rejected(bad_index):
     ):
         with pytest.raises(ValueError, match="index must be unique and increasing"):
             calculate()
+
+
+@pytest.mark.parametrize(
+    "method,kwargs,warmup",
+    [
+        (run_moving_average_crossover, {"fast_window": 1, "slow_window": 2}, 2),
+        (run_rsi_mean_reversion, {"rsi_window": 2}, 3),
+    ],
+)
+def test_backtest_full_history_comparison_includes_warmup(method, kwargs, warmup):
+    dates = pd.date_range("2024-01-01", periods=30, freq="B", tz="America/New_York")
+    prices = pd.Series(np.linspace(100, 150, 30), index=dates)
+    result = method(prices, **kwargs)
+    assert result["buy_and_hold_return_percent"] == 50.0
+    assert result["evaluation_start"] == str(dates[0].date())
+    assert result["evaluation_end"] == str(dates[-1].date())
+    assert result["warmup_observations"] == warmup
+    assert result["equity_curve"][0]["equity"] == 10000.0
+    years = (dates[-1] - dates[0]).total_seconds() / (86400 * 365.25)
+    # Public ending capital is rounded; allow the propagated dollar rounding.
+    assert result["cagr_percent"] == pytest.approx(
+        ((result["ending_capital"] / 10000) ** (1 / years) - 1) * 100, abs=0.05
+    )
+
+
+def test_terminal_only_execution_has_same_full_period_benchmark():
+    prices = pd.Series([100, 110, 120], index=pd.date_range("2024-01-01", periods=3))
+    result = run_moving_average_crossover(prices, fast_window=1, slow_window=2, slippage_bps=100)
+    assert result["ending_capital"] == 9801.0
+    assert result["buy_and_hold_return_percent"] == 20.0
+    assert result["trades"][0]["entry_date"] == result["evaluation_end"]
