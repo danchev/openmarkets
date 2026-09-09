@@ -759,7 +759,11 @@ def compute_factor_regressions(
     factor_returns_df: pd.DataFrame,
     annualization_factor: float = 252.0,
 ) -> list[dict[str, Any]]:
-    """Compute multi-factor linear regression exposures (Beta, Alpha, t-statistic, R-squared)."""
+    """Compute descriptive raw-return OLS exposures with Newey–West inference.
+
+    The annualized intercept is not Jensen alpha: no risk-free series is
+    subtracted and the caller defines the explanatory return columns.
+    """
     if not isinstance(factor_returns_df, pd.DataFrame) or factor_returns_df.columns.empty:
         raise ValueError("At least one factor return column is required")
     if not np.isfinite(annualization_factor) or annualization_factor <= 0:
@@ -817,7 +821,7 @@ def compute_factor_regressions(
 
     res: list[dict[str, Any]] = [
         {
-            "factor": "Alpha (Annualized Intercept)",
+            "factor": "Annualized Raw-Return Intercept",
             "exposure_beta": round(alpha * 100, 2),
             "unit": "%",
             "t_statistic": round(float(t_statistics[0]), 3) if np.isfinite(t_statistics[0]) else None,

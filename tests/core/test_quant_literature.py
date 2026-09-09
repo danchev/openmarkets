@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from openmarkets.core.quant import (
+    compute_factor_regressions,
     compute_minimum_variance_weights,
     compute_risk_metrics,
     compute_risk_parity_weights,
@@ -43,6 +44,29 @@ def test_diagonal_covariance_minimum_variance_has_inverse_variance_solution():
     returns = 0.01 * np.array([[1, 2], [1, -2], [-1, 2], [-1, -2]])
     result = compute_minimum_variance_weights(_prices(returns))
     assert [row["weight_percent"] for row in result] == pytest.approx([80, 20], abs=0.01)
+
+
+def test_newey_west_against_dense_bartlett_kernel_and_qr_ols():
+    # An independent dense kernel oracle, rather than the implementation's lag loop.
+    rng = np.random.default_rng(20260908)
+    n = 120
+    factors = rng.normal(0, 0.01, (n, 2))
+    innovations = rng.normal(0, 0.002, n + 1)
+    y = 0.0002 + factors @ np.array([0.7, -0.3]) + innovations[1:] + 0.6 * innovations[:-1]
+    x = np.column_stack([np.ones(n), factors])
+    q, r = np.linalg.qr(x)
+    coefficients = np.linalg.solve(r, q.T @ y)
+    residual = y - x @ coefficients
+    lag = int(4 * (n / 100) ** (2 / 9))
+    distances = np.abs(np.arange(n)[:, None] - np.arange(n)[None, :])
+    kernel = np.maximum(1 - distances / (lag + 1), 0)
+    influence = np.linalg.solve(r, q.T) * residual
+    covariance = influence @ kernel @ influence.T * n / (n - x.shape[1])
+    expected_t = coefficients / np.sqrt(np.diag(covariance))
+    result = compute_factor_regressions(pd.Series(y), pd.DataFrame(factors, columns=["F1", "F2"]))
+    assert [row["t_statistic"] for row in result[:3]] == pytest.approx(np.round(expected_t, 3), abs=0.001)
+    assert result[0]["exposure_beta"] == round(coefficients[0] * 252 * 100, 2)
+    assert [row["exposure_beta"] for row in result[1:3]] == pytest.approx(np.round(coefficients[1:], 3))
 
 
 def test_empirical_expected_shortfall_uses_exact_tail_mass_with_ties():

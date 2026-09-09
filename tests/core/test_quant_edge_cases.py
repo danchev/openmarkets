@@ -6,6 +6,7 @@ import pytest
 
 from openmarkets.core.quant import (
     compute_drawdown_curve,
+    compute_factor_regressions,
     compute_minimum_variance_weights,
     compute_portfolio_returns,
     compute_risk_metrics,
@@ -186,3 +187,11 @@ def test_terminal_only_execution_has_same_full_period_benchmark():
     assert result["ending_capital"] == 9801.0
     assert result["buy_and_hold_return_percent"] == 20.0
     assert result["trades"][0]["entry_date"] == result["evaluation_end"]
+
+
+def test_raw_factor_intercept_label_and_rank_deficient_inference():
+    x = np.tile([-0.01, 0.01], 60)
+    result = compute_factor_regressions(pd.Series(0.001 + 2 * x), pd.DataFrame({"X": x, "DUPLICATE": x}))
+    assert result[0]["factor"] == "Annualized Raw-Return Intercept"
+    assert result[0]["exposure_beta"] == 25.2
+    assert all(row["t_statistic"] is None for row in result)
