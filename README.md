@@ -310,23 +310,6 @@ Endpoints:
 
 ---
 
-## 🧪 Testing & Validation
-
-Open Markets maintains a comprehensive suite of unit tests, property tests, and live network integration tests:
-
-```bash
-# Run all unit tests with coverage enforcement (95%+ achieved)
-uv run pytest
-
-# Run live endpoint integration tests against real APIs
-uv run pytest -m live -o addopts="" tests/live/
-
-# Run code formatters and type checkers
-uv run ruff format && uv run ruff check && uv run pyright
-```
-
----
-
 ## 📄 License
 
 AGPLv3+ License — see [LICENSE](LICENSE) for details.
