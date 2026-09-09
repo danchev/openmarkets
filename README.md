@@ -49,7 +49,7 @@ The plugin starts `openmarkets@latest` with `uvx` and registers all MCP tools au
 
 ### Usage with Cursor
 
-[![Install MCP Server](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/en-US/install-mcp?name=openmarkets&config=eyJjb21tYW5kIjoidXZ4IG9wZW5tYXJrZXRzQGxhdGVzdCJ9)
+[![Install MCP Server](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/en-US/install-mcp?name=openmarkets&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJvcGVubWFya2V0c0BsYXRlc3QiXX0=)
 
 ### Usage with Claude Desktop
 
@@ -304,7 +304,7 @@ uvx openmarkets@latest \
 ```
 
 Endpoints:
-- `GET /health` — Liveness & readiness probe.
+- `GET /health` — Process liveness probe.
 - `GET /metrics` — Prometheus metrics (uptime, cache entries).
 - `POST /mcp` — MCP streamable JSON-RPC endpoint.
 

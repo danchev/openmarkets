@@ -26,7 +26,7 @@ uv run pytest
 Run live integration tests against the upstream APIs:
 
 ```bash
-uv run pytest -m live -o addopts="" tests/live/
+uv run pytest -m live -o addopts=""
 ```
 
 Run the repository's formatting, linting, and type checks:

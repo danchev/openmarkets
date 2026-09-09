@@ -10,6 +10,33 @@ env:
   COLUMNS: 150
 
 jobs:
+  distribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: 0.12.2
+      - run: uv build
+      - run: uv run --no-project --python 3.12 python scripts/check_release.py --wheel dist/*.whl
+      - run: uvx --from twine==6.2.0 twine check --strict dist/*
+      - run: uv run --frozen --group docs mkdocs build --strict
+
+  required:
+    name: Required checks
+    if: ${{ always() }}
+    needs: [distribution, supply-chain, pre-commit, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every check to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python -c 'import json, os; assert all(job["result"] == "success" for job in json.loads(os.environ["RESULTS"]).values())'
+
   supply-chain:
     name: supply-chain security
     runs-on: ubuntu-latest

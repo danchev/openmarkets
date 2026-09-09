@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: pypi-publish
+  cancel-in-progress: false
+
 jobs:
   release-build:
     name: Build distribution
@@ -28,6 +32,14 @@ jobs:
 
       - name: Build
         run: uv build
+
+      - name: Verify release tag and built metadata
+        run: uv run --python 3.12 --no-project python scripts/check_release.py --tag "$RELEASE_TAG" --wheel dist/*.whl
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+
+      - name: Check distribution metadata
+        run: uvx --from twine==6.2.0 twine check --strict dist/*
 
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
