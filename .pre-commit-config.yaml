@@ -23,7 +23,7 @@ repos:
   #  Install the configuration into the git hook through pre-commit:
   #  `pre-commit install --hook-type commit-msg`
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.17.0
+    rev: v4.19.2
     hooks:
       - id: commitizen
       - id: commitizen-branch
