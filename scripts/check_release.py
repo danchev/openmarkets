@@ -2,11 +2,10 @@
 
 import argparse
 import json
+import tomllib
 from email.parser import BytesParser
 from pathlib import Path
 from zipfile import ZipFile
-
-import tomllib
 
 
 def check(root: Path, tag: str | None = None, wheel: Path | None = None) -> None:
