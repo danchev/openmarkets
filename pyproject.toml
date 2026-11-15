@@ -35,11 +35,14 @@ keywords = [
 readme = "README.md"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
-requires-python = ">=3.11"
+requires-python = ">=3.11.5"
 dependencies = [
     "mcp[cli]>=2.0.0,<3",
     "httpx2>=2.12.0,<3",
     "yfinance>=1.5.2",
+    # Security floors for transitive HTML parsing and trace propagation.
+    "soupsieve>=4.0.0",
+    "opentelemetry-api>=1.45.2",
     "lxml>=6.0.2",
     "curl-cffi>=0.13.0",
     "numpy>=2.0.0; python_version < '3.13'",
