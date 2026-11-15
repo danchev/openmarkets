@@ -16,7 +16,9 @@ nav:
       - development.md
       - Architecture decision records:
           - Python 3.11 minimum: adr/0007-python-311-minimum.md
+          - Parser and trace security: adr/0008-parser-and-trace-security.md
       - Python 3.11 minimum implementation plan: python-311-minimum-implementation-plan.md
+      - Dependency security implementation plan: dependency-security-implementation-plan.md
 
 theme:
   name: "material"
